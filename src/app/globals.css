@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-neon: #39ff14;
+  --font-pixel: "Press Start 2P", cursive;
 }
+
+.font-pixel { font-family: var(--font-pixel); }
+.text-neon { color: var(--color-neon); }
+.border-neon { border-color: var(--color-neon); }
 
 @theme inline {
   --color-background: var(--background);
@@ -24,3 +28,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes glitch {
+  0%   { clip: rect(24px, 9999px, 10px, 0); transform: translate(0.5px, -0.5px); }
+  10%  { clip: rect(12px, 9999px, 80px, 0); transform: translate(-0.5px, 0.5px); }
+  20%  { clip: rect(44px, 9999px, 56px, 0); transform: translate(-1px, 1px); }
+  30%  { clip: rect(72px, 9999px, 30px, 0); transform: translate(1px, -1px); }
+  40%  { clip: rect(10px, 9999px, 90px, 0); transform: translate(-0.5px, 0.5px); }
+  50%  { clip: rect(90px, 9999px, 60px, 0); transform: translate(0.5px, -0.5px); }
+  60%  { clip: rect(30px, 9999px, 20px, 0); transform: translate(-1px, 1px); }
+  70%  { clip: rect(50px, 9999px, 80px, 0); transform: translate(1px, -1px); }
+  80%  { clip: rect(20px, 9999px, 70px, 0); transform: translate(-0.5px, 0.5px); }
+  90%  { clip: rect(60px, 9999px, 40px, 0); transform: translate(0.5px, -0.5px); }
+  100% { clip: rect(44px, 9999px, 10px, 0); transform: translate(-1px, 1px); }
+}
+
+.animate-\[glitch_2s_infinite\] {
+  animation: glitch 2s infinite linear alternate-reverse;
+}
+
+/* Slow spin */
+.animate-spin-slow {
+  animation: spin 10s linear infinite;
+}
+
+:root {
+  --color-neon: #39ff14;
+}
+.text-neon { color: var(--color-neon); }
+.border-neon { border-color: var(--color-neon); }
