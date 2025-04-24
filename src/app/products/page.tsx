@@ -1,24 +1,27 @@
 // src/app/products/page.tsx
-import ProductGrid from "@/components/ProductGrid"
+import ShopClient from "@/components/ShopClient"
 import dbConnect from "@/utils/dbConnect"
-import Product from "@/models/Product"
+import ProductModel from "@/models/Product"
 
-export const revalidate = 86400  // Regenerate page (and run sync) once per day
+export const revalidate = 86400  // rebuild once per day
 
 export default async function ProductsPage() {
-  // 1) Sync from Printful into MongoDB on each ISR rebuild
-  await fetch("/api/printful-sync", { cache: "no-store" })
+  // 1) Sync Printful → Mongo
+  const base = process.env.NEXT_PUBLIC_URL!
+  await fetch(`${base}/api/printful-sync`, { cache: "no-store" })
 
-  // 2) Query your local DB directly for SSR
+  // 2) Read your cached products
   await dbConnect()
-  const products = await Product.find().sort({ updatedAt: -1 }).lean()
+  const products = await ProductModel.find().sort({ updatedAt: -1 }).lean()
 
   return (
-    <section className="container mx-auto py-12">
-      <h1 className="font-pixel text-4xl mb-6">Shop Our Tees</h1>
-      {/* Pass in the SSR-fetched products to avoid double-fetch on mount */}
-      {/* @ts-ignore server->client prop */}
-      <ProductGrid products={products} />
-    </section>
+    <div className="pt-16 min-h-screen bg-white text-gray-900">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-semibold mb-6">Shop Our Tees</h1>
+        {/* Render the client‐side ShopClient here */}
+        {/* @ts-ignore */}
+        <ShopClient initialProducts={products} />
+      </div>
+    </div>
   )
 }

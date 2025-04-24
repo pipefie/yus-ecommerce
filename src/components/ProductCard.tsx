@@ -28,25 +28,34 @@ export default function ProductCard({ product }: { product: Product }) {
   }, [])
 
   return (
-    <div
-      ref={ref}
-      className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-neon transition p-4"
+    <Link
+      href={`/products/${product._id}`}
+      className="group block overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-200"
     >
-      <img
-        src={product.imageUrl}
-        alt={product.title}
-        className="w-full h-48 object-cover rounded"
-      />
-      <div className="mt-3">
-        <h3 className="font-pixel text-lg">{product.title}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2">
+      <div className="aspect-w-1 aspect-h-1 bg-gray-50">
+        <img
+          src={product.imageUrl || "/placeholder.png"}
+          alt={product.title}
+          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-200"
+        />
+      </div>
+
+      <div className="p-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-1 line-clamp-1">
+          {product.title}
+        </h3>
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
           {product.description}
         </p>
-        <p className="mt-2 font-bold">${product.price.toFixed(2)}</p>
-        <Link href={`/products/${product._id}`} className="inline-block mt-3 text-neon hover:underline">
-            View Details
-        </Link>
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-gray-900">
+            ${(product.price / 100).toFixed(2)}
+          </span>
+          <span className="text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            View →
+          </span>
+        </div>
       </div>
-    </div>
+    </Link>
   )
 }

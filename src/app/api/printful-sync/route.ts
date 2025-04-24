@@ -5,19 +5,31 @@ import Product from "@/models/Product"
 import { fetchPrintfulProducts, mapToLocal } from "@/utils/printful"
 
 export async function GET() {
-  await dbConnect()
-  const pfProducts = await fetchPrintfulProducts()
-  let count = 0
+  try {
+    await dbConnect()
+    const pfProducts = await fetchPrintfulProducts()
 
-  for (const pf of pfProducts) {
-    const data = mapToLocal(pf)
-    await Product.findOneAndUpdate(
-      { printfulId: data.printfulId },
-      { $set: data },
-      { upsert: true }
+    let syncedCount = 0
+    for (const pf of pfProducts) {
+      try {
+        const data = mapToLocal(pf)
+        await Product.findOneAndUpdate(
+          { printfulId: data.printfulId },
+          { $set: data },
+          { upsert: true }
+        )
+        syncedCount++
+      } catch (itemErr) {
+        console.warn(`⚠️ Skipping product ${pf.id}:`, itemErr)
+      }
+    }
+
+    return NextResponse.json({ synced: syncedCount })
+  } catch (err: any) {
+    console.error("💥 /api/printful-sync error:", err)
+    return NextResponse.json(
+      { error: err.message || "Unknown error" },
+      { status: 500 }
     )
-    count++
   }
-
-  return NextResponse.json({ synced: count })
 }

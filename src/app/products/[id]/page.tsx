@@ -1,64 +1,53 @@
 // src/app/products/[id]/page.tsx
-import { notFound } from 'next/navigation'
-import dbConnect from '@/utils/dbConnect'
-import Product, { IProduct } from '@/models/Product'
-import NSFWBlock from '@/components/NSFWBlock'
+import { notFound } from "next/navigation"
+import dbConnect from "@/utils/dbConnect"
+import ProductModel from "@/models/Product"
+import type { IProduct as RawProduct } from "@/models/Product"
 import { Metadata } from "next"
+import ProductDetailClient from "@/components/ProductDetailClient"  // the client piece
+import type { Product as UIProduct } from "@/components/ProductCard"
 
 type Props = { params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    await dbConnect()
-    const prod = (await Product.findById(params.id).lean()) as IProduct | null
-    if (!prod) {
-      return { title: "Product Not Found – Y_US?", description: "" }
-    }
-    // Ensure we have a string (never undefined)
-    const description = prod.description ?? ""
-    // Optionally supply a default/fallback image
-    const image = prod.imageUrl ?? "/default-og.png"
+  await dbConnect()
+  const raw = (await ProductModel.findById(params.id).lean()) as RawProduct | null
+  if (!raw) {
+    return { title: "Product Not Found – Y-US?", description: "" }
+  }
+  const desc = raw.description ?? ""
+  const image = raw.imageUrl ?? "/default-og.png"
 
-    const metadata: Metadata = {
-        title: `${prod.title} | Y_US?`,
-        description: description.slice(0, 160),
-        openGraph: {
-        title: prod.title,
-        description: description.slice(0, 160),
-        images: [image],      // now always a string, never undefined
-        },
-    }
-
-    return metadata
+  return {
+    title: `${raw.title} | Y-US?`,
+    description: desc.slice(0, 160),
+    openGraph: {
+      title: raw.title,
+      description: desc.slice(0, 160),
+      images: [image],
+    },
+  }
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   await dbConnect()
-  const prod = await Product.findById(params.id).lean()
-  if (!prod) notFound()
+  const raw = (await ProductModel.findById(params.id).lean()) as RawProduct | null
+  if (!raw) notFound()
+
+  // Map to UIProduct, converting _id → string
+  const product: UIProduct = {
+    _id:       String(raw._id),
+    title:     raw.title,
+    description: raw.description ?? "",
+    price:     raw.price,
+    imageUrl:  raw.imageUrl ?? "",
+    nsfw:      raw.nsfw ?? false,
+  }
 
   return (
-    <div className="container mx-auto py-12">
-      <h1 className="font-pixel text-5xl mb-6">{prod.title}</h1>
-
-      {prod.nsfw ? (
-        <NSFWBlock>
-          <img
-            src={prod.imageUrl}
-            alt={prod.title}
-            className="w-full max-w-md mx-auto rounded-lg"
-          />
-        </NSFWBlock>
-      ) : (
-        <img
-          src={prod.imageUrl}
-          alt={prod.title}
-          className="w-full max-w-md mx-auto rounded-lg"
-        />
-      )}
-
-      <p className="mt-6 text-gray-700">{prod.description}</p>
-      <p className="mt-4 font-bold text-2xl">${prod.price.toFixed(2)}</p>
-      {/* Add “Add to Cart” button here */}
+    <div className="pt-16 container mx-auto py-12">
+      {/* Pass into the client component */}
+      <ProductDetailClient product={product} />
     </div>
   )
 }

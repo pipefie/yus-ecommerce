@@ -11,15 +11,26 @@ import mongoose from 'mongoose'
 const MONGO_URI = process.env.MONGO_URI!
 if (!MONGO_URI) throw new Error('Define MONGO_URI in .env.local')
 
-let cached = (global as any).mongoose
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null }
+interface MongooseCache {
+  conn: mongoose.Connection | null
+  promise: Promise<mongoose.Connection> | null
 }
+
+declare global {
+  var mongooseGlobal: MongooseCache
+}
+
+const cache: MongooseCache = global.mongooseGlobal || (global.mongooseGlobal = { conn: null, promise: null })
+
 export default async function dbConnect() {
-  if (cached.conn) return cached.conn
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI).then(m => m)
+  if (cache.conn) {
+    return cache.conn
   }
-  cached.conn = await cached.promise
-  return cached.conn
+  if (!cache.promise) {
+    cache.promise = mongoose.connect(MONGO_URI).then((mongoose) => {
+      return mongoose.connection
+    })
+  }
+  cache.conn = await cache.promise
+  return cache.conn
 }

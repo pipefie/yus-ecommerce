@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
-
+import { CartProvider } from "@/context/CartContext";
 
 export const metadata = {
   title: "Y-US? Store",
@@ -19,12 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={ "antialiased"}
+        className={ "pt-25 antialiased"}
       >
         <Providers>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
+          <CartProvider>
+            <Navbar/>
+            <main>{children}</main>
+            <Footer/>
+          </CartProvider>
         </Providers>
       </body>
     </html>

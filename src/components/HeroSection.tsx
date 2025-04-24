@@ -64,7 +64,7 @@ export default function HeroSection() {
       {/* Call-to-action */}
       <a
         href="#products"
-        className="relative z-20 mt-8 inline-block px-6 py-3 border-2 border-neon text-neon font-bold font-pixel rounded hover:bg-neon hover:text-black transition"
+        className="relative z-20 inline-block px-6 py-3 border-2 border-neon text-neon font-bold font-pixel rounded hover:bg-neon hover:text-black transition"
       >
         Shop Now
       </a>
