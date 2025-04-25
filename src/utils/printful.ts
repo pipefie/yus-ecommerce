@@ -1,7 +1,7 @@
 import slugify from "slugify"
 
 // Base URL & API key for Printful
-export const BASE = "https://api.printful.com?"
+export const BASE = "https://api.printful.com"
 export const KEY  = process.env.PRINTFUL_API_KEY!
 
 // Fields we store in MongoDB
