@@ -6,11 +6,17 @@ import Link from "next/link"
 import Image from "next/image"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Plus, X, User } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
+import { useCart } from "@/context/CartContext"
+import CartSidebar from "./CartSidebar"
 
 export default function Navbar() {
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
+  const { items } = useCart()
+  const [open, setOpen] = useState(false)
+  const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
 
   const links = [
     { href: "/", label: "Home" },
@@ -79,7 +85,6 @@ export default function Navbar() {
               </div>
             )}
           </div>
-
           {/* Menu Toggle */}
           <button
             onClick={() => setMenuOpen((o) => !o)}
@@ -88,7 +93,22 @@ export default function Navbar() {
           >
             {menuOpen ? <X size={28} /> : <Plus size={28} />}
           </button>
+          {/* Cart */}
+          <button
+            onClick={() => setOpen(true)}
+            className="relative p-2"
+            aria-label="Open cart"
+          >
+            <ShoppingCart size={24} />
+            {totalQty > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                {totalQty}
+              </span>
+            )}
+          </button>
+          <CartSidebar open={open} onClose={() => setOpen(false)} />
         </div>
+
       </nav>
 
       {/* Full-screen Overlay Menu */}

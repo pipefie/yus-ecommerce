@@ -48,7 +48,7 @@ interface ShopClientProps {
         }
       })
     }, [products, category, search, sortBy])
-  
+    
     return (
       <div className="flex">
         {/* Desktop Sidebar */}

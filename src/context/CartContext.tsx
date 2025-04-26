@@ -3,29 +3,39 @@
 import { createContext, useContext, useState, ReactNode } from "react"
 import { Product } from "@/components/ProductCard"
 
-interface CartItem extends Product { quantity: number }
+export interface CartItem extends Product {   
+  variantId: string
+  quantity:  number }
 
 interface CartContextValue {
   items: CartItem[]
-  add:   (p: Product)=>void
-  remove:(id:string)=>void
-  clear: ()=>void
+  add:     (item: CartItem) => void      // now takes a CartItem
+  remove:  (variantId: string) => void   // drop by variant
+  clear:   () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
-  const add = (p: Product) => {
+  const add = (item: CartItem) => {
     setItems((cur) => {
-      const exist = cur.find((i) => i._id===p._id)
-      return exist
-        ? cur.map((i)=>(i._id===p._id?{...i,quantity:i.quantity+1}:i))
-        : [...cur, { ...p, quantity:1 }]
+      const exists = cur.find(
+        (i) => i._id === item._id && i.variantId === item.variantId
+      )
+      if (exists) {
+        return cur.map((i) =>
+          i._id === item._id && i.variantId === item.variantId
+            ? { ...i, quantity: i.quantity + item.quantity }
+            : i
+        )
+      }
+      return [...cur, item]
     })
   }
-  const remove = (id:string) =>
-    setItems((cur)=> cur.filter((i)=>i._id!==id))
+  const remove = (variantId: string) =>
+    setItems((cur)=> cur.filter((i)=>i.variantId !== variantId))
+
   const clear = ()=>setItems([])
   return (
     <CartContext.Provider value={{ items, add, remove, clear }}>
