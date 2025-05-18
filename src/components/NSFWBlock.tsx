@@ -3,7 +3,15 @@
 
 import { useState } from "react"
 
-export default function NSFWBlock({ children }: { children: React.ReactNode }) {
+interface NSFWBlockProps {
+  children: React.ReactNode;
+  className?: string; // Add this line
+}
+
+export default function NSFWBlock({ 
+  children,
+  className, 
+}: NSFWBlockProps) {
   const [allowed, setAllowed] = useState(false)
 
   if (allowed) return <>{children}</>

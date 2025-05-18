@@ -96,7 +96,7 @@ export default function Navbar() {
           {/* Cart */}
           <button
             onClick={() => setOpen(true)}
-            className="relative p-2"
+            className="relative p-2 text-neon"
             aria-label="Open cart"
           >
             <ShoppingCart size={24} />

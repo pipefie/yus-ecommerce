@@ -5,6 +5,7 @@ import ProductModel from "@/models/Product"
 import { Metadata } from "next"
 import type { IProduct as RawProduct } from "@/models/Product"
 import ProductDetailClient, { DetailProduct } from "@/components/ProductDetailClient"
+import { image } from "framer-motion/client"
 
 
 type Props = { params: { id: string } }
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   await dbConnect()
-  const raw = (await ProductModel.findById(params.id).lean()) as
+  const raw = await ProductModel.findById(params.id).lean() as
     | RawProduct
     | null
   
@@ -42,7 +43,10 @@ export default async function ProductDetailPage({ params }: Props) {
     nsfw:       raw.nsfw ?? false,
     images:     raw.images,
     price:      raw.variants[0].price,
-    imageUrl:   raw.variants[0].previewUrl || raw.variants[0].imageUrl,
+    imageUrl:   raw.images?.[0] ||
+                raw.variants?.[0]?.previewUrl ||
+                raw.variants?.[0]?.imageUrl ||
+                "/placeholder.png",
     variants:   raw.variants.map((v) => ({
       id:         String(v.id),
       price:      v.price,

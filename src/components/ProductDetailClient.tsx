@@ -12,8 +12,10 @@ export interface Variant {
   price:      number      // cents
   size?:      string
   color?:     string
-  imageUrl:   string
-  previewUrl?: string
+  files?: {
+    preview_url: string; // 👈 Printful's mockup URL is here
+    type: string;
+  }[];
 }
 
 export interface DetailProduct {
@@ -50,8 +52,12 @@ export default function ProductDetailClient({
     if (found) setVariantId(found.id)
   }, [size, color, product.variants])
 
-  const imageSrc = variant?.previewUrl || variant?.imageUrl || product.images[0] || "/placeholder.png"
-  const price    = variant?.price ?? 0
+  // Extract image URL from Printful's structure
+  const imageSrc = 
+   variant?.files?.[0]?.preview_url.replace('http://', 'https://')  || // 👈 Printful mockup URL
+   "/placeholder.png"; // Fallback
+
+  const price = variant?.price ?? 0
 
   return (
     <>
@@ -59,12 +65,22 @@ export default function ProductDetailClient({
 
       {product.nsfw ? (
         <NSFWBlock>
-          <img src={imageSrc} alt={product.title}
-            className="w-full max-w-md mx-auto rounded-lg" />
+          <img
+            src={imageSrc}
+            alt={product.title}
+            width={500}
+            height={500}
+            className="w-full max-w-md mx-auto rounded-lg"
+          />
         </NSFWBlock>
       ) : (
-        <img src={imageSrc} alt={product.title}
-          className="w-full max-w-md mx-auto rounded-lg" />
+        <img
+          src={imageSrc}
+          alt={product.title}
+          width={500}
+          height={500}
+          className="w-full max-w-md mx-auto rounded-lg"
+        />
       )}
 
       <p className="mt-6 text-gray-700">{product.description}</p>
