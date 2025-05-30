@@ -5,6 +5,23 @@ export const BASE = "https://api.printful.com"
 export const KEY  = process.env.PRINTFUL_API_KEY!
 export const STORE_ID = process.env.PRINTFUL_STORE_ID!
 
+// Low-level helper to call Printful
+async function callPrintful(path: string) {
+  const headers: Record<string,string> = {
+    Authorization: `Bearer ${KEY}`,
+    "Content-Type":  "application/json",
+    "X-PF-Store-Id":  STORE_ID,           // <<< must send your store id
+  }
+
+  const res = await fetch(`${BASE}${path}`, { headers })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(`Printful ${path} error ${res.status}: ${JSON.stringify(body)}`)
+  }
+  return res.json()
+}
+
+
 export interface PFVariant {
   id: number
   price: number       // in cents
@@ -27,28 +44,13 @@ export interface PrintfulProductFields {
   updatedAt: Date
 }
 
-// Low-level helper to call Printful
-async function callPrintful(path: string) {
-  const headers: Record<string,string> = {
-    Authorization: `Bearer ${KEY}`,
-    "Content-Type":  "application/json",
-    "X-PF-Store-Id":  STORE_ID,           // <<< must send your store id
-  }
-
-  const res = await fetch(`${BASE}${path}`, { headers })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(`Printful ${path} error ${res.status}: ${JSON.stringify(body)}`)
-  }
-  return res.json()
-}
 
 // Fetch all synced store products, fallback to full catalog
 export async function fetchPrintfulProducts(): Promise<any[]> {
   // 1) Try store‐synced products
   const storeRes = await callPrintful("/store/products")
   const storeItems = Array.isArray(storeRes.result)
-    ? storeRes.result.filter((p: any) => !p.is_ignored && p.variants > 0)
+    ? storeRes.result.filter((p: any) => !p.is_ignored && (p.variants_count ?? p.variants) > 0)
     : []
 
   // 2) For each, hit the detail endpoint so we can read sync_variants
@@ -87,26 +89,34 @@ export function mapToLocal(pf: any): PrintfulProductFields {
   if (!Array.isArray(rawVariants) || rawVariants.length === 0) {
     throw new Error(`Product ${pf.id} has no variants`)
   }
-  const variants: PFVariant[] = rawVariants.map((v: any) => ({
-    id:         v.variant_id ?? v.id,
-    price:      Math.round(
-                  Number(
-                    // Printful uses `retail_price` on sync, `price` on catalog
-                    v.retail_price ?? v.price ?? "0"
-                  ) * 100
-                ),
-    size:       v.size,
-    color:      v.color,
-    imageUrl:   v.product?.image ?? v.image ?? "",
-    previewUrl: v.files?.[0]?.preview_url,
-  }))
+  const variants: PFVariant[] = rawVariants.map((v: any) =>  {
+    // pick up mockup file URLs
+    const file = Array.isArray(v.files) ? v.files[0] : null;
+    const preview_url   = file?.preview_url;
+    const thumbnail_url = file?.thumbnail_url;
+    // primary mockup: preview first, then thumbnail
+    const mockupUrl = preview_url || thumbnail_url || ""
+    // fallback product image if no mockup
+    const productImg = v.product?.image || v.image || ""
+
+    return {
+      id: v.variant_id ?? v.id,
+      price: Math.round(Number(v.retail_price ?? v.price ?? "0") * 100),
+      size: v.size,
+      color: v.color,
+      imageUrl: productImg || mockupUrl,
+      previewUrl: preview_url || thumbnail_url || "",
+    };
+  });
+
+  
 
   if (!variants.length) {
     throw new Error(`Product ${pf.id} has no variants`)
   }
   const defaultVariant = variants[0]
   const price    = defaultVariant.price
-  const imageUrl = defaultVariant.previewUrl || defaultVariant.imageUrl || images[0] || ""
+  const imageUrl =  images[0] || defaultVariant.imageUrl|| defaultVariant.previewUrl || ""
 
 
   return {
@@ -116,8 +126,8 @@ export function mapToLocal(pf: any): PrintfulProductFields {
     description: pf.sync_product?.name ?? pf.description ?? "",
     price,           
     imageUrl,  
-    variants,
     images,
+    variants,
     nsfw:        false,
     updatedAt:   new Date(
                   pf.sync_product?.updated

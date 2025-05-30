@@ -1,27 +1,33 @@
 // src/components/ProductGrid.tsx
 "use client"
 
-import ProductCard, { Product as ProdType } from "./ProductCard"
+import ProductCard, { Product } from "./ProductCard"
 import useSWR from "swr"
+import { useState, useEffect } from "react";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json() as Promise<ProdType[]>)
+const fetcher = (url: string) => fetch(url).then(res => res.json() as Promise<Product[]>)
 
 interface ProductGridProps {
-  products?: ProdType[]
+  products?: Product[]
 }
 
-export default function ProductGrid({ products: initialProducts }: ProductGridProps) {
-  const { data: fetchedProducts, error } = useSWR<ProdType[]>('/api/products', fetcher, {
-    fallbackData: initialProducts,
-  })
+export default function ProductGrid({ products }: ProductGridProps) {
 
-  if (error) return <p className="text-center">Failed to load products.</p>
-  if (!fetchedProducts) return <p className="text-center">Loading…</p>
+  if (!products) {
+    return <p className="text-center">Loading products…</p>;
+  }
+
+  if (products.length === 0) {
+    return <p className="text-center">No products found.</p>;
+  }
+
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {fetchedProducts.map((product) => (
-        <ProductCard key={product._id} product={product} />
+      {products.map((p) => (
+        <ProductCard 
+          key={p._id} 
+          product={p} />
       ))}
     </div>
   )

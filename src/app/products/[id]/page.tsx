@@ -5,55 +5,46 @@ import ProductModel from "@/models/Product"
 import { Metadata } from "next"
 import type { IProduct as RawProduct } from "@/models/Product"
 import ProductDetailClient, { DetailProduct } from "@/components/ProductDetailClient"
-import { image } from "framer-motion/client"
+import { fetchPrintfulProducts, mapToLocal } from "@/utils/printful";
 
 
-type Props = { params: { id: string } }
+type Props = { 
+  params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await dbConnect()
-  const raw = await ProductModel.findById(params.id).lean()
-  if (!raw) return { title: "Not found", description: "" }
-
-  const image = raw.images?.[0] ||
-                raw.variants?.[0]?.previewUrl ||
-                raw.variants?.[0]?.imageUrl ||
-                "/placeholder.png"
+  const raw = await fetchPrintfulProducts();
+  const products = raw.map(mapToLocal);
+  const p = products.find((x) => x.slug === params.id);
+  if (!p) return { title: "Not found", description: "" };
 
   return {
-    title: `${raw.title} | Y-US?`,
-    description: raw.description.slice(0, 160),
-    openGraph: { title: raw.title, images: [image] },
-  }
+    title: `${p.title} | Y-US?`,
+    description: p.description.slice(0, 160),
+    openGraph: { images: [ p.images[0] || "/placeholder.png" ] },
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  await dbConnect()
-  const raw = await ProductModel.findById(params.id).lean() as
-    | RawProduct
-    | null
-  
-  if (!raw) notFound()
+  const raw = await fetchPrintfulProducts();
+  const products = raw.map(mapToLocal);
+  const p = products.find((x) => x.slug === params.id);
+  if (!p) notFound();
+
 
   // **only** the fields ProductDetailClient needs:
   const detail: DetailProduct = {
-    _id:        String(raw._id),
-    title:      raw.title,
-    description:raw.description,
-    nsfw:       raw.nsfw ?? false,
-    images:     raw.images,
-    price:      raw.variants[0].price,
-    imageUrl:   raw.images?.[0] ||
-                raw.variants?.[0]?.previewUrl ||
-                raw.variants?.[0]?.imageUrl ||
-                "/placeholder.png",
-    variants:   raw.variants.map((v) => ({
+    _id:        p.slug,
+    title:      p.title,
+    description: p.description,
+    nsfw:       p.nsfw ?? false,
+    printfulId: p.printfulId,       // ← must match DetailProduct
+    images:     p.images ?? [],     // your front/back design URLs
+    price:      p.variants[0].price,
+    variants:   p.variants.map((v) => ({
       id:         String(v.id),
       price:      v.price,
       size:       v.size,
       color:      v.color,
-      imageUrl:   v.imageUrl,
-      previewUrl: v.previewUrl,
     })),
   }
 
