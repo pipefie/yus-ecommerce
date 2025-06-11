@@ -26,6 +26,7 @@ export interface PIVariant {
   sku:      string;
   size?:    string;
   color?:   string;
+  designUrl: string;
 }
 
 export interface PrintifyProduct {
@@ -54,13 +55,23 @@ export function mapToLocal(p: any): PrintifyProduct {
     : [];
 
   const variants: PIVariant[] = Array.isArray(p.variants)
-    ? p.variants.map((v: any) => ({
-        id:       v.id,
-        sku:      v.sku,
-        price:    Math.round((v.price || 0) * 100),
-        size:     v.options?.size,
-        color:    v.options?.color,
-      }))
+    ? p.variants.map((v: any) => {
+
+        // Printify’s product JSON often has a `files` array with your design URLs:
+        const designUrl = Array.isArray(v.files) && v.files[0]?.src
+          ? v.files[0].src
+          : p.images[0] || "/placeholder.png";   // fallback to product image
+        
+        return {
+
+            id:       v.id,
+            sku:      v.sku,
+            price:    Math.round((v.price || 0)),
+            size:     v.options?.size,
+            color:    v.options?.color,
+            designUrl
+        };
+      })
     : [];
 
   const defaultVar = variants[0];

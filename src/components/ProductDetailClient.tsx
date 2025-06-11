@@ -8,9 +8,10 @@ import { useCart, CartItem } from "@/context/CartContext"
 
 export interface Variant {
   id:     string
-  price:  number      // cents
+  price:  number
   size?:  string
   color?: string
+  designUrl: string
 }
 
 export interface DetailProduct {
@@ -24,89 +25,78 @@ export interface DetailProduct {
   price:       number
 }
 
-export default async function ProductDetailClient({
+export default function ProductDetailClient({
   product,
 }: {
   product: DetailProduct
 }) {
   const { add } = useCart()
 
-  // --- variant selection
-  const [size, setSize]     = useState(product.variants[0]?.size    || "")
-  const [color, setColor]   = useState(product.variants[0]?.color   || "")
+  // Variant selection
+  const [size, setSize]   = useState(product.variants[0]?.size  || "")
+  const [color, setColor] = useState(product.variants[0]?.color || "")
   const [variantId, setVariantId] = useState(product.variants[0].id)
   const variant = product.variants.find((v) => v.id === variantId)!
 
-  // update variant when size/color change
   useEffect(() => {
-    const found = product.variants.find((v) => v.size === size && v.color === color)
+    const found = product.variants.find(
+      (v) => v.size === size && v.color === color
+    )
     if (found) setVariantId(found.id)
   }, [size, color, product.variants])
 
   const sizes  = Array.from(new Set(product.variants.map((v) => v.size))).filter(Boolean) as string[]
   const colors = Array.from(new Set(product.variants.map((v) => v.color))).filter(Boolean) as string[]
 
-  // --- mockup generation
-  const [mockupUrl, setMockupUrl] = useState("/placeholder.png")
+  // Mockup URL
+  const [mockupUrl, setMockupUrl] = useState(variant.designUrl || "/placeholder.png")
 
   useEffect(() => {
-    fetch("/api/mockups", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        variantId:  Number(variantId),
-        frontImgUrl: product.images[0],
-        backImgUrl:  product.images[1] ?? product.images[0],
-      }),
-    })
-      .then((res) => res.ok ? res.json() : Promise.resolve({ preview_url: undefined }))
-      .then((data) => {
-        if (data.preview_url) setMockupUrl(data.preview_url)
-      })
-      .catch(console.error)
-  }, [variantId, product.images])
+    setMockupUrl(variant.designUrl || "/placeholder.png")
+  }, [variant])
 
-  // --- render
+
   return (
     <>
-      <h1 className="font-pixel text-5xl mb-6">{product.title}</h1>
+      <h1 className="font-pixel text-4xl mb-4">{product.title}</h1>
 
-      {product.nsfw ? (
-        <NSFWBlock>
-          <div className="w-full max-w-md mx-auto relative aspect-square">
+      <div className="mb-6">
+        {product.nsfw ? (
+          <NSFWBlock>
             <Image
               src={mockupUrl}
               alt={product.title}
-              fill
-              className="object-cover rounded-lg"
+              width={500}
+              height={500}
+              className="rounded-lg"
             />
-          </div>
-        </NSFWBlock>
-      ) : (
-        <div className="w-full max-w-md mx-auto relative aspect-square">
+          </NSFWBlock>
+        ) : (
           <Image
             src={mockupUrl}
             alt={product.title}
-            fill
-            className="object-cover rounded-lg"
+            width={500}
+            height={500}
+            className="rounded-lg"
           />
-        </div>
-      )}
+        )}
+      </div>
 
-      <p className="mt-6 text-gray-700">{product.description}</p>
+      <div
+        className="prose prose-invert mb-6"
+        dangerouslySetInnerHTML={{ __html: product.description }}
+      />
 
-      <div className="mt-6 flex space-x-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div>
           <label className="block mb-1 font-medium">Size</label>
           <select
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            className="border rounded-lg px-3 py-2"
+            className="border rounded px-3 py-2"
           >
             {sizes.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
@@ -115,19 +105,17 @@ export default async function ProductDetailClient({
           <select
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="border rounded-lg px-3 py-2"
+            className="border rounded px-3 py-2"
           >
             {colors.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
       </div>
 
-      <p className="mt-4 font-bold text-2xl">
-        ${(variant.price / 100).toFixed(2)}
+      <p className="text-2xl font-bold mb-6">
+        {(variant.price / 100).toFixed(2)} €
       </p>
 
       <button
@@ -144,11 +132,10 @@ export default async function ProductDetailClient({
           }
           add(item)
         }}
-        className="mt-6 px-6 py-3 bg-neon text-black rounded font-pixel"
+        className="px-6 py-3 bg-neon text-black font-pixel rounded"
       >
         Add to Cart
       </button>
     </>
   )
 }
-
