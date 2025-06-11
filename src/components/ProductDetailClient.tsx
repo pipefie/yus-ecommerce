@@ -11,7 +11,7 @@ export interface Variant {
   price:  number
   size?:  string
   color?: string
-  designUrl: string
+  designUrl: string;
 }
 
 export interface DetailProduct {
@@ -49,11 +49,8 @@ export default function ProductDetailClient({
   const colors = Array.from(new Set(product.variants.map((v) => v.color))).filter(Boolean) as string[]
 
   // Mockup URL
-  const [mockupUrl, setMockupUrl] = useState(variant.designUrl || "/placeholder.png")
-
-  useEffect(() => {
-    setMockupUrl(variant.designUrl || "/placeholder.png")
-  }, [variant])
+  // always a string URL
+  const imgUrl = variant.designUrl;
 
 
   return (
@@ -64,7 +61,7 @@ export default function ProductDetailClient({
         {product.nsfw ? (
           <NSFWBlock>
             <Image
-              src={mockupUrl}
+              src={imgUrl}
               alt={product.title}
               width={500}
               height={500}
@@ -73,7 +70,7 @@ export default function ProductDetailClient({
           </NSFWBlock>
         ) : (
           <Image
-            src={mockupUrl}
+            src={imgUrl}
             alt={product.title}
             width={500}
             height={500}
@@ -125,7 +122,7 @@ export default function ProductDetailClient({
             title:       product.title,
             description: product.description,
             price:       variant.price,
-            imageUrl:    mockupUrl,
+            imageUrl:    imgUrl,
             nsfw:        product.nsfw,
             variantId:   variant.id,
             quantity:    1,
