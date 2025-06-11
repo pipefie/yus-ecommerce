@@ -2,15 +2,15 @@
 import HeroSection from "@/components/HeroSection"
 import AnimatedShapes from "@/components/AnimatedShapes"
 import ProductGrid from "@/components/ProductGrid"
-import { fetchPrintfulProducts, mapToLocal } from "@/utils/printful";
-import type { PFVariant, PrintfulProductFields } from "@/utils/printful";
+import { fetchPrintifyProducts, mapToLocal } from "@/utils/printify";
+import type { PrintifyProduct } from "@/utils/printify"
 
 export const revalidate = 60; // ISR: rebuild every 60s
 
 export default async function HomePage() {
     // 1) fetch + map everything
-  const raw = await fetchPrintfulProducts()
-  const pfProducts: PrintfulProductFields[] = raw.map(mapToLocal)
+  const raw = await fetchPrintifyProducts()
+  const pfProducts: PrintifyProduct[] = raw.map(mapToLocal)
 
   // 2) shape only the fields your grid needs
   const products = pfProducts.map((p) => ({

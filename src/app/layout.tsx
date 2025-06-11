@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={ "pt-25 antialiased"}
+        className={ "pt-24 antialiased"}
       >
         <Providers>
           <CartProvider>

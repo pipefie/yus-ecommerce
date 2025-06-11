@@ -1,51 +1,51 @@
 // src/app/products/[id]/page.tsx
 import { notFound } from "next/navigation"
-import dbConnect from "@/utils/dbConnect"
-import ProductModel from "@/models/Product"
 import { Metadata } from "next"
-import type { IProduct as RawProduct } from "@/models/Product"
 import ProductDetailClient, { DetailProduct } from "@/components/ProductDetailClient"
-import { fetchPrintfulProducts, mapToLocal } from "@/utils/printful";
+import { fetchPrintifyProducts, mapToLocal } from "@/utils/printify"
+import type { PrintifyProduct } from "@/utils/printify"
 
+type Props = { params: Promise<{ id: string }> }
 
-type Props = { 
-  params: { id: string } }
+export const revalidate = 60
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const raw = await fetchPrintfulProducts();
-  const products = raw.map(mapToLocal);
-  const p = products.find((x) => x.slug === params.id);
-  if (!p) return { title: "Not found", description: "" };
+  const { id } = await params
+  const raw = await fetchPrintifyProducts()
+  const products = raw.map(mapToLocal)
+  const p = products.find((x) => x.slug === id)
+  if (!p) return { title: "Not found", description: "" }
 
+  const imageUrl = p.images[0] || "/placeholder.png"
   return {
     title: `${p.title} | Y-US?`,
     description: p.description.slice(0, 160),
-    openGraph: { images: [ p.images[0] || "/placeholder.png" ] },
-  };
+    openGraph: { images: [imageUrl] },
+  }
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const raw = await fetchPrintfulProducts();
-  const products = raw.map(mapToLocal);
-  const p = products.find((x) => x.slug === params.id);
-  if (!p) notFound();
+  const { id } = await params
+  const raw = await fetchPrintifyProducts()
+  const products = raw.map(mapToLocal)
+  const p = products.find((x) => x.slug === id)
+  if (!p) notFound()
 
-
-  // **only** the fields ProductDetailClient needs:
   const detail: DetailProduct = {
-    _id:        p.slug,
-    title:      p.title,
+    _id:         p.slug,
+    title:       p.title,
     description: p.description,
-    nsfw:       p.nsfw ?? false,
-    printfulId: p.printfulId,       // ← must match DetailProduct
-    images:     p.images ?? [],     // your front/back design URLs
-    price:      p.variants[0].price,
-    variants:   p.variants.map((v) => ({
-      id:         String(v.id),
-      price:      v.price,
-      size:       v.size,
-      color:      v.color,
+    nsfw:        false,
+    printifyId:  p.printifyId,
+    images:      p.images,      // [frontDesignUrl, backDesignUrl, ...]
+    price:       p.price,
+    variants:    p.variants.map((v) => ({
+      id:    String(v.id),
+      price: v.price,
+      size:  v.size,
+      color: v.color,
     })),
+    
   }
 
   return (

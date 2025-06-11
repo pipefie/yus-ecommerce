@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     price_data: {
       currency: "usd",
       product_data: { name: i.title, images: [i.imageUrl] },
-      unit_amount: Math.round(i.price * 100),
+      unit_amount: Math.round(i.price),
     },
     quantity: i.quantity,
   }))

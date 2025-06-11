@@ -48,7 +48,7 @@ export default function CartSidebar({
                     {i.quantity} × ${(i.price / 100).toFixed(2)}
                   </p>
                   <button
-                    onClick={() => remove(i._id)}
+                    onClick={() => remove(i.variantId)}
                     className="text-red-500 text-xs mt-1"
                   >
                     Remove
