@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import dbConnect from "@/utils/dbConnect"
 import User from "@/models/User"
 import bcrypt from "bcrypt"
+import NewsletterSubscription from "@/models/NewsletterSubscription"
 
 export async function POST(req: Request) {
   const { name, email, password, newsletterOptIn } = await req.json()
@@ -16,6 +17,15 @@ export async function POST(req: Request) {
   // Hash & create
   const hash = await bcrypt.hash(password, 10)
   await User.create({ name, email, password: hash, newsletterOptIn })
+
+  if (newsletterOptIn) {
+    try {
+      await NewsletterSubscription.create({ email })
+    } catch (err) {
+      // ignore duplicate entries or other errors
+      console.error('Newsletter subscription failed:', err)
+    }
+  }
 
   return NextResponse.json({ ok: true })
 }

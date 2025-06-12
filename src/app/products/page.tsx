@@ -7,9 +7,16 @@ import type { IProduct as RawProduct, PFVariant } from "@/models/Product"
 export const revalidate = 0 // rebuild on every request
 
 export default async function ProductsPage() {
-  // 1) Sync Printful → Mongo
+  // 1) Sync Printify → Mongo
   const base = process.env.NEXT_PUBLIC_URL!
-  await fetch(`${base}/api/printful-sync`, { cache: "no-store" })
+  let syncFailed = false
+  try {
+    const res = await fetch(`${base}/api/printify-sync`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`sync ${res.status}`)
+  } catch (err) {
+    console.error("Printify sync failed", err)
+    syncFailed = true
+  }
 
   // 2) Read your cached products
   await dbConnect()

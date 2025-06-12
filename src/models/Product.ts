@@ -13,8 +13,8 @@ export interface PFVariant {
 
 // 2) Product interface now references an array of PFVariant, and images[]
 export interface IProduct extends Document {
-  printfulId: number
-  printfulVariantId: number
+  printifyId: number
+  printVariantId: number
   title:      string
   slug:       string
   description:string
@@ -42,7 +42,7 @@ const VariantSchema = new mongoose.Schema<PFVariant>(
 // 4) Full product schema
 const ProductSchema = new mongoose.Schema<IProduct>(
   {
-    printfulId:  { type: Number, required: true, unique: true },
+    printifyId:  { type: Number, required: true, unique: true },
     title:       { type: String, required: true },
     slug:        { type: String, required: true, unique: true },
     description: { type: String, default: '' },

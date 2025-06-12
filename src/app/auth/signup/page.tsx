@@ -10,6 +10,7 @@ export default function SignUpPage() {
     name: "",
     email: "",
     password: "",
+    newsletterOptIn: false,
   })
   const [error, setError] = useState("")
 
@@ -76,6 +77,19 @@ export default function SignUpPage() {
               }
               className="mt-1 w-full p-3 bg-black text-white rounded outline-neon focus:outline"
             />
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.newsletterOptIn}
+              onChange={(e) =>
+                setForm({ ...form, newsletterOptIn: e.target.checked })
+              }
+              className="h-4 w-4 rounded"
+            />
+            <span className="font-pixel text-sm text-gray-300">
+              Sign me up for the newsletter
+            </span>
           </label>
           <button
             type="submit"

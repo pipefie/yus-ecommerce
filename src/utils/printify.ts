@@ -55,10 +55,10 @@ export async function fetchPrintifyProductDetail(productId: number) {
 
 export interface DetailedVariant {
   id:        number;
-  price:     number;    // cents
+  price:     number;    
   size?:     string;
   color?:    string;
-  designUrl: string;    // the mockup URL
+  designUrl: string[];    // the mockup URL
 }
 
 export interface DetailedProduct {
@@ -71,16 +71,33 @@ export interface DetailedProduct {
   price:      number;   // cents (first variant)
 }
 
+export interface PFVariant {
+  id:         number
+  price:      number      // cents
+  size?:      string
+  color?:     string
+  imageUrl:   string
+  previewUrl?:string
+}
+
 // map for detail page
 export function mapToDetail(slug: string, raw: any): DetailedProduct {
   const images = Array.isArray(raw.images) ? raw.images.map((i: any) => i.src) : [];
-  const variants: DetailedVariant[] = (raw.variants || []).map((v: any) => ({
+
+  const variants: DetailedVariant[] = Array.isArray(raw.variants)
+    ? raw.variants.map((v: any) => ({
     id:        v.id,
-    price:     Math.round((v.price||0)*100),
+    price:     Math.round((v.price||0)),
     size:      v.options?.size,
     color:     v.options?.color,
-    designUrl: v.files?.[0]?.src || images[0] || "/placeholder.png",
-  }));
+    designUrl: Array.isArray(v.files) 
+      ? v.files.map((f: any) => f.src) 
+      : images.length 
+        ? [images[0]]
+        : ["/placeholder.png"],
+    }))
+  : [];
+  
   return {
     printifyId: raw.id,
     slug,
@@ -90,5 +107,62 @@ export function mapToDetail(slug: string, raw: any): DetailedProduct {
     images,
     price:      variants[0]?.price || 0,
   };
+}
+
+export interface PrintifyProductFields {
+  printifyId: number
+  title: string
+  slug: string
+  description: string
+  price: number
+  imageUrl: string
+  variants: PFVariant[]
+  images: string[]
+  nsfw: boolean
+  updatedAt: Date
+}
+
+export function mapToLocal(raw: any): PrintifyProductFields {
+  const title = raw.title || `#${raw.id}`
+  const slug = slugify(title, { lower: true })
+
+  const images = Array.isArray(raw.images)
+    ? raw.images.map((i: any) => i.src).filter(Boolean)
+    : []
+
+  const rawVariants = raw.variants || []
+  if (!Array.isArray(rawVariants) || rawVariants.length === 0) {
+    throw new Error(`Product ${raw.id} has no variants`)
+  }
+
+  const variants: PFVariant[] = rawVariants.map((v: any) => {
+    const file = Array.isArray(v.files) ? v.files[0] : null
+    const design = file?.src || images[0] || ""
+    return {
+      id: v.id,
+      price: Math.round((v.price || 0) * 100),
+      size: v.options?.size,
+      color: v.options?.color,
+      imageUrl: design,
+      previewUrl: design,
+    }
+  })
+
+  const defaultVariant = variants[0]
+  const price = defaultVariant.price
+  const imageUrl = images[0] || defaultVariant.previewUrl || defaultVariant.imageUrl || ""
+
+  return {
+    printifyId: raw.id,
+    title,
+    slug,
+    description: raw.description || "",
+    price,
+    imageUrl,
+    variants,
+    images,
+    nsfw: false,
+    updatedAt: new Date(raw.updated_at || raw.created_at || Date.now()),
+  }
 }
 

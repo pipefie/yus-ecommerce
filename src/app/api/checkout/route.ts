@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       quantity: i.quantity,
     })),
     mode: 'payment',
-    success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+    success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_URL}/cart`,
   })
   return NextResponse.json({ url: session.url })
