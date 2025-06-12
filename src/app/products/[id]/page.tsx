@@ -67,7 +67,7 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   return (
-    <main className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-10">
+    <main className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-1 gap-10">
       <ProductDetailClient product={detail} />
     </main>
   )
