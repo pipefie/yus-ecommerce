@@ -1,63 +1,59 @@
 // src/utils/printifyMockup.ts
+const BASE  = "https://api.printify.com/v1";
+const TOKEN = process.env.PRINTIFY_API_KEY!;
 
-const BASE    = "https://api.printify.com/v1";
-const TOKEN   = process.env.PRINTIFY_API_KEY!;
-const SHOP_ID = process.env.PRINTIFY_SHOP_ID!;
-
-const headers = {
-  Authorization: `Bearer ${TOKEN}`,
-  "Content-Type":  "application/json",
-};
-
-// 1) Create mockup task on Printify
-export async function createPrintifyMockup(
-  productId:   number,
-  variantId:   number,
-  frontImg:    string,
-  backImg?:    string
-): Promise<number> {
-  const body = {
-    product_id:   productId,
-    variant_ids:  [variantId],
-    mockup_views: ["front", "back"],
-    images:       {
-      front: frontImg,
-      ...(backImg ? { back: backImg } : {}),
+async function call(path: string, opts: RequestInit = {}) {
+  console.log(`[PrintifyMockup] ➤ ${opts.method || "GET"} ${path}`, opts.body);
+  const res = await fetch(BASE + path, {
+    ...opts,
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      "Content-Type":  "application/json",
+      ...(opts.headers || {}),
     },
-  };
-  const res = await fetch(
-    `${BASE}/shops/${SHOP_ID}/mockups.json`,
-    { method: "POST", headers, body: JSON.stringify(body) }
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Printify mockup error: ${res.status} ${JSON.stringify(err)}`);
-  }
-  const json = await res.json();
-  return json.data.id;  // mockup task id
+  });
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); } catch { json = text; }
+  console.log(`[PrintifyMockup] ← ${path}`, res.status, json);
+  if (!res.ok) throw new Error(`Mockup ${path} error ${res.status}: ${text}`);
+  return json;
 }
 
-// 2) Poll until ready
+export async function createPrintifyMockup(
+  productId: number,
+  variantId: number,
+  frontUrl: string,
+  backUrl?: string
+): Promise<string> {
+  const payload: any = {
+    product_id:   productId,
+    variant_ids: [variantId],
+    images:       [{ src: frontUrl, placement: "front" }],
+  };
+  if (backUrl) payload.images.push({ src: backUrl, placement: "back" });
+  const { id } = await call("/mockups.json", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return id;
+}
+
 export async function pollPrintifyMockup(
-  mockupId: number,
-  interval = 2000,
-  timeout  = 60000
-): Promise<{ front: string; back?: string }> {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const res = await fetch(
-      `${BASE}/shops/${SHOP_ID}/mockups/${mockupId}.json`,
-      { headers }
-    );
-    if (!res.ok) throw new Error(`Poll error: ${res.status}`);
-    const { data } = await res.json();
-    if (data.status === "completed") {
-      return {
-        front: data.urls.front,
-        back:  data.urls.back,
-      };
+  taskId: string
+): Promise<{ front?: string; back?: string }> {
+  for (let i = 0; i < 8; i++) {
+    const json: any = await call(`/mockups/${taskId}.json`);
+    if (json.status === "completed") {
+      const out: any = {};
+      for (const f of json.files) {
+        if (f.placement === "front") out.front = f.src;
+        if (f.placement === "back")  out.back  = f.src;
+      }
+      return out;
     }
-    await new Promise((r) => setTimeout(r, interval));
+    await new Promise((r) => setTimeout(r, 1500));
   }
-  throw new Error("Mockup polling timed out");
+  console.warn(`[PrintifyMockup] poll timeout for ${taskId}`);
+  return {};
 }

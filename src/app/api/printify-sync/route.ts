@@ -28,9 +28,9 @@ export async function GET() {
       }))
 
       await Product.findOneAndUpdate(
-        { printfulId: detail.printifyId },
+        { printifyId: detail.printifyId },
         {
-          printfulId: detail.printifyId,
+          printifyId: detail.printifyId,
           title: detail.title,
           slug: detail.slug,
           description: detail.description,

@@ -1,54 +1,40 @@
 // src/app/products/[id]/page.tsx
-import { notFound } from "next/navigation"
-import { Metadata } from "next"
-import ProductDetailClient, { DetailProduct } from "@/components/ProductDetailClient"
-import { fetchPrintifyProducts, mapToSummary, fetchPrintifyProductDetail, mapToDetail } from "@/utils/printify"
-import { createPrintifyMockup, pollPrintifyMockup } from "@/utils/printifyMockup";
+import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import ProductDetailClient, { DetailProduct, SummaryProduct } from "@/components/ProductDetailClient";
+import { fetchPrintifyProducts, mapToSummary, fetchPrintifyProductDetail, mapToDetail } from "@/utils/printify";
 
-type Props = { params: { id: string } }
-export const revalidate = 60
+type Props = { params: { id: string } };
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // find the slug in the summary list
-  const { id } = await params;
-  const rawList = await fetchPrintifyProducts();
+  // next13.4+: params can be used synchronously
+  const id = params.id;
+  const rawList   = await fetchPrintifyProducts();
   const summaries = rawList.map(mapToSummary);
-  const summary = summaries.find((s) => s.slug === id);
-  if (!summary) return { title: "Not found", description: "" };
+  const summary   = summaries.find((s) => s.slug === id);
+  if (!summary) {
+    return { title: "Not found", description: "" };
+  }
   return {
     title: `${summary.title} | Y-US?`,
-    description: summary.description.replace(/<\/?[^>]+(>|$)/g, "").slice(0,160),
-    openGraph: { images: [summary.thumbnail || "/placeholder.png"] },
-  }
+    description: summary.description.replace(/<\/?[^>]+>/g, "").slice(0,160),
+    openGraph: { images: [ summary.thumbnail || "/placeholder.png" ] },
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { id } = await params;
-  const rawList = await fetchPrintifyProducts();
+  const id = params.id;
+  const rawList   = await fetchPrintifyProducts();
   const summaries = rawList.map(mapToSummary);
-  const summary = summaries.find((s) => s.slug === id);
-  if (!summary) notFound()
+  const summary   = summaries.find((s) => s.slug === id);
+  if (!summary) notFound();
 
-  // fetch full detail
-  const rawDetail = await fetchPrintifyProductDetail(summary.printifyId);
+  // 1) get full detail + map
+  const rawDetail  = await fetchPrintifyProductDetail(summary.printifyId);
   const detailData = mapToDetail(summary.slug, rawDetail);
 
-    // fetch mockups for each variant (front/back)
-  const mockups = await Promise.all(
-    (rawDetail.variants || []).map(async (v: any) => {
-      try {
-        const front = v.files?.[0]?.src;
-        const back  = v.files?.[1]?.src;
-        if (!front) return [] as string[];
-        const taskId = await createPrintifyMockup(rawDetail.id, v.id, front, back);
-        const urls   = await pollPrintifyMockup(taskId);
-        return [urls.front, urls.back].filter(Boolean) as string[];
-      } catch (err) {
-        return [v.files?.[0]?.src].filter(Boolean) as string[];
-      }
-    })
-  );
-
+  // 2) build DetailProduct
   const detail: DetailProduct = {
     _id:         detailData.slug,
     title:       detailData.title,
@@ -58,17 +44,29 @@ export default async function ProductDetailPage({ params }: Props) {
     images:      detailData.images,
     price:       detailData.price,
     variants:    detailData.variants.map((v) => ({
-      id:        String(v.id),
-      price:     v.price,
-      size:      v.size,
-      color:     v.color,
-      images: v.designUrl,
+      id:    String(v.id),
+      price: v.price,
+      size:  v.size,
+      color: v.color,
+      images: v.designUrl,      // <<< our carousel images
     })),
-  }
+  };
+
+  // 3) related
+  const related: SummaryProduct[] = summaries
+    .filter((s) => s.slug !== id)
+    .slice(0,4)
+    .map((s) => ({
+      id:        s.slug,
+      slug:      s.slug,
+      title:     s.title,
+      price:     s.price,
+      thumbnail: s.thumbnail,
+    }));
 
   return (
-    <main className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-1 gap-10">
-      <ProductDetailClient product={detail} />
+    <main className="container mx-auto px-4 py-12">
+      <ProductDetailClient product={detail} relatedProducts={related} />
     </main>
-  )
+  );
 }
