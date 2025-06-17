@@ -1,68 +1,60 @@
 // src/app/products/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import ProductDetailClient, { DetailProduct, SummaryProduct } from "@/components/ProductDetailClient";
-import { fetchPrintifyProducts, mapToSummary, fetchPrintifyProductDetail, mapToDetail } from "@/utils/printify";
+import ProductDetailClient, { DetailProduct } from "@/components/ProductDetailClient";
+import {
+  fetchPrintifyProducts,
+  mapToSummary,
+  fetchPrintifyProductDetail,
+  mapToDetail,
+  SummaryProduct, // bring in the summary type from your utils
+} from "@/utils/printify";
 
 type Props = { params: { id: string } };
 export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // next13.4+: params can be used synchronously
-  const id = params.id;
-  const rawList   = await fetchPrintifyProducts();
-  const summaries = rawList.map(mapToSummary);
-  const summary   = summaries.find((s) => s.slug === id);
-  if (!summary) {
-    return { title: "Not found", description: "" };
-  }
+  const slug = params.id;
+  const all = await fetchPrintifyProducts();
+  const summaries = all.map(mapToSummary);
+  const me = summaries.find((s) => s.slug === slug);
+  if (!me) return { title: "Not found" };
   return {
-    title: `${summary.title} | Y-US?`,
-    description: summary.description.replace(/<\/?[^>]+>/g, "").slice(0,160),
-    openGraph: { images: [ summary.thumbnail || "/placeholder.png" ] },
+    title: `${me.title} | Y-US?`,
+    description: me.description.replace(/<\/?[^>]+>/g, "").slice(0, 160),
+    openGraph: { images: [me.thumbnail || "/placeholder.png"] },
   };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const id = params.id;
-  const rawList   = await fetchPrintifyProducts();
-  const summaries = rawList.map(mapToSummary);
-  const summary   = summaries.find((s) => s.slug === id);
-  if (!summary) notFound();
+  const slug = params.id;
+  const all = await fetchPrintifyProducts();
+  const summaries = all.map(mapToSummary);
+  const me = summaries.find((s) => s.slug === slug);
+  if (!me) notFound();
 
-  // 1) get full detail + map
-  const rawDetail  = await fetchPrintifyProductDetail(summary.printifyId);
-  const detailData = mapToDetail(summary.slug, rawDetail);
+  const raw = await fetchPrintifyProductDetail(me.printifyId);
+  const d = mapToDetail(me.slug, raw);
 
-  // 2) build DetailProduct
   const detail: DetailProduct = {
-    _id:         detailData.slug,
-    title:       detailData.title,
-    description: detailData.description,
-    nsfw:        false,
-    printifyId:  detailData.printifyId,
-    images:      detailData.images,
-    price:       detailData.price,
-    variants:    detailData.variants.map((v) => ({
-      id:    String(v.id),
+    _id: d.slug,
+    title: d.title,
+    description: d.description,
+    printifyId: String(d.printifyId),
+    images: d.images,
+    price: d.price,
+    variants: d.variants.map((v) => ({
+      id: String(v.id),
       price: v.price,
-      size:  v.size,
+      size: v.size,
       color: v.color,
-      images: v.designUrl,      // <<< our carousel images
+      images: v.designUrls,
     })),
   };
 
-  // 3) related
   const related: SummaryProduct[] = summaries
-    .filter((s) => s.slug !== id)
-    .slice(0,4)
-    .map((s) => ({
-      id:        s.slug,
-      slug:      s.slug,
-      title:     s.title,
-      price:     s.price,
-      thumbnail: s.thumbnail,
-    }));
+    .filter((s) => s.slug !== slug)
+    .slice(0, 4);
 
   return (
     <main className="container mx-auto px-4 py-12">

@@ -1,4 +1,5 @@
 // src/utils/printify.ts
+
 import slugify from "slugify";
 
 const BASE   = "https://api.printify.com/v1";
@@ -36,7 +37,7 @@ export async function fetchPrintifyProducts(): Promise<any[]> {
 }
 
 export function mapToSummary(p: any): SummaryProduct {
-  const firstImage = Array.isArray(p.images) ? p.images[0]?.src : "";
+  const firstImage   = Array.isArray(p.images) ? p.images[0]?.src : "";
   const firstVariant = Array.isArray(p.variants) ? p.variants[0] : { price: 0 };
   return {
     printifyId: p.id,
@@ -54,11 +55,11 @@ export async function fetchPrintifyProductDetail(productId: number) {
 }
 
 export interface DetailedVariant {
-  id:        number;
-  price:     number;
-  color:     string;
-  size:      string;
-  designUrl: string[];  // <<< our carousel images
+  id:         number;
+  price:      number;
+  color:      string;
+  size:       string;
+  designUrls: string[];    // ← now an array of all mockup URLs
 }
 
 export interface DetailedProduct {
@@ -72,17 +73,18 @@ export interface DetailedProduct {
 }
 
 export function mapToDetail(slug: string, raw: any): DetailedProduct {
-  // fallback product‐level images
+  // fallback product-level images
   const images = Array.isArray(raw.images)
     ? raw.images.map((i: any) => i.src)
     : [];
 
-  // map each variant: title is "Color / Size"
+  // each variant’s mockups live in `v.files`
   const variants: DetailedVariant[] = raw.variants.map((v: any) => {
+    // split the variant title "Color / Size" into two fields
     const [color = "Default", size = "One Size"] =
       (v.title || "").split("/").map((s: string) => s.trim());
 
-    // v.files is an array of mockup previews Printify returns for each print area
+    // collect every available mockup URL for this variant
     const urls = Array.isArray(v.files) && v.files.length > 0
       ? v.files.map((f: any) => f.src)
       : images.length > 0
@@ -90,11 +92,11 @@ export function mapToDetail(slug: string, raw: any): DetailedProduct {
         : ["/placeholder.png"];
 
     return {
-      id:        v.id,
-      price:     Math.round(v.price || 0),
+      id:         v.id,
+      price:      Math.round(v.price || 0),
       color,
       size,
-      designUrl: urls,
+      designUrls: urls,            // ← plural
     };
   });
 
@@ -105,6 +107,6 @@ export function mapToDetail(slug: string, raw: any): DetailedProduct {
     description:raw.description || "",
     variants,
     images,
-    price: variants[0]?.price || 0,
+    price:      variants[0]?.price || 0,
   };
 }
