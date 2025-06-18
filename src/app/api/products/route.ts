@@ -1,20 +1,30 @@
-// app/api/products/route.ts
+// src/app/api/products/route.ts
 import { NextResponse } from 'next/server'
-import dbConnect from '@/utils/dbConnect'
-import ProductModel from "@/models/Product"
-import { fetchPrintifyProducts, mapToSummary } from "@/utils/printify";
+import {prisma} from '@/lib/prisma'
 
 export async function GET() {
-  const raw = await fetchPrintifyProducts();
-  const all = raw.map(mapToSummary);
+  // 1) load from your SQLite DB via Prisma
+  const raws = await prisma.product.findMany({
+    orderBy: { updatedAt: 'desc' },
+    include: { variants: true }
+  })
 
-  const payload = all.map((p) => ({
-    _id:         p.slug,
-    title:       p.title,
-    description: p.description,
-    price:       p.price,
-    imageUrl:    p.thumbnail || "/placeholder.png",
-  }));
+  // 2) shape exactly what ShopClient/ProductCard need
+  const payload = raws.map((p) => {
+    const v = p.variants[0]! // default variant
+    const imageUrl =
+      Array.isArray(p.images) && p.images.length
+        ? p.images[0]
+        : p.imageUrl || '/placeholder.png'
 
-  return NextResponse.json(payload);
+    return {
+      slug:        p.slug,
+      title:       p.title,
+      description: p.description,
+      price:       v.price,
+      imageUrl,
+    }
+  })
+
+  return NextResponse.json(payload)
 }

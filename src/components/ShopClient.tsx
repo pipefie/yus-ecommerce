@@ -132,7 +132,7 @@ interface ShopClientProps {
           {/* Product Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((p) => (
-              <ProductCard key={p._id} product={p} />
+              <ProductCard key={p.slug} product={p} />
             ))}
           </div>
         </div>

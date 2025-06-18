@@ -1,35 +1,51 @@
 // src/app/page.tsx
-import HeroSection from "@/components/HeroSection"
-import AnimatedShapes from "@/components/AnimatedShapes"
-import ProductGrid from "@/components/ProductGrid"
-import { fetchPrintifyProducts, mapToSummary } from "@/utils/printify";
-import type { SummaryProduct } from "@/utils/printify"
+import type { Metadata } from "next";
+import HeroSection    from "@/components/HeroSection";
+import AnimatedShapes from "@/components/AnimatedShapes";
+import ProductGrid    from "@/components/ProductGrid";
+import {prisma}         from "@/lib/prisma";
 
+export const revalidate = 60;
 
-export const revalidate = 60; // ISR: rebuild every 60s
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title:       "Y-US? Home",
+    description: "Minimal design meets unfiltered chaos.",
+  };
+}
 
 export default async function HomePage() {
-    // 1) fetch + map everything
-  const raw = await fetchPrintifyProducts()
-  const pfProducts: SummaryProduct[] = raw.map(mapToSummary)
+  // 1️⃣ pull every product + its variants from the DB
+  const products = await prisma.product.findMany({
+    orderBy: { updatedAt: "desc" },
+    include: { variants: true },
+  });
 
-  // 2) shape only the fields your grid needs
-  const products = pfProducts.map((p) => ({
-    _id:      p.slug,
-    title:    p.title,
-    description:p.description,  
-    price:    p.price,
-    imageUrl:  p.thumbnail || "/placeholder.png",
-  }))
+  // 2️⃣ reshape to exactly what your <ProductGrid> expects
+  const items = products.map((p) => {
+    const v = p.variants[0]!; // default to first variant
+
+    // pick a thumbnail: product.images[0] if you have one,
+    // else the variant preview, else fallback to placeholder
+    const imageUrl =
+      Array.isArray(p.images) && p.images.length > 0
+        ? p.images[0]
+        : v.previewUrl || v.imageUrl || "/placeholder.png";
+
+    return {
+      slug:        p.slug,
+      title:       p.title,
+      description: p.description,
+      price:       v.price,
+      imageUrl,
+    };
+  });
+
   return (
     <div className="relative overflow-hidden">
-      {/* 1. Full-screen hero with video, glitch text, and animated shapes */}
       <HeroSection />
-
-      {/* 2. Floating background shapes layer (glass-abstract style) */}
       <AnimatedShapes />
 
-      {/* 3. Featured products section */}
       <section
         id="products"
         className="container mx-auto py-16 z-10 relative"
@@ -37,8 +53,9 @@ export default async function HomePage() {
         <h2 className="font-pixel text-4xl text-center mb-8">
           Featured Tees
         </h2>
-        <ProductGrid products={products}/>
+        {/* @ts-ignore: already serialized */}
+        <ProductGrid products={items} />
       </section>
     </div>
-  )
+  );
 }

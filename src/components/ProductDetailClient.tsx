@@ -1,126 +1,152 @@
 // src/components/ProductDetailClient.tsx
 "use client";
 
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
 
 export interface VariantWithImages {
-  id: string;
-  price: number;
-  size: string;
-  color: string;
-  images: string[];     // now an array
+  id:         string;
+  color:      string;
+  size:       string;
+  price:      number;
+  designUrls: string[];
 }
 
-export interface DetailProduct {
-  _id:        string;
-  title:      string;
-  description:string;   // HTML
-  price:      number;   // cents
-  images:     string[]; // fallback gallery
+export interface ProductDetail {
+  id:          string;
+  title:       string;
+  description: string;
+  price:       number;
+  images:      string[];
   printifyId: string;
-  variants:   VariantWithImages[];
+  variants:    VariantWithImages[];
 }
 
 interface Props {
-  product: DetailProduct;
-  relatedProducts: any[]; // keep as you had
+  product: ProductDetail;
 }
 
 export default function ProductDetailClient({ product }: Props) {
-  // build unique lists
-  const colors = Array.from(new Set(product.variants.map((v) => v.color)));
-  const sizes  = Array.from(new Set(product.variants.map((v) => v.size)));
+  // derive the unique list of colors & sizes
+  const colors = useMemo(
+    () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),
+    [product.variants]
+  );
+  const sizes = useMemo(
+    () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.size))),
+    [product.variants]
+  );
 
-  // controlled
-  const [color, setColor] = useState(colors[0]);
-  const [size,  setSize]  = useState(sizes[0]);
+  // selected state
+  const [selectedColor, setSelectedColor] = useState(colors[0]);
+  const [selectedSize, setSelectedSize] = useState(sizes[0]);
 
-  // find matching variant
-  const variant =
-    product.variants.find((v) => v.color === color && v.size === size)
-    ?? product.variants[0];
-
-  // main carousel image
-  const [main, setMain] = useState(variant.images[0] || product.images[0]);
-
-  // when variant changes, reset main
-  useEffect(() => {
-    setMain(variant.images[0] || product.images[0]);
-  }, [variant, product.images]);
+  // find the matching variant; fallback to the first variant
+  const activeVariant = useMemo(
+    () =>
+      product.variants.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      ) || product.variants[0],
+    [selectedColor, selectedSize, product.variants]
+  );
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="md:flex gap-12">
-        {/* === IMAGES === */}
-        <div className="flex-shrink-0">
-          <div className="border p-4 mb-4">
-            <Image
-              src={main}
-              alt={product.title}
-              width={600}
-              height={600}
-              className="object-contain"
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto">
-            {(variant.images.length ? variant.images : product.images).map((url) => (
-              <button
-                key={url}
-                onClick={() => setMain(url)}
-                className={`border-2 rounded ${
-                  url === main ? "border-blue-500" : "border-gray-700"
-                }`}
-              >
-                <Image src={url} alt="" width={80} height={80} className="object-cover" />
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* left: carousel */}
+      <div>
+        <Carousel images={activeVariant.designUrls} />
+      </div>
 
-        {/* === DETAILS === */}
-        <div className="flex-1 text-white">
-          <h1 className="text-2xl font-semibold mb-2">{product.title}</h1>
-          <p className="text-xl font-bold mb-4">${(product.price/100).toFixed(2)}</p>
+      {/* right: info & selectors */}
+      <div>
+        <h1 className="text-3xl font-semibold">{product.title}</h1>
 
-          {/* safe HTML render */}
-          <div
-            className="prose prose-invert max-w-none mb-6"
-            dangerouslySetInnerHTML={{ __html: product.description }}
-          />
+        <div
+          className="mt-4 text-gray-700 space-y-4"
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
 
-          {/* selectors */}
-          <div className="flex gap-6 mb-6">
-            <div>
-              <label className="block mb-1 text-sm">Color</label>
-              <select
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="bg-black text-white border border-gray-600 px-3 py-2 rounded"
-              >
-                {colors.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1 text-sm">Size</label>
-              <select
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                className="bg-black text-white border border-gray-600 px-3 py-2 rounded"
-              >
-                {sizes.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+        <div className="mt-6 space-y-4">
+          {/* Color selector */}
+          <div>
+            <label className="block mb-1 font-medium">Color</label>
+            <select
+              className="w-full border rounded p-2"
+              value={selectedColor}
+              onChange={(e) => setSelectedColor(e.target.value)}
+            >
+              {colors.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded">
-            Add to Cart
+          {/* Size selector */}
+          <div>
+            <label className="block mb-1 font-medium">Size</label>
+            <select
+              className="w-full border rounded p-2"
+              value={selectedSize}
+              onChange={(e) => setSelectedSize(e.target.value)}
+            >
+              {sizes.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price */}
+          <div className="text-2xl font-bold">
+            ${(activeVariant.price / 100).toFixed(2)}
+          </div>
+
+          {/* Add to cart */}
+          <button className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition">
+            Add to cart
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Carousel({ images }: { images: string[] }) {
+  const [current, setCurrent] = useState(0);
+  if (!images?.length) return null;
+
+  return (
+    <div>
+      <div className="mb-4">
+        <Image
+          src={images[current]}
+          alt={`View ${current + 1}`}
+          width={600}
+          height={600}
+          className="object-cover w-full h-auto rounded"
+        />
+      </div>
+      <div className="flex space-x-2 overflow-x-auto">
+        {images.map((src, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrent(idx)}
+            className={`ring-2 ${
+              idx === current ? "ring-blue-600" : "ring-gray-300"
+            } rounded-sm`}
+          >
+            <Image
+              src={src}
+              alt={`Thumbnail ${idx + 1}`}
+              width={60}
+              height={60}
+              className="object-cover rounded-sm"
+            />
+          </button>
+        ))}
       </div>
     </div>
   );
