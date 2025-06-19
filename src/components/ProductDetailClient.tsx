@@ -54,7 +54,13 @@ export default function ProductDetailClient({ product }: Props) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* left: carousel */}
       <div>
-        <Carousel images={activeVariant.designUrls} />
+        <Carousel 
+          images={
+            activeVariant.designUrls && activeVariant.designUrls.length
+              ? activeVariant.designUrls
+              : product.images
+          }
+        />
       </div>
 
       {/* right: info & selectors */}
