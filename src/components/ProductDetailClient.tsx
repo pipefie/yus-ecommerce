@@ -41,6 +41,25 @@ export default function ProductDetailClient({ product }: Props) {
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [selectedSize, setSelectedSize] = useState(sizes[0]);
 
+  // variants available for the chosen color
+  const colorVariants = useMemo(
+    () => product.variants.filter((v) => v.color === selectedColor),
+    [product.variants, selectedColor]
+  );
+
+  // ensure chosen size exists for the color
+  useEffect(() => {
+    if (!colorVariants.some((v) => v.size === selectedSize)) {
+      setSelectedSize(colorVariants[0]?.size || sizes[0]);
+    }
+  }, [selectedColor, colorVariants, selectedSize, sizes]);
+
+  // all unique mockups for the selected color
+  const colorImages = useMemo(() => {
+    const urls = colorVariants.flatMap((v) => v.designUrls).filter(Boolean);
+    return urls.length ? Array.from(new Set(urls)) : product.images;
+  }, [colorVariants, product.images]);
+
   // find the matching variant; fallback to the first variant
   const activeVariant = useMemo(
     () =>
@@ -56,9 +75,7 @@ export default function ProductDetailClient({ product }: Props) {
       <div>
         <Carousel 
           images={
-            activeVariant.designUrls && activeVariant.designUrls.length
-              ? activeVariant.designUrls
-              : product.images
+            colorImages
           }
         />
       </div>
