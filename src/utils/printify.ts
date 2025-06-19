@@ -31,12 +31,31 @@ export interface SummaryProduct {
   thumbnail:  string;
 }
 
-export async function fetchPrintifyProducts(): Promise<any[]> {
+interface RawPrintifyFile {
+  src: string
+}
+
+interface RawPrintifyVariant {
+  id: number
+  price: number
+  title?: string
+  files?: RawPrintifyFile[]
+}
+
+interface RawPrintifyProduct {
+  id: number
+  title?: string
+  description?: string
+  images?: RawPrintifyFile[]
+  variants: RawPrintifyVariant[]
+}
+
+export async function fetchPrintifyProducts(): Promise<RawPrintifyProduct[]> {
   // Printify paginates at 50 max
   let page = 1;
-  const all: any[] = [];
+  const all: RawPrintifyProduct[] = [];
   while (true) {
-    const batch: any[] = await callPrintify(
+    const batch: RawPrintifyProduct[] = await callPrintify(
       `/shops/${SHOPID}/products.json?page=${page}&limit=50`
     );
     if (!batch.length) break;
@@ -46,13 +65,13 @@ export async function fetchPrintifyProducts(): Promise<any[]> {
   return all;
 }
 
-export function mapToSummary(p: any): SummaryProduct {
+export function mapToSummary(p: RawPrintifyProduct): SummaryProduct {
   const firstImage   = p.images?.[0]?.src || "/placeholder.png";
   const firstVariant = p.variants?.[0] || { price: 0 };
   return {
     printifyId: p.id,
     slug:       slugify(p.title || `#${p.id}`, { lower: true, strict: true }),
-    title:      p.title,
+    title:      String(p.title),
     description:p.description || "",
     price:      Math.round(firstVariant.price),
     thumbnail:  firstImage,
@@ -80,7 +99,7 @@ export interface DetailedProduct {
 
 export async function fetchPrintifyProductDetail(
   productId: number
-): Promise<any> {
+): Promise<RawPrintifyProduct> {
   // callPrintify() returns the JSON body { data: { … } }
   const json = await callPrintify(`/shops/${SHOPID}/products/${productId}.json`);
   return json.data;       // ← unwrap here so raw.images exists
@@ -88,20 +107,20 @@ export async function fetchPrintifyProductDetail(
 
 export function mapToDetail(
   slug: string,
-  raw:  any
+  raw:  RawPrintifyProduct
 ): DetailedProduct {
   // fallback product‐level images
   const images = Array.isArray(raw.images)
-    ? raw.images.map((i:any) => i.src)
+    ? raw.images.map((i: RawPrintifyFile) => i.src)
     : [];
 
-  const variants: DetailedVariant[] = raw.variants.map((v: any) => {
+  const variants: DetailedVariant[] = raw.variants.map((v: RawPrintifyVariant) => {
     const [ color = "Default", size = "One Size" ] =
       (v.title || "").split("/").map((s:string)=>s.trim());
 
     // v.files are the mockup previews per print area
     const designUrls = Array.isArray(v.files) && v.files.length > 0
-      ? v.files.map((f:any) => f.src)
+      ? v.files.map((f: RawPrintifyFile) => f.src)
       : images.length
         ? [images[0]]
         : ["/placeholder.png"];
@@ -118,10 +137,10 @@ export function mapToDetail(
   return {
     printifyId: raw.id,
     slug,
-    title:      raw.title,
-    description: raw.description || "",
+    title:      String(raw.title),
+    description: String(raw.description || ""),
     images,
-    price:      variants[0]?.price || 0,
+    price:      Math.round(variants[0]?.price || 0),
     variants,
   };
 }

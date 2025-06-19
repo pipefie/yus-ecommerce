@@ -9,6 +9,7 @@ export interface PFVariant {
   color?:     string
   imageUrl:   string
   previewUrl?:string
+  designUrls: string[]
 }
 
 // 2) Product interface now references an array of PFVariant, and images[]
@@ -35,6 +36,7 @@ const VariantSchema = new mongoose.Schema<PFVariant>(
     color:      { type: String, required: true },
     imageUrl:   { type: String, required: true },
     previewUrl: { type: String },
+    designUrls: { type: [String], required: true },
   },
   { _id: false }
 )

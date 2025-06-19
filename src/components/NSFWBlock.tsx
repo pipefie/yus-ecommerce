@@ -17,7 +17,9 @@ export default function NSFWBlock({
   if (allowed) return <>{children}</>
 
   return (
-    <div className="p-6 bg-gray-900 text-white rounded-lg text-center space-y-4">
+    <div className={`p-6 bg-gray-900 text-white rounded-lg text-center space-y-4 ${
+        className ?? ""
+      }`}>
       <p className="font-pixel text-lg">⚠️ NSFW Content Ahead ⚠️</p>
       <button
         onClick={() => setAllowed(true)}

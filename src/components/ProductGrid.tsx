@@ -2,10 +2,7 @@
 "use client"
 
 import ProductCard, { Product } from "./ProductCard"
-import useSWR from "swr"
-import { useState, useEffect } from "react";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json() as Promise<Product[]>)
 
 interface ProductGridProps {
   products?: Product[]

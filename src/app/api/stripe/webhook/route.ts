@@ -1,5 +1,5 @@
 // src/app/api/stripe/webhook/route.ts
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 import Stripe from "stripe"
 import { stripe } from "@/utils/stripe"
 import Order from "@/models/Order"
@@ -9,15 +9,17 @@ export const config = {
   api: { bodyParser: false } // Stripe needs raw body
 }
 
-export default async function handler(req: any) {
+export default async function handler(req: NextRequest) {
   const buf = await req.arrayBuffer()
-  const sig = req.headers["stripe-signature"]!
+  const buffer = Buffer.from(buf)
+  const sig = req.headers.get("stripe-signature")!
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch (err: any) {
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 })
+    event = stripe.webhooks.constructEvent(buffer, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return new NextResponse(`Webhook Error: ${message}`, { status: 400 })
   }
 
   // Handle the checkout.session.completed event

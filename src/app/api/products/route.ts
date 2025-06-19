@@ -1,13 +1,13 @@
 // src/app/api/products/route.ts
 import { NextResponse } from 'next/server'
-import {prisma} from '@/lib/prisma'
+import { getAllProducts } from '../../../lib/products'
+
+// Edge cache results so subsequent requests reuse the same DB snapshot
+export const revalidate = 60
 
 export async function GET() {
   // 1) load from your SQLite DB via Prisma
-  const raws = await prisma.product.findMany({
-    orderBy: { updatedAt: 'desc' },
-    include: { variants: true }
-  })
+  const raws = await getAllProducts()
 
   // 2) shape exactly what ShopClient/ProductCard need
   const payload = raws.map((p) => {

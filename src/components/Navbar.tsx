@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"

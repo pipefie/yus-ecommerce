@@ -1,6 +1,7 @@
 // src/app/products/page.tsx
 import ShopClient from "@/components/ShopClient";
-import {prisma}      from "@/lib/prisma";
+// Use cached helpers for DB access
+import { getAllProducts } from "@/lib/products";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -14,10 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProductsPage() {
   // 1) Load every product *with* its variants
-  const products = await prisma.product.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: { variants: true },
-  });
+  const products = await getAllProducts();
 
   // 2) Map into exactly the shape ShopClient expects
   const initialProducts = products.map((p) => {
@@ -37,7 +35,7 @@ export default async function ProductsPage() {
       price:      v.price,
       imageUrl,
       nsfw:       false,
-      updatedAt:  p.updatedAt.toISOString(),
+      updatedAt:  p.updatedAt,
     };
   });
 
@@ -45,7 +43,7 @@ export default async function ProductsPage() {
     <div className="pt-16 min-h-screen bg-white text-gray-900">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-semibold mb-6">Shop Our Tees</h1>
-        {/* @ts-ignore: already serialized */}
+        {/* @ts-expect-error: already serialized */}
         <ShopClient initialProducts={initialProducts} />
       </div>
     </div>

@@ -1,14 +1,13 @@
 // src/app/api/cart/route.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // very naive—store in a cookie
-  if (req.method === 'POST') {
-    const { variantId, quantity } = req.body;
-    const existing = req.cookies.cart ? JSON.parse(req.cookies.cart) : [];
-    const updated  = [...existing, { variantId, quantity }];
-    res.setHeader('Set-Cookie', `cart=${JSON.stringify(updated)}; Path=/; HttpOnly`);
-    return res.status(200).json({ cart: updated });
-  }
-  res.status(405).end();
+export async function POST(req: NextRequest) {
+  const { variantId, quantity } = await req.json();
+  const existing = req.cookies.get('cart')?.value
+    ? JSON.parse(req.cookies.get('cart')!.value)
+    : [];
+  const updated = [...existing, { variantId, quantity }];
+  return NextResponse.json({ cart: updated }, {
+    headers: { 'Set-Cookie': `cart=${JSON.stringify(updated)}; Path=/; HttpOnly` }
+  });
 }

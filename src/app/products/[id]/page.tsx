@@ -2,23 +2,22 @@
 import { notFound }      from "next/navigation";
 import type { Metadata }  from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
-import {prisma}            from "@/lib/prisma";
+// Cached helpers reduce DB round trips for repeated page loads
+import { getProductBySlug, getProductSlugs } from "../../../lib/products";
 
 type Props = { params: { id: string } };
 export const revalidate = 60;
 
 // generateStaticParams so Turbopack will pre-render each slug
 export async function generateStaticParams(): Promise<Props["params"][]> {
-  const all = await prisma.product.findMany({ select: { slug: true } });
-  return all.map((p) => ({ id: p.slug }));
+  const slugs = await getProductSlugs();
+  return slugs.map((s) => ({ id: s }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id: slug } = params;
-  const prod = await prisma.product.findUnique({
-    where:  { slug },
-    select: { title: true, description: true, images: true },
-  });
+  const { id: slug } = await params;
+  const prod = await getProductBySlug(slug);
+
   if (!prod) return { title: "Not found" };
 
   // coerce JSON → string[]
@@ -36,12 +35,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const { id: slug } = params;
+  const { id: slug } = await params;
 
-  const prod = await prisma.product.findUnique({
-    where:   { slug },
-    include: { variants: true },
-  });
+  const prod = await getProductBySlug(slug);
   if (!prod) notFound();
 
   // coerce JSON → string[]

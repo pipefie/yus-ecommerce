@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import HeroSection    from "@/components/HeroSection";
 import AnimatedShapes from "@/components/AnimatedShapes";
 import ProductGrid    from "@/components/ProductGrid";
-import {prisma}         from "@/lib/prisma";
+// Cached DB helpers avoid repeat queries across components
+import { getAllProducts } from "../lib/products";
 
 export const revalidate = 60;
 
@@ -16,10 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   // 1️⃣ pull every product + its variants from the DB
-  const products = await prisma.product.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: { variants: true },
-  });
+  // cached in src/lib/products.ts to minimize database load
+  const products = await getAllProducts();
 
   // 2️⃣ reshape to exactly what your <ProductGrid> expects
   const items = products.map((p) => {
@@ -53,7 +52,7 @@ export default async function HomePage() {
         <h2 className="font-pixel text-4xl text-center mb-8">
           Featured Tees
         </h2>
-        {/* @ts-ignore: already serialized */}
+        {/* @ts-expect-error: already serialized */}
         <ProductGrid products={items} />
       </section>
     </div>

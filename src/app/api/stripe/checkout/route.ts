@@ -4,11 +4,24 @@ import { stripe } from "@/utils/stripe"
 import dbConnect from "@/utils/dbConnect"
 import Order from "@/models/Order"
 
+interface CheckoutItem {
+  _id: string
+  title: string
+  imageUrl: string
+  price: number
+  quantity: number
+}
+
 export async function POST(req: Request) {
-  const { items, customerEmail, userId } = await req.json()
+  const {
+    items,
+    customerEmail,
+    userId,
+  }: { items: CheckoutItem[]; customerEmail?: string; userId?: string } =
+    await req.json()
 
   // Build Stripe line items
-  const line_items = items.map((i: any) => ({
+  const line_items = items.map((i: CheckoutItem) => ({
     price_data: {
       currency: "usd",
       product_data: { name: i.title, images: [i.imageUrl] },
@@ -32,7 +45,7 @@ export async function POST(req: Request) {
   await Order.create({
     userId,
     stripeSessionId: session.id,
-    items: items.map((i: any) => ({
+    items: items.map((i: CheckoutItem) => ({
       productId: i._id,
       quantity:  i.quantity,
       price:     Math.round(i.price * 100),

@@ -8,6 +8,10 @@ export default function CartPage() {
   const { items, clear } = useCart()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  interface SessionData {
+    user?: { email?: string; id?: string }
+  }
+  const session = (window as unknown as { session?: SessionData }).session
 
   const total = items.reduce((sum, i)=>sum + i.price*i.quantity, 0)/100
 
@@ -17,11 +21,11 @@ export default function CartPage() {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        items: items.map(({_id,title,price,quantity,imageUrl})=>({
-          _id, title, price, quantity, imageUrl
+        items: items.map(({slug,title,price,quantity,imageUrl})=>({
+          slug, title, price, quantity, imageUrl
         })),
-        customerEmail: (window as any).session?.user?.email,
-        userId: (window as any).session?.user?.id,
+        customerEmail: session?.user?.email,
+        userId: session?.user?.id,
       }),
     })
     const { url } = await res.json()
@@ -36,7 +40,7 @@ export default function CartPage() {
       <h1 className="font-pixel text-3xl mb-6">Your Cart</h1>
       <ul className="space-y-4 mb-8">
         {items.map((i)=>(
-          <li key={i._id} className="flex justify-between">
+          <li key={i.slug} className="flex justify-between">
             <span>{i.title} × {i.quantity}</span>
             <span>${((i.price*i.quantity)/100).toFixed(2)}</span>
           </li>

@@ -1,7 +1,7 @@
 // src/components/ProductDetailClient.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 
 export interface VariantWithImages {
@@ -71,7 +71,8 @@ export default function ProductDetailClient({ product }: Props) {
           <div>
             <label className="block mb-1 font-medium">Color</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Select color"
               value={selectedColor}
               onChange={(e) => setSelectedColor(e.target.value)}
             >
@@ -87,7 +88,8 @@ export default function ProductDetailClient({ product }: Props) {
           <div>
             <label className="block mb-1 font-medium">Size</label>
             <select
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Select size"
               value={selectedSize}
               onChange={(e) => setSelectedSize(e.target.value)}
             >
@@ -105,7 +107,8 @@ export default function ProductDetailClient({ product }: Props) {
           </div>
 
           {/* Add to cart */}
-          <button className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition">
+          <button className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition 
+          focus:outline-none focus:ring-2 focus:ring-blue-500">
             Add to cart
           </button>
         </div>
@@ -116,6 +119,7 @@ export default function ProductDetailClient({ product }: Props) {
 
 function Carousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
+  useEffect(() => setCurrent(0), [images]);
   if (!images?.length) return null;
 
   return (
@@ -134,9 +138,10 @@ function Carousel({ images }: { images: string[] }) {
           <button
             key={idx}
             onClick={() => setCurrent(idx)}
+            aria-label={`View image ${idx + 1}`}
             className={`ring-2 ${
               idx === current ? "ring-blue-600" : "ring-gray-300"
-            } rounded-sm`}
+            } rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
           >
             <Image
               src={src}

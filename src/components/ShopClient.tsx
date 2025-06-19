@@ -13,10 +13,12 @@ interface ShopClientProps {
   
   const fetcher = (url: string) =>
     fetch(url).then((res) => res.json() as Promise<Product[]>)
+
+  type SortOption = "price-asc" | "price-desc" | "name-asc" | "name-desc"
   
   export default function ShopClient({ initialProducts }: ShopClientProps) {
     const [search, setSearch] = useState("")
-    const [sortBy, setSortBy] = useState<"price-asc"|"price-desc"|"name-asc"|"name-desc">("price-asc")
+    const [sortBy, setSortBy] = useState<SortOption>("price-asc")
     const [category, setCategory] = useState<string>("All")
     const [sidebarOpen, setSidebarOpen] = useState(false)
   
@@ -82,7 +84,7 @@ interface ShopClientProps {
             <div className="flex items-center space-x-4">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 <option value="price-asc">Price: Low to High</option>

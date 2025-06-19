@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import dbConnect from "@/utils/dbConnect"
-import Product from "@/models/Product"
+import { prisma } from "@/lib/prisma"
 import {
   fetchPrintifyProducts,
   fetchPrintifyProductDetail,
@@ -10,7 +9,6 @@ import {
 
 export async function GET() {
   try {
-    await dbConnect()
 
     const rawList = await fetchPrintifyProducts()
     const summaries = rawList.map(mapToSummary)
@@ -18,33 +16,63 @@ export async function GET() {
     for (const sum of summaries) {
       const rawDetail = await fetchPrintifyProductDetail(sum.printifyId)
       const detail = mapToDetail(sum.slug, rawDetail)
+      const basePrice =
+        detail.variants.reduce(
+          (min, v) => Math.min(min, v.price),
+          Infinity
+        ) || 0
 
-      const variants = detail.variants.map((v) => ({
-        id: v.id,
-        price: v.price,
-        size: v.size,
-        color: v.color,
-        imageUrl: v.designUrl,
-      }))
-
-      await Product.findOneAndUpdate(
-        { printifyId: detail.printifyId },
-        {
-          printifyId: detail.printifyId,
-          title: detail.title,
-          slug: detail.slug,
+ await prisma.product.upsert({
+        where: { printifyId: String(detail.printifyId) },
+        update: {
+          slug:        detail.slug,
+          title:       detail.title,
           description: detail.description,
-          variants,
-          images: detail.images,
-          updatedAt: new Date(),
+          price:       basePrice,
+          imageUrl:    detail.images[0] ?? "",
+          images:      detail.images,
         },
-        { upsert: true }
-      )
-    }
+        create: {
+          printifyId:  String(detail.printifyId),
+          slug:        detail.slug,
+          title:       detail.title,
+          description: detail.description,
+          price:       basePrice,
+          imageUrl:    detail.images[0] ?? "",
+          images:      detail.images,
+        },
+      })
 
+      for (const v of detail.variants) {
+        await prisma.variant.upsert({
+          where: { printifyId: String(v.id) },
+          update: {
+            product:    { connect: { printifyId: String(detail.printifyId) } },
+            price:      v.price,
+            color:      v.color,
+            size:       v.size,
+            imageUrl:   v.designUrls[0] ?? "",
+            previewUrl: v.designUrls[0] ?? "",
+            designUrls: v.designUrls,
+          },
+          create: {
+            printifyId: String(v.id),
+            product:    { connect: { printifyId: String(detail.printifyId) } },
+            price:      v.price,
+            color:      v.color,
+            size:       v.size,
+            imageUrl:   v.designUrls[0] ?? "",
+            previewUrl: v.designUrls[0] ?? "",
+            designUrls: v.designUrls,
+          },
+        })
+      }
+    }
     return NextResponse.json({ ok: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("printful-sync error", err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const message = err instanceof Error ? err.message : "Unknown error"
+
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

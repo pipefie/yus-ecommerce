@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { X } from "lucide-react"
 import { useCart } from "@/context/CartContext"
+import Image from "next/image"
 
 export default function CartSidebar({
   open,
@@ -34,10 +35,10 @@ export default function CartSidebar({
           ) : (
             items.map((i) => (
               <div
-                key={i._id + i.variantId}
+                key={i.slug + i.variantId}
                 className="flex items-center space-x-3"
               >
-                <img
+                <Image
                   src={i.imageUrl}
                   alt={i.title}
                   className="w-16 h-16 object-cover rounded"

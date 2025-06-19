@@ -1,6 +1,7 @@
 // src/components/ProductCard.tsx
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 
 export interface Product {
   slug:      string;
@@ -16,10 +17,12 @@ export default function ProductCard({ product }: { product: Product }) {
       href={`/products/${product.slug}`}   // ← ALWAYS use `slug`
       className="group block overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-200"
     >
-      <div className="aspect-w-1 aspect-h-1 bg-gray-50">
-        <img
+      <div className="aspect-w-1 aspect-h-1 bg-gray-50 relative">
+        <Image
           src={product.imageUrl}
           alt={product.title}
+          width={500}
+          height={500}
           className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-200"
         />
       </div>

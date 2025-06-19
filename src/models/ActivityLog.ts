@@ -4,7 +4,7 @@ import mongoose, { Document, Model } from "mongoose"
 export interface IActivityLog extends Document {
   userId?: mongoose.Types.ObjectId
   event: string
-  metadata?: any
+  metadata?: Record<string, unknown>
   createdAt: Date
 }
 
