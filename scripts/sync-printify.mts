@@ -79,13 +79,28 @@ async function main() {
       },
     })
 
+    interface RawVariant {
+      id: number;
+      is_enabled: boolean;
+    }
+
+    interface RawImage {
+      variant_ids?: number[];
+      src: string;
+    }   
+
+    const filtered = variantsRaw.filter((v: RawVariant) =>
+      // keep only enabled variants that have mockups
+      v.is_enabled && rawImages.some((img: RawImage) =>
+        Array.isArray(img.variant_ids) && img.variant_ids.includes(v.id))
+    );
     // upsert Variants
-    for (const v of variantsRaw) {
+    for (const v of filtered) {
       const thisImgs = rawImages
-        .filter((img: any) =>
+        .filter((img: RawImage) =>
           Array.isArray(img.variant_ids) && img.variant_ids.includes(v.id)
         )
-        .map((img: any) => img.src as string)
+        .map((img: RawImage) => img.src)
 
       const [color = 'Default', size = 'One Size'] =
         (v.title || '').split('/').map((s: string) => s.trim())

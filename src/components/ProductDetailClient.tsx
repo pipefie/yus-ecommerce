@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
 
 export interface VariantWithImages {
   id:         string;
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function ProductDetailClient({ product }: Props) {
+  const { add } = useCart()
   // derive the unique list of colors & sizes
   const colors = useMemo(
     () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),
@@ -43,7 +45,7 @@ export default function ProductDetailClient({ product }: Props) {
 
   // variants available for the chosen color
   const colorVariants = useMemo(
-    () => product.variants.filter((v) => v.color === selectedColor),
+    () => product.variants.filter((v) => v.color === selectedColor && v.designUrls.length > 0),
     [product.variants, selectedColor]
   );
 
@@ -64,10 +66,25 @@ export default function ProductDetailClient({ product }: Props) {
   const activeVariant = useMemo(
     () =>
       product.variants.find(
-        (v) => v.color === selectedColor && v.size === selectedSize
+        (v) => v.color === selectedColor && v.size === selectedSize &&
+          v.designUrls.length > 0
       ) || product.variants[0],
     [selectedColor, selectedSize, product.variants]
   );
+
+    const handleAdd = () => {
+    const imageUrl = colorImages[0] || product.images[0] || "/placeholder.png";
+    add({
+      _id:        product.id,
+      slug:       product.id,
+      title:      product.title,
+      description:product.description,
+      price:      activeVariant.price,
+      imageUrl,
+      variantId:  activeVariant.id,
+      quantity:   1,
+    });
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -130,8 +147,11 @@ export default function ProductDetailClient({ product }: Props) {
           </div>
 
           {/* Add to cart */}
-          <button className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition 
-          focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button
+            onClick={handleAdd}
+            className="w-full bg-blue-600 text-white py-3 rounded 
+            hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
             Add to cart
           </button>
         </div>

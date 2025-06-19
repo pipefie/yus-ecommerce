@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, ReactNode } from "react"
 import { Product } from "@/components/ProductCard"
 
-export interface CartItem extends Product {   
+export interface CartItem extends Product {  
+  _id:       string 
   variantId: string
   quantity:  number }
 

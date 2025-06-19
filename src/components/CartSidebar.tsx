@@ -41,6 +41,8 @@ export default function CartSidebar({
                 <Image
                   src={i.imageUrl}
                   alt={i.title}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 object-cover rounded"
                 />
                 <div className="flex-1">

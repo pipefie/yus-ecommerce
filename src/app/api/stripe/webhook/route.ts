@@ -9,7 +9,7 @@ export const config = {
   api: { bodyParser: false } // Stripe needs raw body
 }
 
-export default async function handler(req: NextRequest) {
+export async function POST(req: Request) {
   const buf = await req.arrayBuffer()
   const buffer = Buffer.from(buf)
   const sig = req.headers.get("stripe-signature")!
