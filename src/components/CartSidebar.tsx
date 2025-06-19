@@ -65,9 +65,9 @@ export default function CartSidebar({
         {items.length > 0 && (
           <footer className="p-4 border-t border-gray-700">
             <Link href="/cart">
-              <a className="block w-full mb-2 bg-neon text-black py-2 rounded font-pixel text-center">
+              <p className="block w-full mb-2 bg-neon text-black py-2 rounded font-pixel text-center">
                 Checkout
-              </a>
+              </p>
             </Link>
             <button
               onClick={clear}
