@@ -34,7 +34,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 h-16 bg-black/70 backdrop-blur">
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 h-24 bg-black/70 backdrop-blur">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
