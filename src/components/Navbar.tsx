@@ -23,6 +23,7 @@ export default function Navbar() {
     { href: "/products", label: "Shop" },
     { href: "/feed", label: "Feed" },
     { href: "/contact", label: "Contact" },
+    { href: "/cart", label: "Cart" },
   ]
 
   const socials = [
@@ -33,7 +34,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-30 flex items-center justify-between p-4 bg-black/70 backdrop-blur">
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 h-16 bg-black/70 backdrop-blur">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
@@ -110,6 +111,9 @@ export default function Navbar() {
         </div>
 
       </nav>
+      
+      {/* Cart Sidebar (moved outside nav) */}
+      <CartSidebar open={open} onClose={() => setOpen(false)} />
 
       {/* Full-screen Overlay Menu */}
       <div
