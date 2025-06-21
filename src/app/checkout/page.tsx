@@ -30,12 +30,23 @@ export default function CheckoutPage() {
   const [saveInfo, setSaveInfo] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'crypto'>('card')
 
-  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)
-
-  const handleReview = () => {
-    // TODO: validate and call server/payment API
+  const handleReview = async () => {
+    const res = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
+          slug,
+          title,
+          price,
+          quantity,
+          imageUrl,
+        })),
+      }),
+    })
+    const { url } = await res.json()
     clear()
-    router.push('/order-confirmation')
+    router.push(url)
   }
 
   return (

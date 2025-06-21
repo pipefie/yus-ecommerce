@@ -1,5 +1,6 @@
 // src/app/api/stripe/checkout/route.ts
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { assertCsrf } from "@/utils/csrf"
 import { stripe } from "@/utils/stripe"
 import dbConnect from "@/utils/dbConnect"
 import Order from "@/models/Order"
@@ -12,7 +13,9 @@ interface CheckoutItem {
   quantity: number
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const csrfError = assertCsrf(req)
+  if (csrfError) return csrfError
   const {
     items,
     customerEmail,

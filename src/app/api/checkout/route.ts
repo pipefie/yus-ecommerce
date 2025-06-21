@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { assertCsrf } from '@/utils/csrf'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {})
@@ -10,7 +11,9 @@ export type CartItem = {
     quantity: number
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const csrfError = assertCsrf(req)
+  if (csrfError) return csrfError
   const { items }: { items: CartItem[] } = await req.json()
 
   const session = await stripe.checkout.sessions.create({

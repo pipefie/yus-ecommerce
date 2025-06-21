@@ -1,11 +1,14 @@
 // src/app/api/auth/signup/route.ts
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { assertCsrf } from "../../../../utils/csrf"
 import dbConnect from "@/utils/dbConnect"
 import User from "@/models/User"
 import bcrypt from "bcrypt"
 import NewsletterSubscription from "@/models/NewsletterSubscription"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const csrfError = assertCsrf(req)
+  if (csrfError) return csrfError
   const { name, email, password, newsletterOptIn } = await req.json()
   await dbConnect()
 

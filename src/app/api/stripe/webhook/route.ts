@@ -1,5 +1,5 @@
 // src/app/api/stripe/webhook/route.ts
-import { NextResponse, type NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { stripe } from "@/utils/stripe"
 import Order from "@/models/Order"

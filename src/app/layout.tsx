@@ -3,6 +3,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
 import { CartProvider } from "@/context/CartContext";
+import CookieBanner from "../components/CookieBanner";
+import AnalyticsScripts from "../components/AnalyticsScripts";
 
 export const metadata = {
   title: "Y-US? Store",
@@ -22,8 +24,10 @@ export default function RootLayout({
         <Providers>
           <CartProvider>
             <Navbar/>
+            <AnalyticsScripts />
             <main>{children}</main>
             <Footer/>
+            <CookieBanner />
           </CartProvider>
         </Providers>
       </body>

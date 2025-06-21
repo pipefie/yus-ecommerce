@@ -4,6 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
+import ReviewList from "./ReviewList";
 
 export interface VariantWithImages {
   id:         string;
@@ -154,6 +155,7 @@ export default function ProductDetailClient({ product }: Props) {
           className="mt-4 text-gray-700 space-y-4"
           dangerouslySetInnerHTML={{ __html: product.description }}
         />
+        <ReviewList productId={product.id} />
         </div>
       </div>
     </div>

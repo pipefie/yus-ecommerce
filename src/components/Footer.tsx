@@ -27,6 +27,18 @@ export default function Footer() {
             <li>
               <Link href="/contact" className="hover:text-neon">Contact</Link>
             </li>
+            <li>
+              <Link href="/privacy-policy" className="hover:text-neon">Privacy</Link>
+            </li>
+            <li>
+              <Link href="/cookie-policy" className="hover:text-neon">Cookies</Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-neon">Terms</Link>
+            </li>
+            <li>
+              <Link href="/refund-policy" className="hover:text-neon">Refunds</Link>
+            </li>            
           </ul>
         </div>
 

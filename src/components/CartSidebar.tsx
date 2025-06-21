@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
 

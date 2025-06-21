@@ -1,7 +1,6 @@
 // src/context/CartContext.tsx
 "use client"
-import { createContext, useContext, useState, ReactNode } from "react"
-import { Product } from "@/components/ProductCard"
+import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 
 export interface CartItem {
   _id: string
@@ -26,6 +25,25 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
+  // Hydrate cart from localStorage on first load
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = localStorage.getItem("cart")
+    if (stored) {
+      try {
+        setItems(JSON.parse(stored))
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }, [])
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    localStorage.setItem("cart", JSON.stringify(items))
+  }, [items])
+  
   const add = (item: CartItem) => {
     setItems((curr) => {
       const existing = curr.find((i) => i.variantId === item.variantId)

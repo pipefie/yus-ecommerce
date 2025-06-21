@@ -1,11 +1,12 @@
 // src/components/ShopClient.tsx
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import ProductCard, { Product } from "./ProductCard"
 import { motion } from "framer-motion"
 import { List, Sliders } from "lucide-react"
 import useSWR from "swr"
+import algoliasearch from "algoliasearch/lite"
 
 interface ShopClientProps {
     initialProducts: Product[]
@@ -21,27 +22,42 @@ interface ShopClientProps {
     const [sortBy, setSortBy] = useState<SortOption>("price-asc")
     const [category, setCategory] = useState<string>("All")
     const [sidebarOpen, setSidebarOpen] = useState(false)
+
+    const client = useMemo(
+      () =>
+        algoliasearch(
+          process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
+          process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!
+        ).initIndex("products"),
+      []
+    )
   
     const { data: products = initialProducts } = useSWR<Product[]>("/api/products", fetcher, {
       fallbackData: initialProducts,
     })
-  
+
+    const [results, setResults] = useState<Product[]>(initialProducts)
+
     const categories = useMemo(() => {
       const cats = new Set(products.map((p) => p.title.split(" ")[0]))
       return ["All", ...Array.from(cats)]
     }, [products])
   
+    // Query Algolia whenever search or category change
+    useEffect(() => {
+      const facetFilters = category !== "All" ? [`category:${category}`] : []
+      if (!search && facetFilters.length === 0) {
+        setResults(products)
+        return
+      }
+      client
+        .search<Product>(search, { facetFilters })
+        .then(({ hits }) => setResults(hits as unknown as Product[]))
+        .catch(() => setResults(products))
+    }, [search, category, products, client])
+
     const filtered = useMemo(() => {
-      let list = products
-      if (category !== "All") {
-        list = list.filter((p) => p.title.startsWith(category))
-      }
-      if (search) {
-        list = list.filter((p) =>
-          p.title.toLowerCase().includes(search.toLowerCase())
-        )
-      }
-      return [...list].sort((a, b) => {
+      return [...results].sort((a, b) => {
         switch (sortBy) {
           case "price-asc":  return a.price - b.price
           case "price-desc": return b.price - a.price
@@ -49,7 +65,7 @@ interface ShopClientProps {
           case "name-desc":  return b.title.localeCompare(a.title)
         }
       })
-    }, [products, category, search, sortBy])
+    }, [results, sortBy])
     
     return (
       <div className="flex">
