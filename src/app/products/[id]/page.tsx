@@ -2,6 +2,7 @@
 import { notFound }      from "next/navigation";
 import type { Metadata }  from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
+import Script from "next/script";
 // Cached helpers reduce DB round trips for repeated page loads
 import { getProductBySlug, getProductSlugs } from "../../../lib/products";
 
@@ -63,9 +64,26 @@ export default async function ProductPage({ params }: Props) {
     })),
   };
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: prod.title,
+    description: prod.description.replace(/<\/?[^>]+>/g, ""),
+    image: images.length ? images : ["/placeholder.png"],
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "USD",
+      price: (prod.price / 100).toFixed(2),
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
     <main className="container mx-auto px-4 py-12">
       <ProductDetailClient product={detail} />
+      <Script id="product-schema" type="application/ld+json">
+        {JSON.stringify(productSchema)}
+      </Script>
     </main>
   );
 }

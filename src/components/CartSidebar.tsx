@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
+import { useCurrency } from '@/context/CurrencyContext'
+import useTranslation from 'next-translate/useTranslation'
 
 export default function CartSidebar({
   open,
@@ -13,8 +15,11 @@ export default function CartSidebar({
   onClose: () => void
 }) {
   const { items, add, remove, clear } = useCart()
+  const { currency, rate } = useCurrency()
+  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
+  const { t } = useTranslation('common')
   const [isLoading, setIsLoading] = useState(false)
-  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)
+  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)* rate
 
   const handleCheckout = async () => {
     setIsLoading(true)
@@ -22,7 +27,13 @@ export default function CartSidebar({
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({
+          items: items.map(i => ({
+            ...i,
+            price: Math.round(i.price * rate)
+          })),
+          currency
+        }),
       })
       const { url } = await res.json()
       clear()
@@ -62,7 +73,7 @@ export default function CartSidebar({
 
         {/* items */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 divide-y">
-          {items.length === 0 && <p className="text-gray-500">Your cart is empty.</p>}
+          {items.length === 0 && <p className="text-gray-500">{t('your_cart')} is empty.</p>}
           {items.map((item: CartItem) => (
             <div key={item.variantId} className="flex space-x-4 py-4 text-black">
               <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden">
@@ -107,7 +118,7 @@ export default function CartSidebar({
                   </button>
                 </div>
                 <p className="mt-2 text-sm font-bold text-black">
-                  €{((item.price * item.quantity) / 100).toFixed(2)} EUR
+                  {symbols[currency] || ''}{((item.price * item.quantity * rate)/100).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -119,7 +130,7 @@ export default function CartSidebar({
           <footer className="px-8 py-6 border-t">
             <div className="flex justify-between mb-2 text-black">
               <span className="font-bold">Total</span>
-              <span className="font-bold">€{(subtotal / 100).toFixed(2)} EUR</span>
+              <span className="font-bold">{symbols[currency] || ''}{(subtotal / 100).toFixed(2)}</span>
             </div>
             <p className="text-xs text-gray-500 mb-4">Delivery calculated at checkout</p>
             <button
@@ -129,7 +140,7 @@ export default function CartSidebar({
                 isLoading ? 'bg-gray-400 cursor-wait' : 'bg-black hover:bg-gray-800'
               } transition`}
             >
-              {isLoading ? 'Processing…' : 'Check out'}
+              {isLoading ? 'Processing…' : t('checkout')}
             </button>
           </footer>
         )}

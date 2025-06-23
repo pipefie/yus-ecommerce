@@ -4,6 +4,7 @@ import Stripe from "stripe"
 import { stripe } from "@/utils/stripe"
 import Order from "@/models/Order"
 import dbConnect from "@/utils/dbConnect"
+import { pushOrderToMailchimp } from "@/actions/marketing"
 
 export const config = {
   api: { bodyParser: false } // Stripe needs raw body
@@ -28,10 +29,14 @@ export async function POST(req: Request) {
 
     await dbConnect()
     // Mark the order as paid
-    await Order.findOneAndUpdate(
+    const order = await Order.findOneAndUpdate(
       { stripeSessionId: session.id },
-      { $set: { status: "paid" } }
+      { $set: { status: "paid" } },
+      { new: true }
     )
+    if (order) {
+      await pushOrderToMailchimp(session.customer_email || "", order.id, order.totalAmount)
+    }
   }
 
   return new NextResponse("Received", { status: 200 })

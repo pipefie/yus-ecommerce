@@ -6,11 +6,13 @@ declare module "next-auth" {
     user: {
       /** The user's unique ID (from your database) */
       id: string
+      role?: string
     } & DefaultSession["user"]
   }
 
   // optional: if you directly use `User` returned from authorize
   interface User {
     id: string
+    role?: string
   }
 }

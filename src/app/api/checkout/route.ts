@@ -14,13 +14,13 @@ export type CartItem = {
 export async function POST(req: NextRequest) {
   const csrfError = assertCsrf(req)
   if (csrfError) return csrfError
-  const { items }: { items: CartItem[] } = await req.json()
+  const { items, currency }: { items: CartItem[]; currency: string } = await req.json()
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: items.map((i: CartItem) => ({
       price_data: {
-        currency: 'eur',
+        currency: currency.toLowerCase(),
         product_data: { name: i.title, images: [i.imageUrl] },
         unit_amount: Math.round(i.price),
       },

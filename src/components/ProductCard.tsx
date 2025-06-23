@@ -2,6 +2,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export interface Product {
   slug:      string;
@@ -12,6 +13,8 @@ export interface Product {
 }
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { currency, rate } = useCurrency();
+  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' };
   return (
     <Link
       href={`/products/${product.slug}`}   // ← ALWAYS use `slug`
@@ -32,7 +35,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </h3>
         <div className="flex items-center justify-between">
           <span className="font-semibold text-gray-900">
-            ${(product.price / 100).toFixed(2)}
+            {symbols[currency] || ''}{((product.price * rate) / 100).toFixed(2)}
           </span>
           <span className="text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             View →

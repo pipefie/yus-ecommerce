@@ -1,8 +1,14 @@
 // next.config.ts
 import type { NextConfig } from "next";
+import nextTranslate from 'next-translate-plugin';
+import { withSentryConfig } from "@sentry/nextjs";
 
-const nextConfig: NextConfig = {
+const nextConfig: NextConfig = nextTranslate({
   reactStrictMode: true,
+  i18n: {
+    locales: ['en','es','fr','de'],
+    defaultLocale: 'en',
+  },
 
   images: {
     minimumCacheTTL: 60,
@@ -27,6 +33,6 @@ const nextConfig: NextConfig = {
 
     optimizePackageImports: ["react-icons"],
   },
-};
+});
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, { silent: true });

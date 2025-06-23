@@ -18,15 +18,16 @@ export async function POST(req: NextRequest) {
   if (csrfError) return csrfError
   const {
     items,
+    currency,
     customerEmail,
     userId,
-  }: { items: CheckoutItem[]; customerEmail?: string; userId?: string } =
+  }: { items: CheckoutItem[]; currency: string; customerEmail?: string; userId?: string } =
     await req.json()
 
   // Build Stripe line items
   const line_items = items.map((i: CheckoutItem) => ({
     price_data: {
-      currency: "usd",
+      currency: currency.toLowerCase(),
       product_data: { name: i.title, images: [i.imageUrl] },
       unit_amount: Math.round(i.price),
     },

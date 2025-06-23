@@ -1,14 +1,22 @@
 import Link from "next/link";
 import { stripe } from "@/utils/stripe";
 import type Stripe from "stripe";
+import PurchaseTracker from "../../components/PurchaseTracker";
+import getT from 'next-translate/getT'
+export const revalidate = 0
 
 export default async function SuccessPage({
+  params,
   searchParams,
 }: {
+  params: { locale: string };
   searchParams: { session_id?: string };
 }) {
+  const t = await getT(params.locale, 'common')
   let items: Stripe.LineItem[] = [];
   let total = 0;
+  let currency = 'USD';
+  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' };
 
   const sessionId = searchParams.session_id;
   if (sessionId) {
@@ -16,11 +24,12 @@ export default async function SuccessPage({
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
     items = lineItems.data;
     total = (session.amount_total ?? 0) / 100;
+    currency = session.currency?.toUpperCase() || 'USD';
   }
 
   return (
     <div className="pt-16 min-h-screen flex flex-col items-center justify-center bg-black text-white px-4 text-center">
-      <h1 className="font-pixel text-4xl text-neon mb-4">Thank you for your order!</h1>
+      <h1 className="font-pixel text-4xl text-neon mb-4">{t('thank_you')}</h1>
       {items.length > 0 && (
         <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-neon mb-6">
           <h2 className="font-pixel text-2xl mb-4">Order Summary</h2>
@@ -28,19 +37,27 @@ export default async function SuccessPage({
             {items.map((item) => (
               <li key={item.id} className="flex justify-between">
                 <span>{item.description} × {item.quantity}</span>
-                <span>${((item.amount_total ?? 0) / 100).toFixed(2)}</span>
+                <span>{symbols[currency] || ''}{((item.amount_total ?? 0) / 100).toFixed(2)}</span>
               </li>
             ))}
           </ul>
           <div className="flex justify-between font-bold border-t border-gray-700 pt-2">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>{symbols[currency] || ''}{total.toFixed(2)}</span>
           </div>
         </div>
       )}
       <Link href="/products" className="px-6 py-3 bg-neon text-black font-pixel rounded hover:bg-neon/80 transition">
-        Back to Shop
+        {t('back_to_shop')}
       </Link>
+      {items.length > 0 && 
+        (<PurchaseTracker 
+          items={items.map(item => ({
+            ...item,
+            description: item.description ?? "",
+          }))} 
+          total={total} 
+        />)}
     </div>
   );
 }

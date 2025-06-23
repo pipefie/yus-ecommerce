@@ -3,6 +3,7 @@ import ShopClient from "@/components/ShopClient";
 // Use cached helpers for DB access
 import { getAllProducts } from "@/lib/products";
 import type { Metadata } from "next";
+import getT from 'next-translate/getT'
 
 export const revalidate = 60;
 
@@ -13,7 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ params }: { params: { locale: string } }) {
+  const t = await getT(params.locale, 'common')
   // 1) Load every product *with* its variants
   const products = await getAllProducts();
 
@@ -42,7 +44,7 @@ export default async function ProductsPage() {
   return (
     <div className="pt-16 min-h-screen bg-white text-gray-900">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-semibold mb-6">Shop Our Tees</h1>
+        <h1 className="text-3xl font-semibold mb-6">{t('shop_our_tees')}</h1>
         {/* @ts-expect-error: already serialized */}
         <ShopClient initialProducts={initialProducts} />
       </div>

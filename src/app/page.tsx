@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import HeroSection    from "@/components/HeroSection";
 import AnimatedShapes from "@/components/AnimatedShapes";
 import ProductGrid    from "@/components/ProductGrid";
+import getT from 'next-translate/getT'
 // Cached DB helpers avoid repeat queries across components
 import { getAllProducts } from "../lib/products";
 
@@ -15,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HomePage() {
+export default async function HomePage({ params }: { params: { locale: string } }) {
+  const t = await getT(params.locale, 'common')
   // 1️⃣ pull every product + its variants from the DB
   // cached in src/lib/products.ts to minimize database load
   const products = await getAllProducts();
@@ -50,7 +52,7 @@ export default async function HomePage() {
         className="container mx-auto py-16 z-10 relative"
       >
         <h2 className="font-pixel text-4xl text-center mb-8">
-          Featured Tees
+          {t('featured_tees')}
         </h2>
         {/* @ts-expect-error: already serialized */}
         <ProductGrid products={items} />

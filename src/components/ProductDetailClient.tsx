@@ -5,6 +5,9 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import ReviewList from "./ReviewList";
+import { sendGAEvent } from "@/utils/ga";
+import { useCurrency } from "@/context/CurrencyContext";
+import useTranslation from "next-translate/useTranslation";
 
 export interface VariantWithImages {
   id:         string;
@@ -30,6 +33,20 @@ interface Props {
 
 export default function ProductDetailClient({ product }: Props) {
   const { add } = useCart()
+  useEffect(() => {
+    sendGAEvent('view_item', {
+      items: [
+        {
+          item_id: product.printifyId,
+          item_name: product.title,
+          price: product.price / 100,
+        },
+      ],
+    })
+  }, [product.printifyId, product.title, product.price])
+  const { currency, rate } = useCurrency()
+  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
+  const { t } = useTranslation('common')
   // derive the unique list of colors & sizes
   const colors = useMemo(
     () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),
@@ -74,18 +91,28 @@ export default function ProductDetailClient({ product }: Props) {
   );
 
     const handleAdd = () => {
-    const imageUrl = colorImages[0] || product.images[0] || "/placeholder.png";
-    add({
-      _id:        product.id,
-      slug:       product.id,
-      title:      product.title,
-      description:product.description,
-      price:      activeVariant.price,
-      imageUrl,
-      variantId:  activeVariant.id,
-      quantity:   1,
-    });
-  };
+      const imageUrl = colorImages[0] || product.images[0] || "/placeholder.png";
+      add({
+        _id:        product.id,
+        slug:       product.id,
+        title:      product.title,
+        description:product.description,
+        price:      activeVariant.price,
+        imageUrl,
+        variantId:  activeVariant.id,
+        quantity:   1,
+        });
+      sendGAEvent('add_to_cart', {
+        items: [
+          {
+            item_id: product.printifyId,
+            item_name: product.title,
+            price: activeVariant.price / 100,
+            quantity: 1,
+          },
+        ],
+        })
+    };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2  gap-8">
@@ -139,7 +166,7 @@ export default function ProductDetailClient({ product }: Props) {
 
           {/* Price */}
           <div className="text-2xl font-bold">
-            $ {(activeVariant.price / 100).toFixed(2)}
+            {symbols[currency] || ''}{((activeVariant.price * rate) / 100).toFixed(2)}
           </div>
 
           {/* Add to cart */}
@@ -148,7 +175,7 @@ export default function ProductDetailClient({ product }: Props) {
             className="min-w-full text-neon text-white py-3 rounded 
             hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Add to cart
+            {t('add_to_cart')}
           </button>
 
         <div

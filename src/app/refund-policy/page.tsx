@@ -1,4 +1,5 @@
 export const metadata = { title: "Refund Policy" }
+export const revalidate = 60
 export default function RefundPolicyPage() {
   return (
     <div className="pt-16 container mx-auto px-4 text-white">

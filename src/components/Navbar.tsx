@@ -9,6 +9,9 @@ import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import CartSidebar from "./CartSidebar"
+import useTranslation from "next-translate/useTranslation"
+import CurrencySwitcher from "./CurrencySwitcher"
+import LanguageSwitcher from "./LanguageSwitcher"
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -18,12 +21,14 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
 
+  const { t } = useTranslation('common')
+
   const links = [
-    { href: "/", label: "Home" },
-    { href: "/products", label: "Shop" },
-    { href: "/feed", label: "Feed" },
-    { href: "/contact", label: "Contact" },
-    { href: "/cart", label: "Cart" },
+    { href: "/", label: t('home') },
+    { href: "/products", label: t('shop') },
+    { href: "/feed", label: t('feed') },
+    { href: "/contact", label: t('contact') },
+    { href: "/cart", label: t('cart') },
   ]
 
   const socials = [
@@ -47,6 +52,8 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center space-x-4">
+          {/* Language Selector */}
+          <LanguageSwitcher />
           {/* User Icon & Dropdown */}
           <div className="relative">
             <button
@@ -114,6 +121,7 @@ export default function Navbar() {
       
       {/* Cart Sidebar (moved outside nav) */}
       <CartSidebar open={open} onClose={() => setOpen(false)} />
+      <CurrencySwitcher />
 
       {/* Full-screen Overlay Menu */}
       <div

@@ -2,7 +2,7 @@
 
 import 'dotenv/config'
 import slugify from 'slugify'
-import { PrismaClient } from '../src/generated/prisma/index.js'  // ← your generated client
+import { PrismaClient } from '@prisma/client'  // ← your generated client
 
 const prisma    = new PrismaClient()
 const SHOP_ID   = process.env.PRINTIFY_SHOP_ID!

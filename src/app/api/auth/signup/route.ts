@@ -5,6 +5,8 @@ import dbConnect from "@/utils/dbConnect"
 import User from "@/models/User"
 import bcrypt from "bcrypt"
 import NewsletterSubscription from "@/models/NewsletterSubscription"
+import { sendWelcomeEmail } from "@/utils/sendgrid"
+import { pushCustomerToMailchimp } from "@/actions/marketing"
 
 export async function POST(req: NextRequest) {
   const csrfError = assertCsrf(req)
@@ -19,7 +21,13 @@ export async function POST(req: NextRequest) {
 
   // Hash & create
   const hash = await bcrypt.hash(password, 10)
-  await User.create({ name, email, password: hash, newsletterOptIn })
+  await User.create({ name, email, password: hash, newsletterOptIn, role: 'user' })
+  try {
+    await sendWelcomeEmail(email, name)
+    await pushCustomerToMailchimp(email, name)
+  } catch (err) {
+    console.error('Post-signup actions failed:', err)
+  }
 
   if (newsletterOptIn) {
     try {
