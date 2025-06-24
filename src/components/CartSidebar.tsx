@@ -17,7 +17,7 @@ export default function CartSidebar({
   const { items, add, remove, clear } = useCart()
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const t = useTranslations('common')
+  const t = useTranslations()
   const [isLoading, setIsLoading] = useState(false)
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)* rate
 

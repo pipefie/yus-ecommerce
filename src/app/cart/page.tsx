@@ -12,7 +12,7 @@ export default function CartPage() {
   const router = useRouter()
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const t = useTranslations('common')
+  const t = useTranslations()
   interface SessionData {
     user?: { email?: string; id?: string }
   }
@@ -46,7 +46,7 @@ export default function CartPage() {
       <h1 className="font-pixel text-3xl mb-6">{t('your_cart')}</h1>
       <ul className="space-y-4 mb-8">
         {items.map((i)=>(
-          <li key={i.slug} className="flex justify-between">
+          <li key={i.variantId} className="flex justify-between">
             <span>{i.title} × {i.quantity}</span>
             <span>{symbols[currency] || ''}{((i.price*i.quantity*rate)/100).toFixed(2)}</span>
           </li>

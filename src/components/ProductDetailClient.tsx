@@ -46,7 +46,7 @@ export default function ProductDetailClient({ product }: Props) {
   }, [product.printifyId, product.title, product.price])
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const t = useTranslations('common')
+  const t = useTranslations()
   // derive the unique list of colors & sizes
   const colors = useMemo(
     () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),

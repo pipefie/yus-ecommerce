@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProductsPage() {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
-  const t = await getTranslations({ locale: lang, namespace: 'common' })
+  const t = await getTranslations({ locale: lang})
   // 1) Load every product *with* its variants
   const products = await getAllProducts();
 

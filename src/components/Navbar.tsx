@@ -21,7 +21,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
 
-  const t = useTranslations('common')
+  const t = useTranslations()
 
   const links = [
     { href: "/", label: t('home') },

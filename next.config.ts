@@ -1,6 +1,7 @@
 // next.config.ts
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import createNextIntlPlugin from 'next-intl/plugin';
 
 
 const nextConfig: NextConfig = {
@@ -29,5 +30,5 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["react-icons"],
   },
 };
-
-export default withSentryConfig(nextConfig, { silent: true });
+const withNextIntl = createNextIntlPlugin();
+export default withNextIntl(nextConfig);

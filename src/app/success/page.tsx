@@ -13,7 +13,7 @@ export default async function SuccessPage({
 }) {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
-  const t = await getTranslations({ locale: lang, namespace: 'common' })
+  const t = await getTranslations({ locale: lang })
   let items: Stripe.LineItem[] = [];
   let total = 0;
   let currency = 'USD';
