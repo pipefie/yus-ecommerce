@@ -9,7 +9,7 @@ import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import CartSidebar from "./CartSidebar"
-import useTranslation from "next-translate/useTranslation"
+import { useTranslations } from "next-intl"
 import CurrencySwitcher from "./CurrencySwitcher"
 import LanguageSwitcher from "./LanguageSwitcher"
 
@@ -21,7 +21,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
 
-  const { t } = useTranslation('common')
+  const t = useTranslations('common')
 
   const links = [
     { href: "/", label: t('home') },

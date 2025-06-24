@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import HeroSection    from "@/components/HeroSection";
 import AnimatedShapes from "@/components/AnimatedShapes";
 import ProductGrid    from "@/components/ProductGrid";
-import getT from 'next-translate/getT'
+import { getTranslations } from 'next-intl/server'
 // Cached DB helpers avoid repeat queries across components
 import { getAllProducts } from "../lib/products";
+import { cookies } from 'next/headers';
 
 export const revalidate = 60;
 
@@ -16,8 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HomePage({ params }: { params: { locale: string } }) {
-  const t = await getT(params.locale, 'common')
+export default async function HomePage() {
+  const cookie = await cookies();
+  const lang = cookie.get('language')?.value || 'en'
+  const t = await getTranslations({ locale: lang, namespace: 'common' })
   // 1️⃣ pull every product + its variants from the DB
   // cached in src/lib/products.ts to minimize database load
   const products = await getAllProducts();

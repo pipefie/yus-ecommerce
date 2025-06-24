@@ -3,7 +3,8 @@ import ShopClient from "@/components/ShopClient";
 // Use cached helpers for DB access
 import { getAllProducts } from "@/lib/products";
 import type { Metadata } from "next";
-import getT from 'next-translate/getT'
+import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
 
 export const revalidate = 60;
 
@@ -14,8 +15,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ProductsPage({ params }: { params: { locale: string } }) {
-  const t = await getT(params.locale, 'common')
+export default async function ProductsPage() {
+  const cookie = await cookies();
+  const lang = cookie.get('language')?.value || 'en'
+  const t = await getTranslations({ locale: lang, namespace: 'common' })
   // 1) Load every product *with* its variants
   const products = await getAllProducts();
 

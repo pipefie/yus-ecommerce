@@ -2,17 +2,18 @@ import Link from "next/link";
 import { stripe } from "@/utils/stripe";
 import type Stripe from "stripe";
 import PurchaseTracker from "../../components/PurchaseTracker";
-import getT from 'next-translate/getT'
+import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers';
 export const revalidate = 0
 
 export default async function SuccessPage({
-  params,
   searchParams,
 }: {
-  params: { locale: string };
   searchParams: { session_id?: string };
 }) {
-  const t = await getT(params.locale, 'common')
+  const cookie = await cookies();
+  const lang = cookie.get('language')?.value || 'en'
+  const t = await getTranslations({ locale: lang, namespace: 'common' })
   let items: Stripe.LineItem[] = [];
   let total = 0;
   let currency = 'USD';

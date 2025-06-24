@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 import ReviewList from "./ReviewList";
 import { sendGAEvent } from "@/utils/ga";
 import { useCurrency } from "@/context/CurrencyContext";
-import useTranslation from "next-translate/useTranslation";
+import { useTranslations } from "next-intl";
 
 export interface VariantWithImages {
   id:         string;
@@ -46,7 +46,7 @@ export default function ProductDetailClient({ product }: Props) {
   }, [product.printifyId, product.title, product.price])
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const { t } = useTranslation('common')
+  const t = useTranslations('common')
   // derive the unique list of colors & sizes
   const colors = useMemo(
     () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),

@@ -51,6 +51,10 @@ Cloudflare Workers can forward request logs to [Logflare](https://logflare.app/)
 
 The `ci.yml` workflow runs linting, tests and `npm run build` on every push. A Node script `scripts/backup-db.ts` saves `prisma/prisma/dev.db` to the `backups` folder with a timestamp so the SQLite database can be backed up in CI or a cron job.
 
+## Localization
+
+The `LanguageSwitcher` component allows users to change the interface language. Their choice is persisted by the `LanguageContext` in both a `language` cookie and `localStorage` so the preference sticks on reloads.
+
 ## Email and Marketing Integration
 
 Set the following environment variables to enable email and marketing features:

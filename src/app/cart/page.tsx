@@ -4,7 +4,7 @@ import { useCart } from "@/context/CartContext"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useCurrency } from "../../context/CurrencyContext"
-import useTranslation from "next-translate/useTranslation"
+import { useTranslations } from "next-intl"
 
 export default function CartPage() {
   const { items, clear } = useCart()
@@ -12,7 +12,7 @@ export default function CartPage() {
   const router = useRouter()
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const { t } = useTranslation('common')
+  const t = useTranslations('common')
   interface SessionData {
     user?: { email?: string; id?: string }
   }

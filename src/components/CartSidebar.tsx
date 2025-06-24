@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
-import useTranslation from 'next-translate/useTranslation'
+import { useTranslations } from 'next-intl'
 
 export default function CartSidebar({
   open,
@@ -17,7 +17,7 @@ export default function CartSidebar({
   const { items, add, remove, clear } = useCart()
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
-  const { t } = useTranslation('common')
+  const t = useTranslations('common')
   const [isLoading, setIsLoading] = useState(false)
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)* rate
 

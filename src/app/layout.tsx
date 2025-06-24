@@ -6,6 +6,7 @@ import { CartProvider } from "@/context/CartContext";
 import CookieBanner from "../components/CookieBanner";
 import AnalyticsScripts from "../components/AnalyticsScripts";
 import { cookies } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
 
 export const metadata = {
   title: "Y-US? Store",
@@ -19,6 +20,9 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const lang = cookieStore.get("language")?.value || "en";
+  // Load locale messages dynamically from new single-layer JSON files
+  const messages = (await import(`../../locales/${lang}.json`)).default;
+  void messages; // keep for potential future use
   return (
     <html lang={lang} className="scroll-smooth">
       <body
@@ -26,11 +30,13 @@ export default async function RootLayout({
       >
         <Providers>
           <CartProvider>
-            <Navbar/>
-            <AnalyticsScripts />
-            <main>{children}</main>
-            <Footer/>
-            <CookieBanner />
+            <NextIntlClientProvider locale={lang} messages={messages}>
+              <Navbar/>
+              <AnalyticsScripts />
+              <main>{children}</main>
+              <Footer/>
+              <CookieBanner />
+            </NextIntlClientProvider>
           </CartProvider>
         </Providers>
       </body>
