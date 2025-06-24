@@ -121,7 +121,7 @@ export default function Navbar() {
       
       {/* Cart Sidebar (moved outside nav) */}
       <CartSidebar open={open} onClose={() => setOpen(false)} />
-      <CurrencySwitcher />
+      {/*<CurrencySwitcher />*/}
 
       {/* Full-screen Overlay Menu */}
       <div
