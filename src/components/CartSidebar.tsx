@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useTranslations } from 'next-intl'
+import fetchWithCsrf from '@/utils/fetchWithCsrf'
 
 export default function CartSidebar({
   open,
@@ -24,7 +25,7 @@ export default function CartSidebar({
   const handleCheckout = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/checkout', {
+      const res = await fetchWithCsrf('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

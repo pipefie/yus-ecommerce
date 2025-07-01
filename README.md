@@ -20,6 +20,37 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, OAuth providers and database credentials.
+
+```
+STRIPE_SECRET_KEY=your-stripe-key
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+NEXT_PUBLIC_URL=http://localhost:3000
+MONGO_URI=mongodb://localhost:27017/db
+GOOGLE_ID=google-client-id
+GOOGLE_SECRET=google-client-secret
+FACEBOOK_ID=facebook-app-id
+FACEBOOK_SECRET=facebook-app-secret
+NEXT_PUBLIC_GA_ID=ga-id
+NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
+SENTRY_DSN=sentry-server-dsn
+JWT_SECRET=your-jwt-secret
+PRINTIFY_API_KEY=printify-api-key
+PRINTIFY_SHOP_ID=printify-shop-id
+SENDGRID_API_KEY=your-sendgrid-key
+SENDGRID_FROM=from@example.com
+SENDGRID_WELCOME_TEMPLATE=template-id
+MAILCHIMP_API_KEY=your-mailchimp-key
+MAILCHIMP_LIST_ID=list-id
+MAILCHIMP_STORE_ID=store-id
+NEXT_PUBLIC_ALGOLIA_APP_ID=algolia-app-id
+NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=algolia-search-key
+DATABASE_URL=file:./prisma/dev.db
+```
+
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -114,7 +114,6 @@ export default function Navbar() {
               </span>
             )}
           </button>
-          <CartSidebar open={open} onClose={() => setOpen(false)} />
         </div>
 
       </nav>
