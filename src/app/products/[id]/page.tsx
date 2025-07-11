@@ -3,6 +3,7 @@ import { notFound }      from "next/navigation";
 import type { Metadata }  from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import Script from "next/script";
+import DOMPurify from "isomorphic-dompurify";
 // Cached helpers reduce DB round trips for repeated page loads
 import { getProductBySlug, getProductSlugs } from "../../../lib/products";
 
@@ -50,7 +51,7 @@ export default async function ProductPage({ params }: Props) {
     id:          prod.slug,
     printifyId:  prod.printifyId,
     title:       prod.title,
-    description: prod.description,
+    description: DOMPurify.sanitize(prod.description),
     images,               // front/back/etc product images
     price:       prod.price,
     variants:    prod.variants.map((v) => ({

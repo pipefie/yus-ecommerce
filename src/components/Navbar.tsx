@@ -10,7 +10,6 @@ import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 import CartSidebar from "./CartSidebar"
 import { useTranslations } from "next-intl"
-import CurrencySwitcher from "./CurrencySwitcher"
 import LanguageSwitcher from "./LanguageSwitcher"
 
 export default function Navbar() {

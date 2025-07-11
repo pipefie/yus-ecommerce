@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useTranslations } from 'next-intl'
+import getCsrfHeader from '@/utils/getCsrfHeader'
 import fetchWithCsrf from '@/utils/fetchWithCsrf'
 
 export default function CartSidebar({
@@ -20,14 +21,16 @@ export default function CartSidebar({
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
   const t = useTranslations()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0)* rate
 
   const handleCheckout = async () => {
+    setError('')
     setIsLoading(true)
     try {
-      const res = await fetchWithCsrf('/api/checkout', {
+      const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeader() },
         body: JSON.stringify({
           items: items.map(i => ({
             ...i,
@@ -36,10 +39,16 @@ export default function CartSidebar({
           currency
         }),
       })
-      const { url } = await res.json()
+      const data = await res.json()
+      if (!res.ok || !data.url) {
+        setError(data.error || 'Checkout failed')
+        setIsLoading(false)
+        return
+      }
       clear()
-      window.location.href = url
+      window.location.href = data.url
     } catch {
+      setError('Checkout failed')
       setIsLoading(false)
     }
   }
@@ -134,6 +143,9 @@ export default function CartSidebar({
               <span className="font-bold">{symbols[currency] || ''}{(subtotal / 100).toFixed(2)}</span>
             </div>
             <p className="text-xs text-gray-500 mb-4">Delivery calculated at checkout</p>
+            {error && (
+              <p className="text-red-500 text-sm mb-2">{error}</p>
+            )}           
             <button
               onClick={handleCheckout}
               disabled={isLoading}

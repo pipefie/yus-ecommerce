@@ -1,9 +1,8 @@
+import getCsrfHeader from './getCsrfHeader'
+
 export default function fetchWithCsrf(input: RequestInfo | URL, init: RequestInit = {}) {
-  const match = typeof document !== 'undefined'
-    ? document.cookie.match(/(?:^|; )csrfToken=([^;]+)/)
-    : null
-  const token = match ? decodeURIComponent(match[1]) : ''
   const headers = new Headers(init.headers || {})
-  if (token) headers.set('x-csrf-token', token)
+  const csrfHeader = (getCsrfHeader() as { 'x-csrf-token'?: string })['x-csrf-token']
+  if (csrfHeader) headers.set('x-csrf-token', csrfHeader)
   return fetch(input, { ...init, headers })
 }

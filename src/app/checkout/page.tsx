@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
 import Image from 'next/image'
 import Link from 'next/link'
+import getCsrfHeader from '@/utils/getCsrfHeader'
 
 export default function CheckoutPage() {
   const { items, clear } = useCart()
@@ -29,11 +30,13 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('')
   const [saveInfo, setSaveInfo] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'crypto'>('card')
-
+  const [error, setError] = useState('')
+  
   const handleReview = async () => {
+    setError('')
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeader() },
       body: JSON.stringify({
         items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
           slug,
@@ -44,9 +47,13 @@ export default function CheckoutPage() {
         })),
       }),
     })
-    const { url } = await res.json()
+    const data = await res.json()
+    if (!res.ok || !data.url) {
+      setError(data.error || 'Checkout failed')
+      return
+    }
     clear()
-    router.push(url)
+    router.push(data.url)
   }
 
   return (
@@ -275,6 +282,9 @@ export default function CheckoutPage() {
         </div>
 
         {/* Review Order */}
+        {error && (
+          <p className="text-red-500 text-sm mb-2">{error}</p>
+        )}
         <button
           onClick={handleReview}
           className="w-full py-3 bg-green-800 text-white font-bold rounded-lg hover:bg-green-900 transition"

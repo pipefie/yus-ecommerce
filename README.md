@@ -20,6 +20,22 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Mandatory Environment Variables
+
+Before starting the app, create a `.env.local` file in the project root with at least the following variables:
+
+```
+DATABASE_URL=file:./prisma/dev.db
+STRIPE_SECRET_KEY=your-stripe-key
+NEXT_PUBLIC_URL=http://localhost:3000
+```
+
+Then run the Prisma migrations to initialize the local database:
+
+```bash
+npx prisma migrate dev
+```
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, OAuth providers and database credentials.

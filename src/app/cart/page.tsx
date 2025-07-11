@@ -5,11 +5,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useCurrency } from "../../context/CurrencyContext"
 import { useTranslations } from "next-intl"
+import getCsrfHeader from "../../utils/getCsrfHeader"
 import fetchWithCsrf from "../../utils/fetchWithCsrf"
 
 export default function CartPage() {
   const { items, clear } = useCart()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const router = useRouter()
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
@@ -23,20 +25,30 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     setLoading(true)
-    const res = await fetchWithCsrf("/api/stripe/checkout", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
+    setError("")
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getCsrfHeader() },
       body: JSON.stringify({
-        items: items.map(({slug,title,price,quantity,imageUrl})=>({
-          slug, title, price: Math.round(price * rate), quantity, imageUrl
+        items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
+          slug,
+          title,
+          price: Math.round(price * rate),
+          quantity,
+          imageUrl,
         })),
         currency,
         customerEmail: session?.user?.email,
         userId: session?.user?.id,
       }),
     })
-    const { url } = await res.json()
-    router.push(url)
+    const data = await res.json()
+    if (!res.ok || !data.url) {
+      setError(data.error || "Checkout failed")
+      setLoading(false)
+      return
+    }
+    router.push(data.url)
     clear()
   }
 
@@ -56,6 +68,9 @@ export default function CartPage() {
       <div className="flex justify-between font-bold mb-4">
         <span>Total:</span><span>{symbols[currency] || ''}{total.toFixed(2)}</span>
       </div>
+      {error && (
+        <p className="text-red-500 text-sm mb-2 font-pixel">{error}</p>
+      )}
       <button
         onClick={handleCheckout}
         disabled={loading}

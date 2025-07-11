@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
+import getCsrfHeader from "@/utils/getCsrfHeader"
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -20,16 +21,16 @@ export default function SignUpPage() {
 
     const res = await fetch("/api/auth/signup", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getCsrfHeader() },
       body: JSON.stringify(form),
     })
     const data = await res.json()
-    if (!res.ok) {
+    if (!res.ok || !data.url) {
       setError(data.error || "Something went wrong")
       return
     }
     // After signup, redirect to credentials sign-in
-    router.push("/auth/signin")
+    router.push(data.url)
   }
 
   return (

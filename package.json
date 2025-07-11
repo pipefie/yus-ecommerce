@@ -23,6 +23,7 @@
     "dotenv": "^16.5.0",
     "framer-motion": "^12.8.0",
     "gsap": "^3.12.7",
+    "isomorphic-dompurify": "^2.25.0",
     "lucide-react": "^0.503.0",
     "mongoose": "^8.13.2",
     "next": "^15.3.4",
