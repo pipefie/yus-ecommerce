@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
 
 export function assertCsrf(req: NextRequest): NextResponse | null {
   const cookieToken = req.cookies.get('csrfToken')?.value
@@ -10,7 +9,6 @@ export function assertCsrf(req: NextRequest): NextResponse | null {
   return null
 }
 
-export function generateCsrfToken(): { name: string; value: string } {
-  const token = crypto.randomBytes(32).toString('hex')
-  return { name: 'csrfToken', value: token }
+export function generateCsrfToken() {
+  return { name: 'csrfToken', value: crypto.randomUUID()}
 }
