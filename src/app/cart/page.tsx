@@ -5,7 +5,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useCurrency } from "../../context/CurrencyContext"
 import { useTranslations } from "next-intl"
-import getCsrfHeader from "../../utils/getCsrfHeader"
 import fetchWithCsrf from "../../utils/fetchWithCsrf"
 
 export default function CartPage() {
@@ -26,9 +25,9 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setLoading(true)
     setError("")
-    const res = await fetch("/api/stripe/checkout", {
+    const res = await fetchWithCsrf("/api/stripe/checkout", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...getCsrfHeader() },
+      headers: { "Content-Type": "application/json"},
       body: JSON.stringify({
         items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
           slug,

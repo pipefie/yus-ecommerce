@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { useCart, CartItem } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useTranslations } from 'next-intl'
-import getCsrfHeader from '@/utils/getCsrfHeader'
 import fetchWithCsrf from '@/utils/fetchWithCsrf'
 
 export default function CartSidebar({
@@ -28,9 +27,9 @@ export default function CartSidebar({
     setError('')
     setIsLoading(true)
     try {
-      const res = await fetch('/api/checkout', {
+      const res = await fetchWithCsrf('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getCsrfHeader() },
+        headers: { 'Content-Type': 'application/json'},
         body: JSON.stringify({
           items: items.map(i => ({
             ...i,
