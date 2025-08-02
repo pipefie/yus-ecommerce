@@ -28,6 +28,7 @@ Before starting the app, create a `.env.local` file in the project root with at 
 DATABASE_URL=file:./prisma/prisma/dev.db
 STRIPE_SECRET_KEY=your-stripe-key
 NEXT_PUBLIC_URL=http://localhost:3000
+MONGO_URI=mongodb://localhost:27017/db
 ```
 
 Then run the Prisma migrations to initialize the local database:
@@ -52,7 +53,7 @@ FACEBOOK_SECRET=facebook-app-secret
 NEXT_PUBLIC_GA_ID=ga-id
 NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
 SENTRY_DSN=sentry-server-dsn
-JWT_SECRET=your-jwt-secret
+NEXTAUTH_SECRET=your-nextauth-secret
 PRINTIFY_API_KEY=printify-api-key
 PRINTIFY_SHOP_ID=printify-shop-id
 SENDGRID_API_KEY=your-sendgrid-key
@@ -66,6 +67,7 @@ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=algolia-search-key
 DATABASE_URL=file:./prisma/dev.db
 ```
 
+The `dbConnect` helper logs connection failures to the console so you can debug issues with your MongoDB configuration.
 
 ## Learn More
 
@@ -118,3 +120,21 @@ MAILCHIMP_STORE_ID=store-id
 The `/api/email/welcome` endpoint sends a welcome email after signup.
 The `/api/email/invoice` endpoint generates a PDF invoice and emails it to the customer.
 Signups and completed orders are pushed to Mailchimp for marketing automation.
+
+## Security
+
+The application sets various HTTP headers in `middleware.ts` to mitigate common
+web attacks:
+
+- `Content-Security-Policy` restricts which domains can serve content.
+- `X-Frame-Options: DENY` blocks rendering in iframes.
+- `Strict-Transport-Security` forces HTTPS for future requests.
+- `Referrer-Policy: strict-origin-when-cross-origin` limits referrer details.
+- `X-Content-Type-Options: nosniff` prevents MIME type sniffing.
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()` disables these
+  features unless explicitly allowed.
+middleware.ts
++3
+-0
+
+

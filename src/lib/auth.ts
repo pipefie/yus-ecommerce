@@ -54,5 +54,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     newUser: "/auth/signup",
   },
-  jwt: { secret: process.env.JWT_SECRET! },
+  jwt: { secret: process.env.NEXTAUTH_SECRET! },
 }

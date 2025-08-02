@@ -21,7 +21,7 @@ export default function SignUpPage() {
 
     const res = await fetch("/api/auth/signup", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...getCsrfHeader() },
+      headers: { "Content-Type": "application/json", ...await getCsrfHeader() },
       body: JSON.stringify(form),
     })
     const data = await res.json()

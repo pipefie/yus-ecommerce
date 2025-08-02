@@ -1,7 +1,7 @@
 // src/app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { stripe } from "@/utils/stripe"
+import crypto from "node:crypto"
 import Order from "@/models/Order"
 import dbConnect from "@/utils/dbConnect"
 import { pushOrderToMailchimp } from "@/actions/marketing"
@@ -11,15 +11,44 @@ export const config = {
 }
 
 export async function POST(req: Request) {
-  const buf = await req.arrayBuffer()
-  const buffer = Buffer.from(buf)
-  const sig = req.headers.get("stripe-signature")!
-  let event: Stripe.Event
+  if (req.headers.get("x-forwarded-proto") !== "https") {
+    return new NextResponse("Insecure protocol", { status: 400 })
+  }
 
+  const sigHeader = req.headers.get("stripe-signature")
+  if (!sigHeader) {
+    return new NextResponse("Missing Stripe-Signature header", { status: 400 })
+  }
+
+  const [tPart, v1Part] = sigHeader.split(",")
+  const timestamp = Number(tPart?.split("=")[1])
+  const signature = v1Part?.split("=")[1]
+  if (!timestamp || !signature) {
+    return new NextResponse("Invalid Stripe-Signature header", { status: 400 })
+  }
+
+  if (Date.now() - timestamp * 1000 > 5 * 60 * 1000) {
+    return new NextResponse("Stale Stripe signature", { status: 400 })
+  }
+
+  const buf = await req.arrayBuffer()
+  const payload = Buffer.from(buf)
+  const secret = process.env.STRIPE_WEBHOOK_SECRET!
+
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${payload.toString()}`)
+    .digest("hex")
+
+  if (expected !== signature) {
+    return new NextResponse("Invalid signature", { status: 400 })
+  }
+
+  let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(buffer, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = JSON.parse(payload.toString()) as Stripe.Event
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error"
+    const message = err instanceof Error ? err.message : "Invalid payload"
     return new NextResponse(`Webhook Error: ${message}`, { status: 400 })
   }
 

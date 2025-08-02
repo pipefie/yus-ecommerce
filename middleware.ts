@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.JWT_SECRET })
+
+  if (!token || token.role !== 'admin') {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
+
   const res = NextResponse.next()
 
   res.headers.set(
@@ -9,10 +16,13 @@ export function middleware(req: NextRequest) {
   )
   res.headers.set('X-Frame-Options', 'DENY')
   res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
-
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.headers.set('X-Content-Type-Options', 'nosniff')
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  
   if (!req.cookies.get('csrfToken')) {
-    const token = crypto.randomUUID()
-    res.cookies.set('csrfToken', token, {
+    const csrfToken = crypto.randomUUID()
+    res.cookies.set('csrfToken', csrfToken, {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/'
@@ -23,5 +33,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: '/:path*',
+  matcher: '/admin/:path*',
 }

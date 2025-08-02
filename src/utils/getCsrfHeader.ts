@@ -1,7 +1,12 @@
-export default function getCsrfHeader(): HeadersInit {
-  const match = typeof document !== 'undefined'
-    ? document.cookie.match(/(?:^|; )csrfToken=([^;]+)/)
-    : null
-  const token = match ? decodeURIComponent(match[1]) : ''
-  return token ? { 'x-csrf-token': token } : {}
+export default async function getCsrfHeader(): Promise<HeadersInit> {
+  try {
+    const res = await fetch('/api/csrf-token', {
+      credentials: 'include',
+    })
+    if (!res.ok) return {}
+    const data = (await res.json()) as { token?: string }
+    return data.token ? { 'x-csrf-token': data.token } : {}
+  } catch {
+    return {}
+  }
 }

@@ -23,15 +23,28 @@ declare global {
 
 const cache: MongooseCache = global.mongooseGlobal || (global.mongooseGlobal = { conn: null, promise: null })
 
+export function getCachedConnection() {
+  return cache.conn
+}
+
 export default async function dbConnect() {
   if (cache.conn) {
     return cache.conn
   }
   if (!cache.promise) {
-    cache.promise = mongoose.connect(MONGO_URI).then((mongoose) => {
-      return mongoose.connection
-    })
+    cache.promise = mongoose
+      .connect(MONGO_URI)
+      .then((mongoose) => mongoose.connection)
+      .catch((err) => {
+        console.error('MongoDB connection error:', err)
+        throw err
+      })
   }
-  cache.conn = await cache.promise
+  try {
+    cache.conn = await cache.promise
+  } catch (err) {
+    cache.promise = null
+    throw err
+  }
   return cache.conn
 }

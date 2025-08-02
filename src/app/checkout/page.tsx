@@ -36,7 +36,7 @@ export default function CheckoutPage() {
     setError('')
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getCsrfHeader() },
+      headers: { 'Content-Type': 'application/json', ...await getCsrfHeader() },
       body: JSON.stringify({
         items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
           slug,

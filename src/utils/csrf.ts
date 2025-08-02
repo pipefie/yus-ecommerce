@@ -9,6 +9,3 @@ export function assertCsrf(req: NextRequest): NextResponse | null {
   return null
 }
 
-export function generateCsrfToken() {
-  return { name: 'csrfToken', value: crypto.randomUUID()}
-}
