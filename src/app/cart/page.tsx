@@ -29,7 +29,8 @@ export default function CartPage() {
       method: "POST",
       headers: { "Content-Type": "application/json"},
       body: JSON.stringify({
-        items: items.map(({ slug, title, price, quantity, imageUrl }) => ({
+        items: items.map(({ _id, slug, title, price, quantity, imageUrl }) => ({
+          _id,
           slug,
           title,
           price: Math.round(price * rate),

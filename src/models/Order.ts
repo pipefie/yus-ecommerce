@@ -1,10 +1,10 @@
 // src/models/Order.ts
 import mongoose, { Document, Model } from "mongoose"
 
-interface LineItem { productId: mongoose.Types.ObjectId; quantity: number; price: number }
+interface LineItem { productId: string; quantity: number; price: number }
 
 export interface IOrder extends Document {
-  userId?: mongoose.Types.ObjectId       // nullable for guest checkouts
+  userId?: string       // nullable for guest checkouts
   stripeSessionId: string
   items: LineItem[]
   totalAmount: number     // in cents
@@ -20,7 +20,7 @@ const OrderSchema = new mongoose.Schema<IOrder>(
     stripeSessionId: { type: String, required: true, unique: true },
     items: [
       {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+        productId: { type: String, ref: "Product", required: true },
         quantity:  { type: Number, required: true },
         price:     { type: Number, required: true }
       }
