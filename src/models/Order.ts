@@ -16,7 +16,7 @@ export interface IOrder extends Document {
 
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
-    userId:          { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    userId:          { type: String, ref: "User" },
     stripeSessionId: { type: String, required: true, unique: true },
     items: [
       {
@@ -26,7 +26,7 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       }
     ],
     totalAmount: { type: Number, required: true },
-    currency:    { type: String, required: true, default: "usd" },
+    currency:    { type: String, required: true, default: "eur" },
     status:      { type: String, required: true, default: "pending" },
   },
   { timestamps: true }
