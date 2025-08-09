@@ -39,21 +39,21 @@ npx prisma migrate dev
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, OAuth providers and database credentials.
+Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, Auth0 credentials and database configuration.
 
 ```
 STRIPE_SECRET_KEY=your-stripe-key
 STRIPE_WEBHOOK_SECRET=your-webhook-secret
 NEXT_PUBLIC_URL=http://localhost:3000
 MONGO_URI=mongodb://localhost:27017/db
-GOOGLE_ID=google-client-id
-GOOGLE_SECRET=google-client-secret
-FACEBOOK_ID=facebook-app-id
-FACEBOOK_SECRET=facebook-app-secret
+AUTH0_SECRET=your-auth0-secret
+AUTH0_BASE_URL=http://localhost:3000
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+AUTH0_CLIENT_ID=auth0-client-id
+AUTH0_CLIENT_SECRET=auth0-client-secret
 NEXT_PUBLIC_GA_ID=ga-id
 NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
 SENTRY_DSN=sentry-server-dsn
-NEXTAUTH_SECRET=your-nextauth-secret
 PRINTIFY_API_KEY=printify-api-key
 PRINTIFY_SHOP_ID=printify-shop-id
 SENDGRID_API_KEY=your-sendgrid-key
@@ -68,6 +68,10 @@ DATABASE_URL=file:./prisma/dev.db
 ```
 
 The `dbConnect` helper logs connection failures to the console so you can debug issues with your MongoDB configuration.
+
+### Auth0 Setup
+
+Create an Auth0 tenant and configure a Database Connection for username/password users. Enable the Google social connection and the WebAuthn passkey connection in your tenant, then populate the `AUTH0_*` variables above with your credentials.
 
 ## Learn More
 
@@ -133,8 +137,5 @@ web attacks:
 - `X-Content-Type-Options: nosniff` prevents MIME type sniffing.
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()` disables these
   features unless explicitly allowed.
-middleware.ts
-+3
--0
 
 

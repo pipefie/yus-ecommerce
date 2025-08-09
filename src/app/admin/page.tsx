@@ -1,10 +1,10 @@
-import { getServerSession } from "next-auth/next"
+import auth0 from "@/lib/auth0"
 import { redirect } from "next/navigation"
-import { authOptions } from "../api/auth/[...nextauth]/route"
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') {
+  const session = await auth0.getSession()
+  const user = session?.user as { role?: string } | undefined
+  if (!session || user?.role !== 'admin') {
     redirect("/")
   }
   return (

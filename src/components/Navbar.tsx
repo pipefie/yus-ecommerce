@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSession, signOut } from "next-auth/react"
+import { useUser } from "@auth0/nextjs-auth0/client"
 import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import LanguageSwitcher from "./LanguageSwitcher"
 
 export default function Navbar() {
-  const { data: session } = useSession()
+  const { user } = useUser()
   const [menuOpen, setMenuOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const { items } = useCart()
@@ -64,26 +64,19 @@ export default function Navbar() {
             </button>
             {authOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-black/90 backdrop-blur p-3 rounded-lg shadow-neon">
-                {!session ? (
+                {!user ? (
                   <>
                     <Link
-                      href="/auth/signin"
+                      href="/auth/login"
                       className="block px-2 py-1 text-white font-pixel hover:text-neon"
                       onClick={() => setAuthOpen(false)}
                     >
                       Sign In
                     </Link>
-                    <Link
-                      href="/auth/signup"
-                      className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
                   </>
                 ) : (
                   <button
-                    onClick={() => { signOut(); setAuthOpen(false) }}
+                    onClick={() => { window.location.href = "/api/auth/logout"; setAuthOpen(false) }}
                     className="w-full text-left px-2 py-1 text-white font-pixel hover:text-neon"
                   >
                     Sign Out

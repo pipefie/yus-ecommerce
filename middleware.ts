@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { getSession } from '@auth0/nextjs-auth0/edge'
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.JWT_SECRET })
+  const res = NextResponse.next()
+  const session = await getSession(req, res)
+  const user = session?.user as { role?: string } | undefined
 
-  if (!token || token.role !== 'admin') {
+  if (!session || user?.role !== 'admin') {
     return NextResponse.redirect(new URL('/', req.url))
   }
-
-  const res = NextResponse.next()
 
   res.headers.set(
     'Content-Security-Policy',

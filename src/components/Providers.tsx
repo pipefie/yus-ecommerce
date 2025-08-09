@@ -1,18 +1,18 @@
 "use client"
 
-import { SessionProvider } from "next-auth/react"
+import { UserProvider } from "@auth0/nextjs-auth0/client"
 import { ReactNode } from "react"
 import { CurrencyProvider } from "@/context/CurrencyContext"
 import { LanguageProvider } from "@/context/LanguageContext"
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider>
+    <UserProvider>
       <CurrencyProvider>
         <LanguageProvider>
           {children}
         </LanguageProvider>
       </CurrencyProvider>
-    </SessionProvider>
+    </UserProvider>
   )
 }

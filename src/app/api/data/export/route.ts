@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import auth0 from "@/lib/auth0"
 import dbConnect from "@/utils/dbConnect"
 import User from "@/models/User"
 import Order from "@/models/Order"
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
+  const session = await auth0.getSession()
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
   await dbConnect()
-  const user = await User.findById(session.user.id).lean()
-  const orders = await Order.find({ userId: session.user.id }).lean()
+  const userId = (session.user as { sub: string }).sub
+  const user = await User.findById(userId).lean()
+  const orders = await Order.find({ userId }).lean()
   return NextResponse.json({ user, orders })
 }
