@@ -10,5 +10,19 @@
   "checkout": "Commander",
   "thank_you": "Merci pour votre commande !",
   "back_to_shop": "Retour à la boutique",
-  "add_to_cart": "Ajouter au panier"
+  "add_to_cart": "Ajouter au panier",
+  "cookie_policy_title": "Politique de cookies",
+  "cookie_policy_intro": "Nous utilisons des cookies pour comprendre comment les visiteurs utilisent notre site. Les cookies d’analyse et de marketing ne sont chargés que si vous les acceptez.",
+  "cookie_essential_title": "Cookies essentiels",
+  "cookie_essential_purpose": "Nécessaires au fonctionnement de base du site, comme la mémorisation de votre panier et de votre session.",
+  "cookie_essential_duration": "Stockés uniquement pendant la session.",
+  "cookie_analytics_title": "Cookies d’analyse",
+  "cookie_analytics_purpose": "Nous aident à comprendre comment les visiteurs interagissent avec le site.",
+  "cookie_analytics_duration": "Stockés pendant 12 mois.",
+  "cookie_marketing_title": "Cookies marketing",
+  "cookie_marketing_purpose": "Utilisés pour personnaliser les offres et mesurer la performance des campagnes.",
+  "cookie_marketing_duration": "Stockés pendant 6 mois.",
+  "cookie_preferences_intro": "Vous pouvez modifier vos préférences de cookies à tout moment via la",
+  "cookie_preferences_link": "bannière de consentement",
+  "cookie_preferences_outro": "située en bas de la page."
 }

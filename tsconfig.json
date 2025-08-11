@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "@testing-library/jest-dom"],
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -24,5 +24,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "scripts/sync-printify.mts", "scripts/cleanup-variants.mts", "next-intl.config.js"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "tests"] 
 }

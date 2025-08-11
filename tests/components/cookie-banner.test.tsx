@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import CookieBanner from '@/components/CookieBanner'
+import CookieBanner from '../../src/components/CookieBanner'
 
 jest.mock('react-cookie-consent', () => ({
   __esModule: true,

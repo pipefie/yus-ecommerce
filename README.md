@@ -65,13 +65,20 @@ MAILCHIMP_STORE_ID=store-id
 NEXT_PUBLIC_ALGOLIA_APP_ID=algolia-app-id
 NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=algolia-search-key
 DATABASE_URL=file:./prisma/dev.db
+AUTH0_DOMAIN=your-auth0-domain
+AUTH0_CLIENT_ID=your-auth0-client-id
+AUTH0_CLIENT_SECRET=your-auth0-client-secret
 ```
 
 The `dbConnect` helper logs connection failures to the console so you can debug issues with your MongoDB configuration.
 
-### Auth0 Setup
+## Auth0 Setup
 
-Create an Auth0 tenant and configure a Database Connection for username/password users. Enable the Google social connection and the WebAuthn passkey connection in your tenant, then populate the `AUTH0_*` variables above with your credentials.
+1. Sign up for [Auth0](https://auth0.com) and create a new tenant.
+2. Create a **Regular Web Application** in the Auth0 dashboard and note the domain, client ID and client secret.
+3. Add `http://localhost:3000/api/auth/callback/auth0` and your production URL to the application's **Allowed Callback URLs**.
+4. Define roles under **User Management → Roles** (e.g. `admin`, `customer`) and assign them to users.
+5. Set `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET` in your `.env.local` file.
 
 ## Learn More
 
@@ -91,6 +98,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Analytics
 
 Google Analytics 4 is loaded only after the user accepts cookies. Ecommerce events (`view_item`, `add_to_cart`, `purchase`) are dispatched via `window.gtag` once consent is granted.
+
+## Cookies and Session Security
+
+On first visit the site displays a banner requesting cookie consent. Tracking scripts are loaded only after consent is given. Any UTM parameters present in the landing URL are persisted in cookies (e.g. `utm_source`, `utm_medium`, `utm_campaign`) for 30 days so later signups and purchases can be attributed to the original campaign.
+
+Authentication sessions rely on HTTP-only cookies that include the `Secure` flag in production and `SameSite=Lax` to mitigate CSRF. Tokens are rotated on sign‑in and cleared on logout to reduce the risk of session fixation.
+
 
 ## Error monitoring
 

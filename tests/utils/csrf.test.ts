@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { assertCsrf } from '@/utils/csrf'
+import { assertCsrf } from '../../src/utils/csrf'
 
 describe('assertCsrf', () => {
   it('returns null when tokens match', () => {

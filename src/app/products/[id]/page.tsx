@@ -6,6 +6,7 @@ import Script from "next/script";
 import DOMPurify from "isomorphic-dompurify";
 // Cached helpers reduce DB round trips for repeated page loads
 import { getProductBySlug, getProductSlugs } from "../../../lib/products";
+import { ST } from "next/dist/shared/lib/utils"; 
 
 type Props = { params: { id: string } };
 export const revalidate = 60;
@@ -13,7 +14,7 @@ export const revalidate = 60;
 // generateStaticParams so Turbopack will pre-render each slug
 export async function generateStaticParams(): Promise<Props["params"][]> {
   const slugs = await getProductSlugs();
-  return slugs.map((s) => ({ id: s }));
+  return slugs.map((s: string) => ({ id: s }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // coerce JSON → string[]
   const imgs = Array.isArray(prod.images)
-    ? prod.images.filter((x): x is string => typeof x === "string")
+    ? prod.images.filter((x: unknown): x is string => typeof x === "string")
     : [];
 
   const clean = prod.description.replace(/<\/?[^>]+>/g, "").slice(0, 160);
@@ -44,7 +45,7 @@ export default async function ProductPage({ params }: Props) {
 
   // coerce JSON → string[]
   const images = Array.isArray(prod.images)
-    ? prod.images.filter((x): x is string => typeof x === "string")
+    ? prod.images.filter((x: unknown): x is string => typeof x === "string")
     : [];
 
   const detail = {
@@ -54,13 +55,19 @@ export default async function ProductPage({ params }: Props) {
     description: DOMPurify.sanitize(prod.description),
     images,               // front/back/etc product images
     price:       prod.price,
-    variants:    prod.variants.map((v) => ({
+    variants:    prod.variants.map((v: {
+    id: string | number
+    color: string
+    size: string
+    price: number
+    designUrls: unknown
+    }) => ({
       id:         String(v.id),
       color:      v.color,
       size:       v.size,
       price:      v.price,
       designUrls: Array.isArray(v.designUrls)
-        ? v.designUrls.filter((x): x is string => typeof x === "string")
+        ? v.designUrls.filter((x: unknown): x is string => typeof x === "string")
         : [],
     })),
   };

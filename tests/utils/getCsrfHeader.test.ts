@@ -1,4 +1,4 @@
-import getCsrfHeader from '@/utils/getCsrfHeader'
+import getCsrfHeader from '../../src/utils/getCsrfHeader'
 
 describe('getCsrfHeader', () => {
   beforeEach(() => {

@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useUser } from "@auth0/nextjs-auth0/client"
+import { useUser } from "@auth0/nextjs-auth0"
 import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
@@ -76,7 +76,7 @@ export default function Navbar() {
                   </>
                 ) : (
                   <button
-                    onClick={() => { window.location.href = "/api/auth/logout"; setAuthOpen(false) }}
+                    onClick={() => { window.location.href = "/auth/logout"; setAuthOpen(false) }}
                     className="w-full text-left px-2 py-1 text-white font-pixel hover:text-neon"
                   >
                     Sign Out

@@ -1,15 +1,14 @@
 "use client"
 import { useEffect, useState } from "react"
 import Script from "next/script"
+import { getConsentCookie } from "@/utils/cookies"
 
 export default function AnalyticsScripts() {
   const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const consent = localStorage.getItem("cookieConsent")
-      if (consent === "true") setEnabled(true)
-    }
+    const consent = getConsentCookie()
+    if (consent === "true") setEnabled(true)
   }, [])
 
   if (!enabled) return null
