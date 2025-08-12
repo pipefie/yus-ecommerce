@@ -62,28 +62,46 @@ export default function Navbar() {
             >
               <User size={28} />
             </button>
-            {authOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-black/90 backdrop-blur p-3 rounded-lg shadow-neon">
-                {!user ? (
-                  <>
-                    <Link
-                      href="/auth/login"
-                      className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => { window.location.href = "/auth/logout"; setAuthOpen(false) }}
-                    className="w-full text-left px-2 py-1 text-white font-pixel hover:text-neon"
-                  >
-                    Sign Out
-                  </button>
-                )}
-              </div>
-            )}
+              {authOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-black/90 backdrop-blur p-3 rounded-lg shadow-neon">
+                  {!user ? (
+                    <>
+                      <Link
+                        href="/signin"
+                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      {/* Optional: show Account when logged in */}
+                      <Link
+                        href="/account"
+                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Account
+                      </Link>
+                      <a
+                        href="/auth/logout?returnTo=/"
+                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign Out
+                      </a>
+                    </>
+                  )}
+                </div>
+              )}
           </div>
           {/* Menu Toggle */}
           <button
