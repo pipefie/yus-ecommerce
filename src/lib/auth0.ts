@@ -5,7 +5,7 @@ const auth0 = new Auth0Client({
   // You can omit these if you set the env vars below; keeping here for clarity
   domain: process.env.AUTH0_DOMAIN,
   clientId: process.env.AUTH0_CLIENT_ID,
-  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  clientSecret: process.env.APP_BASE_URL ?? process.env.AUTH0_BASE_URL ?? 'http://localhost:3000',
   appBaseUrl: process.env.APP_BASE_URL,
   secret: process.env.AUTH0_SECRET,
   authorizationParameters: {
