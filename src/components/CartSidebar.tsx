@@ -82,7 +82,7 @@ export default function CartSidebar({
 
         {/* items */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 divide-y">
-          {items.length === 0 && <p className="text-gray-500">{t('your_cart')} is empty.</p>}
+          {items.length === 0 && <p className="text-gray-500">{t('cart_empty')}</p>}
           {items.map((item: CartItem) => (
             <div key={item.variantId} className="flex space-x-4 py-4 text-black">
               <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden">

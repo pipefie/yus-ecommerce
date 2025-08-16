@@ -51,6 +51,7 @@ model User {
   role           String   @default("user")
   newsletterOptIn Boolean @default(false)
   orders         Order[]
+  events         UserEvent[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -66,7 +67,7 @@ model Order {
   id             Int      @id @default(autoincrement())
   userId         Int?
   user           User?    @relation(fields: [userId], references: [id])
-  stripeSessionId String       @unique  
+  stripeSessionId String       @unique
   items          Json
   totalAmount    Int
   currency       String   @default("eur")
@@ -74,4 +75,16 @@ model Order {
   trackingNumber String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model UserEvent {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  user       User?   @relation(fields: [userId], references: [id])
+  sessionId  String
+  event      String
+  entityType String
+  entityId   String?
+  metadata   Json
+  ts         DateTime @default(now())
 }

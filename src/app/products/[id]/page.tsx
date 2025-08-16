@@ -3,10 +3,8 @@ import { notFound }      from "next/navigation";
 import type { Metadata }  from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import Script from "next/script";
-import DOMPurify from "isomorphic-dompurify";
 // Cached helpers reduce DB round trips for repeated page loads
 import { getProductBySlug, getProductSlugs } from "../../../lib/products";
-import { ST } from "next/dist/shared/lib/utils"; 
 
 type Props = { params: { id: string } };
 export const revalidate = 60;
@@ -38,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
+  const DOMPurify = (await import("isomorphic-dompurify")).default;
   const { id: slug } = await params;
 
   const prod = await getProductBySlug(slug);

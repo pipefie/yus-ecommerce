@@ -47,8 +47,8 @@ STRIPE_WEBHOOK_SECRET=your-webhook-secret
 NEXT_PUBLIC_URL=http://localhost:3000
 MONGO_URI=mongodb://localhost:27017/db
 AUTH0_SECRET=your-auth0-secret
-AUTH0_BASE_URL=http://localhost:3000
-AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+APP_BASE_URL=http://localhost:3000
+AUTH0_DOMAIN=your-auth0-domain
 AUTH0_CLIENT_ID=auth0-client-id
 AUTH0_CLIENT_SECRET=auth0-client-secret
 NEXT_PUBLIC_GA_ID=ga-id
@@ -99,6 +99,10 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 Google Analytics 4 is loaded only after the user accepts cookies. Ecommerce events (`view_item`, `add_to_cart`, `purchase`) are dispatched via `window.gtag` once consent is granted.
 
+### User events
+
+Lightweight analytics events are queued in the browser and sent to `/api/events` when the page loses visibility. Events include a random session identifier and optional user id; IP addresses are not stored. Collection only begins after the user accepts the cookie banner so no tracking occurs without consent. Avoid sending personally identifiable information in the `metadata` field to keep records anonymized.
+
 ## Cookies and Session Security
 
 On first visit the site displays a banner requesting cookie consent. Tracking scripts are loaded only after consent is given. Any UTM parameters present in the landing URL are persisted in cookies (e.g. `utm_source`, `utm_medium`, `utm_campaign`) for 30 days so later signups and purchases can be attributed to the original campaign.
@@ -113,6 +117,10 @@ The project uses the Sentry SDK for both client and server error tracking. Provi
 ## Request logging
 
 Cloudflare Workers can forward request logs to [Logflare](https://logflare.app/) for long term storage and dashboards. Point your Worker at the Logflare endpoint and include your source token.
+
+## Rate limiting
+
+Stripe API requests automatically retry up to two times with a 10-second timeout to handle transient errors and avoid hitting rate limits.
 
 ## CI / Backups
 

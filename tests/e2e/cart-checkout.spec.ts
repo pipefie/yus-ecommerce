@@ -1,21 +1,14 @@
 import { NextRequest } from 'next/server'
 import { POST } from '../../src/app/api/stripe/checkout/route'
 import { stripe } from '../../src/utils/stripe'
-import dbConnect from '../../src/utils/dbConnect'
-import Order from '../../src/models/Order'
+import { prisma } from '../../src/lib/prisma'
 
 jest.mock('../../src/utils/stripe', () => ({
   stripe: { checkout: { sessions: { create: jest.fn() } } },
 }))
 
-jest.mock('../../src/utils/dbConnect', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
-
-jest.mock('../../src/models/Order', () => ({
-  __esModule: true,
-  default: { create: jest.fn() },
+jest.mock('../../src/lib/prisma', () => ({
+  prisma: { order: { create: jest.fn() } },
 }))
 
 process.env.NEXT_PUBLIC_URL = 'http://localhost:3000'
@@ -46,8 +39,10 @@ describe('checkout API', () => {
 
     const res = await POST(req)
     expect(stripe.checkout.sessions.create).toHaveBeenCalled()
-    expect(Order.create).toHaveBeenCalledWith(
-      expect.objectContaining({ stripeSessionId: 'sess_123' })
+    expect(prisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ stripeSessionId: 'sess_123' }),
+      })
     )
     const data = await res.json()
     expect(data.url).toBe(session.url)

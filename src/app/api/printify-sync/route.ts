@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getRequestLogger } from "@/lib/logger"
 import {
   fetchPrintifyProducts,
   fetchPrintifyProductDetail,
@@ -7,7 +8,8 @@ import {
   mapToDetail,
 } from "@/utils/printify"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const logger = getRequestLogger(req)
   try {
 
     const rawList = await fetchPrintifyProducts()

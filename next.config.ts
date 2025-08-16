@@ -8,20 +8,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     minimumCacheTTL: 60,
-    // Whitelist Printify’s mockup host
+    // Whitelist Printful image hosts
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images-api.printify.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "images.printify.com",
-        port: "",
-        pathname: "/**",
-      },
+      { protocol: "https", hostname: "files.cdn.printful.com", pathname: "/**" },
+      { protocol: "https", hostname: "img.printful.com", pathname: "/**" },
     ],
   },
 

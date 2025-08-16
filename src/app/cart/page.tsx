@@ -42,7 +42,7 @@ export default function CartPage() {
   }
 
   if (!items.length) {
-    return <p className="pt-20 text-center">{t("your_cart")} {t("is_empty") ?? "is empty"}</p>
+    return <p className="pt-20 text-center">{t('cart_empty')}</p>
   }
 
   return (

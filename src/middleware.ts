@@ -6,14 +6,22 @@ const UTM_PARAMS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_con
 const isProd = process.env.NODE_ENV === 'production';
 
 export async function middleware(req: NextRequest) {
+  // Generate or reuse a requestId so logs can be correlated
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+  req.headers.set('x-request-id', requestId);
   // 1) Always run the SDK middleware so /auth/* handlers are mounted
   const sdkRes = await auth0.middleware(req);
 
   // 2) Let Auth0 own /auth/* routes entirely
-  if (req.nextUrl.pathname.startsWith('/auth/')) return sdkRes;
+  if (req.nextUrl.pathname.startsWith('/auth/')) {
+    const authRes = sdkRes instanceof NextResponse ? sdkRes : NextResponse.next();
+    authRes.headers.set('x-request-id', requestId);
+    return authRes;
+  }
 
   // 3) For the rest, start from the SDK response (or next())
   const res = sdkRes instanceof NextResponse ? sdkRes : NextResponse.next();
+  res.headers.set('x-request-id', requestId);
 
   // 4) RBAC for /admin (only when needed)
   if (req.nextUrl.pathname.startsWith('/admin')) {
@@ -27,15 +35,19 @@ export async function middleware(req: NextRequest) {
   // 5) Security headers
   // Send strong CSP ONLY in production; dev needs inline/eval for HMR
   if (isProd) {
+    const connectSrc = ["'self'", 'https://api.printful.com', 'https://api.stripe.com'];
+    if (process.env.AUTH0_DOMAIN) {
+      connectSrc.push(`https://${process.env.AUTH0_DOMAIN}`);
+    }
     res.headers.set(
       'Content-Security-Policy',
       [
         "default-src 'self'",
         "script-src 'self'",                                  // no inline/eval in prod
         "style-src 'self'",
-        "img-src 'self' https://images.printify.com https://images-api.printify.com data:",
+        "img-src 'self' https://files.cdn.printful.com https://img.printful.com data:",
         "font-src 'self' data:",
-        "connect-src 'self'",
+        `connect-src ${connectSrc.join(' ')}`,
         "frame-ancestors 'none'",
         "base-uri 'self'",
       ].join('; ')

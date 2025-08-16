@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import fetch from 'node-fetch'
+import { getRequestLogger } from '@/lib/logger'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const logger = getRequestLogger(req)
   const orders = await prisma.order.findMany({ where: { trackingNumber: { not: null } } })
   for (const order of orders) {
     try {
@@ -12,7 +14,7 @@ export async function POST() {
       await prisma.order.update({ where: { id: order.id }, data: { status: data.tracking_status?.status } })
       // TODO: adjust inventory levels based on order items
     } catch (err) {
-      console.error('Track update failed', err)
+      logger.error('Track update failed', err)
     }
   }
   return NextResponse.json({ ok: true })

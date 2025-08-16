@@ -9,4 +9,6 @@ if (!secretKey) {
 export const stripe = new Stripe(secretKey, {
   // You can add `maxNetworkRetries`, `timeout`, etc. here
   // Leave apiVersion unset to use your account's default (e.g. "2025-03-31.basil")
+    maxNetworkRetries: 2,
+    timeout: 10000,
 })
