@@ -1,22 +1,20 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getRequestLogger } from "@/lib/logger"
 import {
-  fetchPrintifyProducts,
-  fetchPrintifyProductDetail,
+  fetchPrintfulProducts,
+  fetchPrintfulProductDetail,
   mapToSummary,
   mapToDetail,
-} from "@/utils/printify"
+} from "@/utils/printful"
 
-export async function GET(req: NextRequest) {
-  const logger = getRequestLogger(req)
+export async function GET() {
   try {
 
-    const rawList = await fetchPrintifyProducts()
+    const rawList = await fetchPrintfulProducts()
     const summaries = rawList.map(mapToSummary)
 
     for (const sum of summaries) {
-      const rawDetail = await fetchPrintifyProductDetail(sum.printifyId)
+      const rawDetail = await fetchPrintfulProductDetail(sum.printfulProductId)
       const detail = mapToDetail(sum.slug, rawDetail)
       const basePrice =
         detail.variants.reduce(
@@ -24,8 +22,8 @@ export async function GET(req: NextRequest) {
           Infinity
         ) || 0
 
- await prisma.product.upsert({
-        where: { printifyId: String(detail.printifyId) },
+      await prisma.product.upsert({
+        where: { printfulProductId: String(detail.printfulProductId) },
         update: {
           slug:        detail.slug,
           title:       detail.title,
@@ -35,7 +33,7 @@ export async function GET(req: NextRequest) {
           images:      detail.images,
         },
         create: {
-          printifyId:  String(detail.printifyId),
+          printfulProductId:  String(detail.printfulProductId),
           slug:        detail.slug,
           title:       detail.title,
           description: detail.description,
@@ -47,9 +45,9 @@ export async function GET(req: NextRequest) {
 
       for (const v of detail.variants) {
         await prisma.variant.upsert({
-          where: { printifyId: String(v.id) },
+          where: { printfulVariantId: String(v.id) },
           update: {
-            product:    { connect: { printifyId: String(detail.printifyId) } },
+            product:    { connect: { printfulProductId: String(detail.printfulProductId) } },
             price:      v.price,
             color:      v.color,
             size:       v.size,
@@ -58,8 +56,8 @@ export async function GET(req: NextRequest) {
             designUrls: v.designUrls,
           },
           create: {
-            printifyId: String(v.id),
-            product:    { connect: { printifyId: String(detail.printifyId) } },
+            printfulVariantId: String(v.id),
+            product:    { connect: { printfulProductId: String(detail.printfulProductId) } },
             price:      v.price,
             color:      v.color,
             size:       v.size,

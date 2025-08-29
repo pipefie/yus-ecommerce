@@ -15,30 +15,76 @@ datasource db {
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
-  printifyId  String    @unique
-  slug        String    @unique
-  title       String
-  description String
-  price       Int // in cents
-  imageUrl    String // default product‐level image
-  images      Json // JSON array of image URLs
-  variants    Variant[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                Int       @id @default(autoincrement())
+  printfulProductId String    @unique
+  slug              String    @unique
+  title             String
+  description       String
+  price             Int // in cents
+  imageUrl          String // default product‐level image
+  images            Json // JSON array of image URLs
+  variants          Variant[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model Variant {
+  id                Int      @id @default(autoincrement())
+  printfulVariantId String   @unique
+  productId         Int
+  size              String
+  color             String
+  price             Int // in cents
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl          String // the primary mockup for that variant
+  previewUrl        String // you can use same as imageUrl or a thumbnail
+  designUrls        Json // JSON array of all mockup URLs (front/back/etc)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model User {
+  id              Int         @id @default(autoincrement())
+  email           String      @unique
+  name            String
+  password        String
+  role            String      @default("user")
+  newsletterOptIn Boolean     @default(false)
+  orders          Order[]
+  events          UserEvent[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  refunded
+}
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  userId          Int?
+  user            User?    @relation(fields: [userId], references: [id])
+  stripeSessionId String   @unique
+  items           Json
+  totalAmount     Int
+  currency        String   @default("eur")
+  status          String   @default("pending")
+  trackingNumber  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UserEvent {
   id         Int      @id @default(autoincrement())
-  printifyId String   @unique
-  productId  Int
-  size       String
-  color      String
-  price      Int // in cents
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  imageUrl   String // the primary mockup for that variant
-  previewUrl String // you can use same as imageUrl or a thumbnail
-  designUrls Json // JSON array of all mockup URLs (front/back/etc)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  sessionId  String
+  event      String
+  entityType String
+  entityId   String?
+  metadata   Json
+  ts         DateTime @default(now())
 }

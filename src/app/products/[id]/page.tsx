@@ -49,7 +49,7 @@ export default async function ProductPage({ params }: Props) {
 
   const detail = {
     id:          prod.slug,
-    printifyId:  prod.printifyId,
+    printfulProductId:  prod.printfulProductId,
     title:       prod.title,
     description: DOMPurify.sanitize(prod.description),
     images,               // front/back/etc product images

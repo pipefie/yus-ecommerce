@@ -1,11 +1,11 @@
-// src/utils/printify.ts
+// src/utils/printful.ts
 import slugify from "slugify";
 
-const BASE   = "https://api.printify.com/v1";
-const TOKEN  = process.env.PRINTIFY_API_KEY!;
-const SHOPID = process.env.PRINTIFY_SHOP_ID!;
+const BASE   = "https://api.printful.com";
+const TOKEN  = process.env.PRINTFUL_API_KEY!;
+const STOREID = process.env.PRINTFUL_STORE_ID!;
 
-async function callPrintify(path: string, opts: RequestInit = {}) {
+async function callPrintful(path: string, opts: RequestInit = {}) {
   const res = await fetch(BASE + path, {
     ...opts,
     headers: {
@@ -16,14 +16,14 @@ async function callPrintify(path: string, opts: RequestInit = {}) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Printify ${path} → ${res.status}\n${text}`);
+    throw new Error(`Printful ${path} → ${res.status}\n${text}`);
   }
-  return (await res.json()).data;
+  return (await res.json()).result;
 }
 
 /** Top‐level product summary for catalog pages */
 export interface SummaryProduct {
-  printifyId: number;
+  printfulProductId: number;
   slug:       string;
   title:      string;
   description:string;
@@ -31,32 +31,32 @@ export interface SummaryProduct {
   thumbnail:  string;
 }
 
-interface RawPrintifyFile {
+interface RawPrintfulFile {
   src: string
 }
 
-interface RawPrintifyVariant {
+interface RawPrintfulVariant {
   id: number
   price: number
   title?: string
-  files?: RawPrintifyFile[]
+  files?: RawPrintfulFile[]
 }
 
-interface RawPrintifyProduct {
+interface RawPrintfulProduct {
   id: number
   title?: string
   description?: string
-  images?: RawPrintifyFile[]
-  variants: RawPrintifyVariant[]
+  images?: RawPrintfulFile[]
+  variants: RawPrintfulVariant[]
 }
 
-export async function fetchPrintifyProducts(): Promise<RawPrintifyProduct[]> {
-  // Printify paginates at 50 max
+export async function fetchPrintfulProducts(): Promise<RawPrintfulProduct[]> {
+  // Printful paginates at 50 max
   let page = 1;
-  const all: RawPrintifyProduct[] = [];
+  const all: RawPrintfulProduct[] = [];
   while (true) {
-    const batch: RawPrintifyProduct[] = await callPrintify(
-      `/shops/${SHOPID}/products.json?page=${page}&limit=50`
+    const batch: RawPrintfulProduct[] = await callPrintful(
+      `/stores/${STOREID}/products?page=${page}&limit=50`
     );
     if (!batch.length) break;
     all.push(...batch);
@@ -65,11 +65,11 @@ export async function fetchPrintifyProducts(): Promise<RawPrintifyProduct[]> {
   return all;
 }
 
-export function mapToSummary(p: RawPrintifyProduct): SummaryProduct {
+export function mapToSummary(p: RawPrintfulProduct): SummaryProduct {
   const firstImage   = p.images?.[0]?.src || "/placeholder.png";
   const firstVariant = p.variants?.[0] || { price: 0 };
   return {
-    printifyId: p.id,
+    printfulProductId: p.id,
     slug:       slugify(p.title || `#${p.id}`, { lower: true, strict: true }),
     title:      String(p.title),
     description:p.description || "",
@@ -88,7 +88,7 @@ export interface DetailedVariant {
 }
 
 export interface DetailedProduct {
-  printifyId: number;
+  printfulProductId: number;
   slug:       string;
   title:      string;
   description:string;
@@ -97,30 +97,28 @@ export interface DetailedProduct {
   variants:   DetailedVariant[];
 }
 
-export async function fetchPrintifyProductDetail(
+export async function fetchPrintfulProductDetail(
   productId: number
-): Promise<RawPrintifyProduct> {
-  // callPrintify() returns the JSON body { data: { … } }
-  const json = await callPrintify(`/shops/${SHOPID}/products/${productId}.json`);
-  return json.data;       // ← unwrap here so raw.images exists
+): Promise<RawPrintfulProduct> {
+  return await callPrintful(`/stores/${STOREID}/products/${productId}`);
 }
 
 export function mapToDetail(
   slug: string,
-  raw:  RawPrintifyProduct
+  raw:  RawPrintfulProduct
 ): DetailedProduct {
   // fallback product‐level images
   const images = Array.isArray(raw.images)
-    ? raw.images.map((i: RawPrintifyFile) => i.src)
+    ? raw.images.map((i: RawPrintfulFile) => i.src)
     : [];
 
-  const variants: DetailedVariant[] = raw.variants.map((v: RawPrintifyVariant) => {
+  const variants: DetailedVariant[] = raw.variants.map((v: RawPrintfulVariant) => {
     const [ color = "Default", size = "One Size" ] =
       (v.title || "").split("/").map((s:string)=>s.trim());
 
     // v.files are the mockup previews per print area
     const designUrls = Array.isArray(v.files) && v.files.length > 0
-      ? v.files.map((f: RawPrintifyFile) => f.src)
+      ? v.files.map((f: RawPrintfulFile) => f.src)
       : images.length
         ? [images[0]]
         : ["/placeholder.png"];
@@ -135,7 +133,7 @@ export function mapToDetail(
   });
 
   return {
-    printifyId: raw.id,
+    printfulProductId: raw.id,
     slug,
     title:      String(raw.title),
     description: String(raw.description || ""),

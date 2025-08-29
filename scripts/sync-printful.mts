@@ -5,15 +5,15 @@ import slugify from 'slugify'
 import { PrismaClient } from '@prisma/client'  // ← your generated client
 
 const prisma    = new PrismaClient()
-const SHOP_ID   = process.env.PRINTIFY_SHOP_ID!
-const API_TOKEN = process.env.PRINTIFY_API_KEY!
+const STORE_ID  = process.env.PRINTFUL_STORE_ID!
+const API_TOKEN = process.env.PRINTFUL_API_KEY!
 
 async function fetchAllProducts(): Promise<any[]> {
   let page = 1
   const out: any[] = []
 
   while (true) {
-    const url = `https://api.printify.com/v1/shops/${SHOP_ID}/products.json?page=${page}&limit=50`
+    const url = `https://api.printful.com/stores/${STORE_ID}/products?page=${page}&limit=50`
     console.log('📦 GET', url)
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${API_TOKEN}` },
@@ -31,7 +31,7 @@ async function fetchAllProducts(): Promise<any[]> {
 }
 
 async function fetchDetail(id: number): Promise<any> {
-  const url = `https://api.printify.com/v1/shops/${SHOP_ID}/products/${id}.json`
+  const url = `https://api.printful.com/stores/${STORE_ID}/products/${id}`
   console.log('🖼 GET', url)
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${API_TOKEN}` },
@@ -59,7 +59,7 @@ async function main() {
 
     // upsert Product
     await prisma.product.upsert({
-      where: { printifyId: String(p.id) },
+      where: { printfulProductId: String(p.id) },
       update: {
         title:       detail.title,
         description: detail.description,
@@ -69,7 +69,7 @@ async function main() {
         slug,
       },
       create: {
-        printifyId:  String(p.id),
+        printfulProductId:  String(p.id),
         slug,
         title:       detail.title,
         description: detail.description,
@@ -106,7 +106,7 @@ async function main() {
         (v.title || '').split('/').map((s: string) => s.trim())
 
       await prisma.variant.upsert({
-        where: { printifyId: String(v.id) },
+        where: { printfulVariantId: String(v.id) },
         update: {
           price:      Number(v.price),
           color,
@@ -116,8 +116,8 @@ async function main() {
           designUrls: thisImgs,
         },
         create: {
-          printifyId: String(v.id),
-          product:    { connect: { printifyId: String(p.id) } },
+          printfulVariantId: String(v.id),
+          product:    { connect: { printfulProductId: String(p.id) } },
           price:      Number(v.price),
           color,
           size,
