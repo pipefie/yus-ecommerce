@@ -40,7 +40,7 @@ export type Variant = $Result.DefaultSelection<Prisma.$VariantPayload>
  */
 export class PrismaClient<
   ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
-  U = 'log' extends keyof ClientOptions ? ClientOptions['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<ClientOptions['log']> : never : never,
+  const U = 'log' extends keyof ClientOptions ? ClientOptions['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<ClientOptions['log']> : never : never,
   ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs
 > {
   [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
@@ -226,8 +226,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.9.0
-   * Query Engine version: 81e4af48011447c3cc503a190e86995b66d2a28e
+   * Prisma Client JS version: 6.13.0
+   * Query Engine version: 361e86d0ea4987e9f53a565309b3eed797a6bcbd
    */
   export type PrismaVersion = {
     client: string
@@ -823,16 +823,24 @@ export namespace Prisma {
     /**
      * @example
      * ```
-     * // Defaults to stdout
+     * // Shorthand for `emit: 'stdout'`
      * log: ['query', 'info', 'warn', 'error']
      * 
-     * // Emit as events
+     * // Emit as events only
      * log: [
-     *   { emit: 'stdout', level: 'query' },
-     *   { emit: 'stdout', level: 'info' },
-     *   { emit: 'stdout', level: 'warn' }
-     *   { emit: 'stdout', level: 'error' }
+     *   { emit: 'event', level: 'query' },
+     *   { emit: 'event', level: 'info' },
+     *   { emit: 'event', level: 'warn' }
+     *   { emit: 'event', level: 'error' }
      * ]
+     * 
+     * / Emit as events and log to stdout
+     * og: [
+     *  { emit: 'stdout', level: 'query' },
+     *  { emit: 'stdout', level: 'info' },
+     *  { emit: 'stdout', level: 'warn' }
+     *  { emit: 'stdout', level: 'error' }
+     * 
      * ```
      * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
      */
@@ -875,10 +883,15 @@ export namespace Prisma {
     emit: 'stdout' | 'event'
   }
 
-  export type GetLogType<T extends LogLevel | LogDefinition> = T extends LogDefinition ? T['emit'] extends 'event' ? T['level'] : never : never
-  export type GetEvents<T extends any> = T extends Array<LogLevel | LogDefinition> ?
-    GetLogType<T[0]> | GetLogType<T[1]> | GetLogType<T[2]> | GetLogType<T[3]>
-    : never
+  export type CheckIsLogLevel<T> = T extends LogLevel ? T : never;
+
+  export type GetLogType<T> = CheckIsLogLevel<
+    T extends LogDefinition ? T['level'] : T
+  >;
+
+  export type GetEvents<T extends any[]> = T extends Array<LogLevel | LogDefinition>
+    ? GetLogType<T[number]>
+    : never;
 
   export type QueryEvent = {
     timestamp: Date
@@ -1022,6 +1035,7 @@ export namespace Prisma {
     imageUrl: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    deleted: boolean | null
   }
 
   export type ProductMaxAggregateOutputType = {
@@ -1034,6 +1048,7 @@ export namespace Prisma {
     imageUrl: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    deleted: boolean | null
   }
 
   export type ProductCountAggregateOutputType = {
@@ -1047,6 +1062,7 @@ export namespace Prisma {
     images: number
     createdAt: number
     updatedAt: number
+    deleted: number
     _all: number
   }
 
@@ -1071,6 +1087,7 @@ export namespace Prisma {
     imageUrl?: true
     createdAt?: true
     updatedAt?: true
+    deleted?: true
   }
 
   export type ProductMaxAggregateInputType = {
@@ -1083,6 +1100,7 @@ export namespace Prisma {
     imageUrl?: true
     createdAt?: true
     updatedAt?: true
+    deleted?: true
   }
 
   export type ProductCountAggregateInputType = {
@@ -1096,6 +1114,7 @@ export namespace Prisma {
     images?: true
     createdAt?: true
     updatedAt?: true
+    deleted?: true
     _all?: true
   }
 
@@ -1196,6 +1215,7 @@ export namespace Prisma {
     images: JsonValue
     createdAt: Date
     updatedAt: Date
+    deleted: boolean
     _count: ProductCountAggregateOutputType | null
     _avg: ProductAvgAggregateOutputType | null
     _sum: ProductSumAggregateOutputType | null
@@ -1228,6 +1248,7 @@ export namespace Prisma {
     images?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    deleted?: boolean
     variants?: boolean | Product$variantsArgs<ExtArgs>
     _count?: boolean | ProductCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["product"]>
@@ -1243,6 +1264,7 @@ export namespace Prisma {
     images?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    deleted?: boolean
   }, ExtArgs["result"]["product"]>
 
   export type ProductSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1256,6 +1278,7 @@ export namespace Prisma {
     images?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    deleted?: boolean
   }, ExtArgs["result"]["product"]>
 
   export type ProductSelectScalar = {
@@ -1269,9 +1292,10 @@ export namespace Prisma {
     images?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    deleted?: boolean
   }
 
-  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "printifyId" | "slug" | "title" | "description" | "price" | "imageUrl" | "images" | "createdAt" | "updatedAt", ExtArgs["result"]["product"]>
+  export type ProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "printifyId" | "slug" | "title" | "description" | "price" | "imageUrl" | "images" | "createdAt" | "updatedAt" | "deleted", ExtArgs["result"]["product"]>
   export type ProductInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     variants?: boolean | Product$variantsArgs<ExtArgs>
     _count?: boolean | ProductCountOutputTypeDefaultArgs<ExtArgs>
@@ -1295,6 +1319,7 @@ export namespace Prisma {
       images: Prisma.JsonValue
       createdAt: Date
       updatedAt: Date
+      deleted: boolean
     }, ExtArgs["result"]["product"]>
     composites: {}
   }
@@ -1729,6 +1754,7 @@ export namespace Prisma {
     readonly images: FieldRef<"Product", 'Json'>
     readonly createdAt: FieldRef<"Product", 'DateTime'>
     readonly updatedAt: FieldRef<"Product", 'DateTime'>
+    readonly deleted: FieldRef<"Product", 'Boolean'>
   }
     
 
@@ -3350,7 +3376,8 @@ export namespace Prisma {
     imageUrl: 'imageUrl',
     images: 'images',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    deleted: 'deleted'
   };
 
   export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
@@ -3446,6 +3473,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -3469,6 +3503,7 @@ export namespace Prisma {
     images?: JsonFilter<"Product">
     createdAt?: DateTimeFilter<"Product"> | Date | string
     updatedAt?: DateTimeFilter<"Product"> | Date | string
+    deleted?: BoolFilter<"Product"> | boolean
     variants?: VariantListRelationFilter
   }
 
@@ -3483,6 +3518,7 @@ export namespace Prisma {
     images?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    deleted?: SortOrder
     variants?: VariantOrderByRelationAggregateInput
   }
 
@@ -3500,6 +3536,7 @@ export namespace Prisma {
     images?: JsonFilter<"Product">
     createdAt?: DateTimeFilter<"Product"> | Date | string
     updatedAt?: DateTimeFilter<"Product"> | Date | string
+    deleted?: BoolFilter<"Product"> | boolean
     variants?: VariantListRelationFilter
   }, "id" | "printifyId" | "slug">
 
@@ -3514,6 +3551,7 @@ export namespace Prisma {
     images?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    deleted?: SortOrder
     _count?: ProductCountOrderByAggregateInput
     _avg?: ProductAvgOrderByAggregateInput
     _max?: ProductMaxOrderByAggregateInput
@@ -3535,6 +3573,7 @@ export namespace Prisma {
     images?: JsonWithAggregatesFilter<"Product">
     createdAt?: DateTimeWithAggregatesFilter<"Product"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Product"> | Date | string
+    deleted?: BoolWithAggregatesFilter<"Product"> | boolean
   }
 
   export type VariantWhereInput = {
@@ -3634,6 +3673,7 @@ export namespace Prisma {
     images: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    deleted?: boolean
     variants?: VariantCreateNestedManyWithoutProductInput
   }
 
@@ -3648,6 +3688,7 @@ export namespace Prisma {
     images: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    deleted?: boolean
     variants?: VariantUncheckedCreateNestedManyWithoutProductInput
   }
 
@@ -3661,6 +3702,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
     variants?: VariantUpdateManyWithoutProductNestedInput
   }
 
@@ -3675,6 +3717,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
     variants?: VariantUncheckedUpdateManyWithoutProductNestedInput
   }
 
@@ -3689,6 +3732,7 @@ export namespace Prisma {
     images: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    deleted?: boolean
   }
 
   export type ProductUpdateManyMutationInput = {
@@ -3701,6 +3745,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type ProductUncheckedUpdateManyInput = {
@@ -3714,6 +3759,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type VariantCreateInput = {
@@ -3864,6 +3910,11 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type VariantListRelationFilter = {
     every?: VariantWhereInput
     some?: VariantWhereInput
@@ -3885,6 +3936,7 @@ export namespace Prisma {
     images?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    deleted?: SortOrder
   }
 
   export type ProductAvgOrderByAggregateInput = {
@@ -3902,6 +3954,7 @@ export namespace Prisma {
     imageUrl?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    deleted?: SortOrder
   }
 
   export type ProductMinOrderByAggregateInput = {
@@ -3914,6 +3967,7 @@ export namespace Prisma {
     imageUrl?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    deleted?: SortOrder
   }
 
   export type ProductSumOrderByAggregateInput = {
@@ -3987,6 +4041,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProductScalarRelationFilter = {
@@ -4076,6 +4138,10 @@ export namespace Prisma {
     set?: Date | string
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type VariantUpdateManyWithoutProductNestedInput = {
     create?: XOR<VariantCreateWithoutProductInput, VariantUncheckedCreateWithoutProductInput> | VariantCreateWithoutProductInput[] | VariantUncheckedCreateWithoutProductInput[]
     connectOrCreate?: VariantCreateOrConnectWithoutProductInput | VariantCreateOrConnectWithoutProductInput[]
@@ -4154,6 +4220,11 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -4228,6 +4299,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type VariantCreateWithoutProductInput = {
@@ -4307,6 +4386,7 @@ export namespace Prisma {
     images: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    deleted?: boolean
   }
 
   export type ProductUncheckedCreateWithoutVariantsInput = {
@@ -4320,6 +4400,7 @@ export namespace Prisma {
     images: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    deleted?: boolean
   }
 
   export type ProductCreateOrConnectWithoutVariantsInput = {
@@ -4348,6 +4429,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type ProductUncheckedUpdateWithoutVariantsInput = {
@@ -4361,6 +4443,7 @@ export namespace Prisma {
     images?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deleted?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type VariantCreateManyProductInput = {
