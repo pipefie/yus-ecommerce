@@ -7,12 +7,6 @@ jest.mock('../../src/utils/stripe', () => ({
   stripe: { checkout: { sessions: { create: jest.fn() } } },
 }))
 
-jest.mock('../../src/utils/dbConnect', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
-
-
 jest.mock('../../src/lib/prisma', () => ({
   prisma: { order: { create: jest.fn() } },
 }))

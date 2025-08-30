@@ -11,6 +11,7 @@
     "test": "jest --runInBand",
     "e2e": "start-server-and-test 'npm run start' http://localhost:3000 'cypress run'",
     "sync:printify": "node --loader ts-node/esm scripts/sync-printify.mts",
+    "sync:printful": "node --loader ts-node/esm scripts/sync-printful.mts",
     "cron:update-orders": "curl -X POST http://localhost:3000/api/orders/sync",
     "lhci": "lhci autorun"
   },

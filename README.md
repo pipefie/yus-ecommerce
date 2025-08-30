@@ -37,6 +37,32 @@ Then run the Prisma migrations to initialize the local database:
 npx prisma migrate dev
 ```
 
+## Migrating from SQLite to Postgres
+
+Older versions of this project used SQLite. To migrate existing data to Postgres:
+
+1. Set `DATABASE_URL` to your Postgres connection string.
+2. Generate a migration script comparing the old SQLite database to Postgres:
+
+   ```bash
+   npx prisma migrate diff \
+     --from-url "file:./prisma/prisma/dev.db" \
+     --to-url "$DATABASE_URL" \
+     --script > migration.sql
+   ```
+
+3. Apply the generated SQL to your Postgres database:
+
+   ```bash
+   psql "$DATABASE_URL" -f migration.sql
+   ```
+
+4. Run the standard Prisma migrate command to ensure the schema is up to date:
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, Auth0 credentials and database configuration.
@@ -53,9 +79,11 @@ AUTH0_CLIENT_ID=auth0-client-id
 AUTH0_CLIENT_SECRET=auth0-client-secret
 NEXT_PUBLIC_GA_ID=ga-id
 NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
-SENTRY_DSN=sentry-server-dsn
-PRINTIFY_API_KEY=printify-api-key
-PRINTIFY_SHOP_ID=printify-shop-id
+SENTRY_DSN=sentry-server-dsn  
+PRINTFUL_API_KEY=
+PRINTFUL_WEBHOOK_SECRET=
+PRINTFUL_STORE_ID=
+DEFAULT_CURRENCY=EUR
 SENDGRID_API_KEY=your-sendgrid-key
 SENDGRID_FROM=from@example.com
 SENDGRID_WELCOME_TEMPLATE=template-id

@@ -23,7 +23,7 @@ export interface ProductDetail {
   description: string;
   price:       number;
   images:      string[];
-  printifyId: string;
+  printfulProductId: string;
   variants:    VariantWithImages[];
 }
 
@@ -37,13 +37,13 @@ export default function ProductDetailClient({ product }: Props) {
     sendGAEvent('view_item', {
       items: [
         {
-          item_id: product.printifyId,
+          item_id: product.printfulProductId,
           item_name: product.title,
           price: product.price / 100,
         },
       ],
     })
-  }, [product.printifyId, product.title, product.price])
+  }, [product.printfulProductId, product.title, product.price])
   const { currency, rate } = useCurrency()
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
   const t = useTranslations()
@@ -105,7 +105,7 @@ export default function ProductDetailClient({ product }: Props) {
       sendGAEvent('add_to_cart', {
         items: [
           {
-            item_id: product.printifyId,
+            item_id: product.printfulProductId,
             item_name: product.title,
             price: activeVariant.price / 100,
             quantity: 1,

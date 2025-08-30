@@ -18,7 +18,25 @@ export interface Parcel {
   weight: number
 }
 
-export async function getShippingRates(from: Address, to: Address, parcel: Parcel) {
+export interface Rate {
+  object_id: string
+  [key: string]: unknown
+}
+
+export interface RatesResponse {
+  rates: Rate[]
+}
+
+export interface Label {
+  tracking_number: string
+  [key: string]: unknown
+}
+
+export async function getShippingRates(
+  from: Address,
+  to: Address,
+  parcel: Parcel,
+): Promise<RatesResponse> {
   const res = await fetch('https://api.goshippo.com/shipments/', {
     method: 'POST',
     headers: {
@@ -28,10 +46,10 @@ export async function getShippingRates(from: Address, to: Address, parcel: Parce
     body: JSON.stringify({ address_from: from, address_to: to, parcels: [parcel], async: false }),
   })
   if (!res.ok) throw new Error('Failed to fetch rates')
-  return res.json()
+  return (await res.json()) as RatesResponse
 }
 
-export async function purchaseLabel(rateId: string) {
+export async function purchaseLabel(rateId: string): Promise<Label> {
   const res = await fetch('https://api.goshippo.com/transactions/', {
     method: 'POST',
     headers: {
@@ -41,5 +59,5 @@ export async function purchaseLabel(rateId: string) {
     body: JSON.stringify({ rate: rateId, label_file_type: 'PDF' }),
   })
   if (!res.ok) throw new Error('Failed to purchase label')
-  return res.json()
+  return (await res.json()) as Label
 }
