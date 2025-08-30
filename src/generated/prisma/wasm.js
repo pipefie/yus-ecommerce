@@ -119,7 +119,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.ProductScalarFieldEnum = {
   id: 'id',
-  printifyId: 'printifyId',
+  printfulProductId: 'printfulProductId',
   slug: 'slug',
   title: 'title',
   description: 'description',
@@ -133,7 +133,7 @@ exports.Prisma.ProductScalarFieldEnum = {
 
 exports.Prisma.VariantScalarFieldEnum = {
   id: 'id',
-  printifyId: 'printifyId',
+  printfulVariantId: 'printfulVariantId',
   productId: 'productId',
   size: 'size',
   color: 'color',
@@ -143,6 +143,41 @@ exports.Prisma.VariantScalarFieldEnum = {
   designUrls: 'designUrls',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  name: 'name',
+  password: 'password',
+  role: 'role',
+  newsletterOptIn: 'newsletterOptIn',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrderScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  stripeSessionId: 'stripeSessionId',
+  items: 'items',
+  totalAmount: 'totalAmount',
+  currency: 'currency',
+  status: 'status',
+  trackingNumber: 'trackingNumber',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  sessionId: 'sessionId',
+  event: 'event',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  metadata: 'metadata',
+  ts: 'ts'
 };
 
 exports.Prisma.SortOrder = {
@@ -165,10 +200,18 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
   Product: 'Product',
-  Variant: 'Variant'
+  Variant: 'Variant',
+  User: 'User',
+  Order: 'Order',
+  UserEvent: 'UserEvent'
 };
 
 /**

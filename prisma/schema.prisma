@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -16,7 +16,7 @@ datasource db {
 
 model Product {
   id          Int       @id @default(autoincrement())
-  printifyId   String    @unique
+  printfulProductId String    @unique
   slug         String    @unique
   title        String
   description  String    
@@ -30,19 +30,19 @@ model Product {
 }
 
 model Variant {
-  id              Int      @id @default(autoincrement())
-  printifyId      String   @unique
-  productId       Int
-  size            String
-  color           String
-  price           Int      // in cents
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  imageUrl    String   // the primary mockup for that variant
-  previewUrl  String   // you can use same as imageUrl or a thumbnail
-  designUrls  Json     // JSON array of all mockup URLs (front/back/etc)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}  
+  id               Int      @id @default(autoincrement())
+  printfulVariantId String   @unique
+  productId        Int
+  size             String
+  color            String
+  price            Int      // in cents
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl         String   // the primary mockup for that variant
+  previewUrl       String   // you can use same as imageUrl or a thumbnail
+  designUrls       Json     // JSON array of all mockup URLs (front/back/etc)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
 
 model User {
   id             Int      @id @default(autoincrement())
