@@ -15,17 +15,18 @@ datasource db {
 }
 
 model Product {
-  id               Int       @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   printfulProductId String    @unique
-  slug             String    @unique
-  title            String
-  description      String
-  price            Int       // in cents
-  imageUrl         String    // default product‐level image
-  images           Json      // JSON array of image URLs
-  variants         Variant[]
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  slug         String    @unique
+  title        String
+  description  String    
+  price        Int       // in cents
+  imageUrl     String    // default product‐level image
+  images       Json      // JSON array of image URLs
+  variants     Variant[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deleted      Boolean   @default(false)
 }
 
 model Variant {
