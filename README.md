@@ -79,11 +79,17 @@ AUTH0_CLIENT_ID=auth0-client-id
 AUTH0_CLIENT_SECRET=auth0-client-secret
 NEXT_PUBLIC_GA_ID=ga-id
 NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
+<<<<<<< HEAD
 SENTRY_DSN=sentry-server-dsn  
 PRINTFUL_API_KEY=
 PRINTFUL_WEBHOOK_SECRET=
 PRINTFUL_STORE_ID=
 DEFAULT_CURRENCY=EUR
+=======
+SENTRY_DSN=sentry-server-dsn
+PRINTFUL_API_KEY=printful-api-key
+PRINTFUL_STORE_ID=printful-store-id
+>>>>>>> 73c0bf685bdbd65723fa1b5bc4671c49a393520c
 SENDGRID_API_KEY=your-sendgrid-key
 SENDGRID_FROM=from@example.com
 SENDGRID_WELCOME_TEMPLATE=template-id

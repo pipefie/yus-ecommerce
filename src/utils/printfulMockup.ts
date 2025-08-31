@@ -1,15 +1,15 @@
-// src/utils/printifyMockup.ts
-const BASE  = "https://api.printify.com/v1";
-const TOKEN = process.env.PRINTIFY_API_KEY!;
+// src/utils/printfulMockup.ts
+const BASE  = "https://api.printful.com";
+const TOKEN = process.env.PRINTFUL_API_KEY!;
 
-interface PrintifyMockupPayload {
+interface PrintfulMockupPayload {
   product_id: number
   variant_ids: number[]
   images: { src: string; placement: "front" | "back" }[]
 }
 
 async function call(path: string, opts: RequestInit = {}) {
-  console.log(`[PrintifyMockup] ➤ ${opts.method || "GET"} ${path}`, opts.body);
+  console.log(`[PrintfulMockup] ➤ ${opts.method || "GET"} ${path}`, opts.body);
   const res = await fetch(BASE + path, {
     ...opts,
     headers: {
@@ -21,18 +21,18 @@ async function call(path: string, opts: RequestInit = {}) {
   const text = await res.text();
   let json;
   try { json = JSON.parse(text); } catch { json = text; }
-  console.log(`[PrintifyMockup] ← ${path}`, res.status, json);
+  console.log(`[PrintfulMockup] ← ${path}`, res.status, json);
   if (!res.ok) throw new Error(`Mockup ${path} error ${res.status}: ${text}`);
   return json;
 }
 
-export async function createPrintifyMockup(
+export async function createPrintfulMockup(
   productId: number,
   variantId: number,
   frontUrl: string,
   backUrl?: string
 ): Promise<string> {
-  const payload: PrintifyMockupPayload  = {
+  const payload: PrintfulMockupPayload  = {
     product_id:   productId,
     variant_ids: [variantId],
     images:       [{ src: frontUrl, placement: "front" }],
@@ -45,7 +45,7 @@ export async function createPrintifyMockup(
   return id;
 }
 
-export async function pollPrintifyMockup(
+export async function pollPrintfulMockup(
   taskId: string
 ): Promise<{ front?: string; back?: string }> {
   for (let i = 0; i < 8; i++) {
@@ -63,6 +63,6 @@ export async function pollPrintifyMockup(
     }
     await new Promise((r) => setTimeout(r, 1500));
   }
-  console.warn(`[PrintifyMockup] poll timeout for ${taskId}`);
+  console.warn(`[PrintfulMockup] poll timeout for ${taskId}`);
   return {};
 }

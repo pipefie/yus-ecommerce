@@ -10,7 +10,10 @@
     "lint": "next lint",
     "test": "jest --runInBand",
     "e2e": "start-server-and-test 'npm run start' http://localhost:3000 'cypress run'",
+<<<<<<< HEAD
     "sync:printify": "node --loader ts-node/esm scripts/sync-printify.mts",
+=======
+>>>>>>> 73c0bf685bdbd65723fa1b5bc4671c49a393520c
     "sync:printful": "node --loader ts-node/esm scripts/sync-printful.mts",
     "cron:update-orders": "curl -X POST http://localhost:3000/api/orders/sync",
     "lhci": "lhci autorun"
