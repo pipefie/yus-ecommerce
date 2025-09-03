@@ -45,7 +45,7 @@ async function upsertProduct(productId: number) {
     ) || 0
 
   await prisma.product.upsert({
-    where: { printifyId: String(prod.id) },
+    where: { printfulProductId: String(prod.id) },
     update: {
       slug,
       title: prod.name,
@@ -56,7 +56,7 @@ async function upsertProduct(productId: number) {
       deleted: false,
     },
     create: {
-      printifyId: String(prod.id),
+      printfulProductId: String(prod.id),
       slug,
       title: prod.name,
       description: prod.description || '',
@@ -75,9 +75,9 @@ async function upsertProduct(productId: number) {
     const size = v.size || ''
 
     await prisma.variant.upsert({
-      where: { printifyId: String(v.id) },
+      where: { printfulVariantId: String(v.id) },
       update: {
-        product: { connect: { printifyId: String(prod.id) } },
+        product: { connect: { printfulProductId: String(prod.id) } },
         price: Number(v.retail_price) || 0,
         color,
         size,
@@ -87,8 +87,8 @@ async function upsertProduct(productId: number) {
         deleted: false,
       },
       create: {
-        printifyId: String(v.id),
-        product: { connect: { printifyId: String(prod.id) } },
+        printfulVariantId: String(v.id),
+        product: { connect: { printfulProductId: String(prod.id) } },
         price: Number(v.retail_price) || 0,
         color,
         size,
@@ -117,7 +117,14 @@ export async function POST(req: NextRequest) {
 
   try {
     await prisma.userEvent.create({
-      data: { type: 'system', message: body.type ?? 'webhook', payload: body },
+      data: {
+        userId: null,
+        sessionId: 'webhook',
+        event: body.type ?? 'printful_webhook',
+        entityType: 'printful',
+        entityId: String(body.data?.id ?? ''),
+        metadata: body,
+      },
     })
   } catch (err) {
     console.error('Failed to record UserEvent', err)
@@ -130,13 +137,13 @@ export async function POST(req: NextRequest) {
   } else if (type === 'product_deleted') {
     const id = body.data?.id || body.data?.product?.id
     if (id) {
-      await prisma.product.updateMany({ where: { printifyId: String(id) }, data: { deleted: true } })
-      await prisma.variant.updateMany({ where: { product: { printifyId: String(id) } }, data: { deleted: true } })
+      await prisma.product.updateMany({ where: { printfulProductId: String(id) }, data: { deleted: true } })
+      await prisma.variant.updateMany({ where: { product: { printfulProductId: String(id) } }, data: { deleted: true } })
     }
   } else if (type === 'variant_deleted') {
     const id = body.data?.id || body.data?.variant?.id
     if (id) {
-      await prisma.variant.updateMany({ where: { printifyId: String(id) }, data: { deleted: true } })
+      await prisma.variant.updateMany({ where: { printfulVariantId: String(id) }, data: { deleted: true } })
     }
   }
 

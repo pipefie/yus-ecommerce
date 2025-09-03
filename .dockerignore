@@ -1,0 +1,10 @@
+node_modules
+.next
+git
+.git
+Dockerfile
+docker-compose.yml
+*.log
+.env*
+backups
+src/generated

@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useUser } from "@auth0/nextjs-auth0"
+import { useAuthUser } from "@/lib/useAuthUser"
 import { Plus, X, User } from "lucide-react"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/CartContext"
@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import LanguageSwitcher from "./LanguageSwitcher"
 
 export default function Navbar() {
-  const { user } = useUser()
+  const { user } = useAuthUser()
   const [menuOpen, setMenuOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const { items } = useCart()

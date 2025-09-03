@@ -1,14 +1,25 @@
 // src/utils/stripe.ts
 import Stripe from "stripe"
 
-const secretKey = process.env.STRIPE_SECRET_KEY
-if (!secretKey) {
-  throw new Error("STRIPE_SECRET_KEY is not defined")
-}
-// Instantiate Stripe without overriding apiVersion
-export const stripe = new Stripe(secretKey, {
-  // You can add `maxNetworkRetries`, `timeout`, etc. here
-  // Leave apiVersion unset to use your account's default (e.g. "2025-03-31.basil")
+let _stripe: Stripe | null = null
+
+export function getStripe(): Stripe {
+  if (_stripe) return _stripe
+  const secretKey = process.env.STRIPE_SECRET_KEY
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is not defined")
+  }
+  _stripe = new Stripe(secretKey, {
     maxNetworkRetries: 2,
     timeout: 10000,
-})
+  })
+  return _stripe
+}
+
+// Back-compat proxy for code importing { stripe }
+export const stripe = new Proxy({}, {
+  get(_target, prop) {
+    const s = getStripe() as any
+    return s[prop]
+  }
+}) as unknown as Stripe

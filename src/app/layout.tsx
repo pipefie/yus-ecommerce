@@ -7,7 +7,6 @@ import CookieBanner from "../components/CookieBanner";
 import AnalyticsScripts from "../components/AnalyticsScripts";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
-import auth0 from "@/lib/auth0" 
 
 export const metadata = {
   title: "Y-US? Store",

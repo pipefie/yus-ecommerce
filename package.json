@@ -10,16 +10,13 @@
     "lint": "next lint",
     "test": "jest --runInBand",
     "e2e": "start-server-and-test 'npm run start' http://localhost:3000 'cypress run'",
-<<<<<<< HEAD
-    "sync:printify": "node --loader ts-node/esm scripts/sync-printify.mts",
-=======
->>>>>>> 73c0bf685bdbd65723fa1b5bc4671c49a393520c
     "sync:printful": "node --loader ts-node/esm scripts/sync-printful.mts",
     "cron:update-orders": "curl -X POST http://localhost:3000/api/orders/sync",
     "lhci": "lhci autorun"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.9.0",
+    "@prisma/client": "^6.13.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@sendgrid/mail": "^8.1.5",
     "@sentry/nextjs": "^9.30.0",
@@ -53,7 +50,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@lhci/cli": "^0.15.0",
-    "@prisma/client": "^6.13.0",
     "@tailwindcss/postcss": "^4.1.4",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
@@ -80,5 +76,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "whatwg-fetch": "^3.6.20"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   }
 }

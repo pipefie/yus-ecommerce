@@ -1,0 +1,28 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/yus?schema=public
+      NEXT_PUBLIC_URL: http://localhost:3000
+      NODE_ENV: development
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: yus
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+

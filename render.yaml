@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: yus-ecommerce-web
+    env: node
+    plan: free
+    buildCommand: |
+      npm ci
+      npx prisma generate
+      npm run build
+    startCommand: |
+      npx prisma migrate deploy
+      npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        fromDatabase: true
+        name: yus-postgres
+      - key: NEXT_PUBLIC_URL
+        value: https://yus-ecommerce-web.onrender.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: AUTH0_SECRET
+        sync: false
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_CLIENT_ID
+        sync: false
+      - key: AUTH0_CLIENT_SECRET
+        sync: false
+      - key: PRINTFUL_API_KEY
+        sync: false
+      - key: PRINTFUL_STORE_ID
+        sync: false
+      - key: PRINTFUL_WEBHOOK_SECRET
+        sync: false
+      - key: DEFAULT_CURRENCY
+        value: EUR
+    healthCheckPath: /
+
+databases:
+  - name: yus-postgres
+    plan: free
