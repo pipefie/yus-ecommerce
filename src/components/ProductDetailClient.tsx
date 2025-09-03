@@ -49,11 +49,17 @@ export default function ProductDetailClient({ product }: Props) {
   const t = useTranslations()
   // derive the unique list of colors & sizes
   const colors = useMemo(
-    () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color))),
+    () => {
+      const arr = Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color)))
+      return arr.length ? arr : ['Default']
+    },
     [product.variants]
   );
   const sizes = useMemo(
-    () => Array.from(new Set(product.variants.map((v: VariantWithImages) => v.size))),
+    () => {
+      const arr = Array.from(new Set(product.variants.map((v: VariantWithImages) => v.size)))
+      return arr.length ? arr : ['One Size']
+    },
     [product.variants]
   );
 
@@ -81,14 +87,19 @@ export default function ProductDetailClient({ product }: Props) {
   }, [colorVariants, product.images]);
 
   // find the matching variant; fallback to the first variant
-  const activeVariant = useMemo(
-    () =>
+  const activeVariant = useMemo(() => {
+    return (
       product.variants.find(
-        (v) => v.color === selectedColor && v.size === selectedSize &&
-          v.designUrls.length > 0
-      ) || product.variants[0],
-    [selectedColor, selectedSize, product.variants]
-  );
+        (v) => v.color === selectedColor && v.size === selectedSize && v.designUrls.length > 0
+      ) || product.variants[0] || {
+        id: 'fallback',
+        color: 'Default',
+        size: 'One Size',
+        price: product.price,
+        designUrls: product.images?.length ? [product.images[0]] : [],
+      }
+    )
+  }, [selectedColor, selectedSize, product.variants, product.price, product.images])
 
     const handleAdd = () => {
       const imageUrl = colorImages[0] || product.images[0] || "/placeholder.png";

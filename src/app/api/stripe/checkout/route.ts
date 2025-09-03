@@ -131,6 +131,12 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       line_items,
       customer_email: email, // optional for guests
+      shipping_address_collection: {
+        allowed_countries: [
+          'US','CA','GB','DE','FR','ES','IT','NL','BE','IE','PT','SE','NO','DK','FI','AT','CH','AU','NZ'
+        ],
+      },
+      phone_number_collection: { enabled: true },
       success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
     })

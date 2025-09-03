@@ -27,20 +27,18 @@ export default async function HomePage() {
 
   // 2️⃣ reshape to exactly what your <ProductGrid> expects
   const items = products.map((p) => {
-    const v = p.variants[0]!; // default to first variant
+    const v = p.variants.find((vv) => Array.isArray(vv.designUrls) && vv.designUrls.length > 0) || p.variants[0] || null;
 
-    // pick a thumbnail: product.images[0] if you have one,
-    // else the variant preview, else fallback to placeholder
     const imageUrl =
-      Array.isArray(p.images) && p.images.length > 0
-        ? p.images[0]
-        : v.previewUrl || v.imageUrl || "/placeholder.png";
+      (Array.isArray(p.images) && p.images.length > 0)
+        ? (p.images as unknown as string[])[0]
+        : v?.previewUrl || v?.imageUrl || "/placeholder.png";
 
     return {
       slug:        p.slug,
       title:       p.title,
       description: p.description,
-      price:       v.price,
+      price:       v?.price ?? p.price,
       imageUrl,
     };
   });

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import auth0 from '@/lib/auth0';
 
 const AUTH0_ROLE_CLAIM = 'https://y-us.com/roles';
 const UTM_PARAMS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
 const isProd = process.env.NODE_ENV === 'production';
 
 export async function middleware(req: NextRequest) {
+  // Auth0 SDK handles all /auth/* routes via middleware in v4
+  if (req.nextUrl.pathname.startsWith('/auth')) {
+    return auth0.middleware(req)
+  }
   // Generate or reuse a requestId so logs can be correlated
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
   req.headers.set('x-request-id', requestId);
@@ -25,7 +30,7 @@ export async function middleware(req: NextRequest) {
         "default-src 'self'",
         "script-src 'self'",                                  // no inline/eval in prod
         "style-src 'self'",
-        "img-src 'self' https://files.cdn.printful.com https://img.printful.com data:",
+        "img-src 'self' https://files.cdn.printful.com https://img.printful.com https://images-api.printify.com data:",
         "font-src 'self' data:",
         `connect-src ${connectSrc.join(' ')}`,
         "frame-ancestors 'none'",

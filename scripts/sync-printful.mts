@@ -5,24 +5,24 @@ import slugify from 'slugify'
 import { PrismaClient } from '@prisma/client'
 
 const prisma    = new PrismaClient()
-const STORE_ID  = process.env.PRINTFUL_STORE_ID!
-const API_TOKEN = process.env.PRINTFUL_API_KEY!
+const STORE_ID  = process.env.PRINTFUL_STORE_ID || ''
+const API_TOKEN = process.env.PRINTFUL_TOKEN || process.env.PRINTFUL_API_KEY || ''
 
 async function fetchAllProducts(): Promise<any[]> {
   let page = 1
   const out: any[] = []
 
-  while (true) {
-    const url = `https://api.printful.com/stores/${STORE_ID}/products?page=${page}&limit=50`
-    console.log('📦 GET', url)
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_TOKEN}` },
-    })
-    if (!res.ok) throw new Error(`fetch page ${page}: ${res.status}`)
+  for (;;) {
+    const url = `https://api.printful.com/sync/products?offset=${(page-1)*50}&limit=50`
+    console.log('GET', url)
+    const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
+    if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
+    const res = await fetch(url, { headers })
     const json = (await res.json()) as any
-    const items: any[] = Array.isArray(json) ? json : json.data ?? []
-    console.log(`✅ fetched ${items.length} products`)
-    if (items.length === 0) break
+    if (!res.ok) throw new Error(`fetch page ${page}: ${res.status} ${(json?.result)||''}`)
+    const items: any[] = Array.isArray(json?.result) ? json.result : []
+    console.log(`fetched ${items.length} products`)
+    if (!items.length) break
     out.push(...items)
     page++
   }
@@ -31,37 +31,38 @@ async function fetchAllProducts(): Promise<any[]> {
 }
 
 async function fetchDetail(id: number): Promise<any> {
-  const url = `https://api.printful.com/stores/${STORE_ID}/products/${id}`
-  console.log('🖼 GET', url)
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${API_TOKEN}` },
-  })
-  if (!res.ok) throw new Error(`fetch detail ${id}: ${res.status}`)
+  const url = `https://api.printful.com/sync/products/${id}`
+  console.log('GET', url)
+  const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
+  if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
+  const res = await fetch(url, { headers })
   const json = (await res.json()) as any
-  return json.data ?? json
+  if (!res.ok) throw new Error(`fetch detail ${id}: ${res.status} ${(json?.result)||''}`)
+  return json.result ?? json
 }
 
 async function main() {
+  if (!API_TOKEN) throw new Error('Missing PRINTFUL_TOKEN (or PRINTFUL_API_KEY)')
   const products = await fetchAllProducts()
 
   for (const p of products) {
     const detail      = await fetchDetail(p.id)
-    const rawImages   = Array.isArray(detail.images) ? detail.images : []
-    const prodUrls    = rawImages.map((img: any) => img.src as string)
-    const variantsRaw = Array.isArray(detail.variants) ? detail.variants : []
+    const sp          = detail.sync_product
+    const variantsRaw = Array.isArray(detail.sync_variants) ? detail.sync_variants : []
+    const prodUrls    = sp?.thumbnail_url ? [sp.thumbnail_url] : []
     const basePrice   =
       variantsRaw.reduce(
-        (min: number, v: any) => Math.min(min, Number(v.price) || min),
+        (min: number, v: any) => Math.min(min, Math.round(Number(v.retail_price) * 100) || min),
         Infinity
       ) || 0
 
-    const slug = slugify(detail.title, { lower: true, strict: true })
+    const slug = slugify(sp.name, { lower: true, strict: true })
 
     await prisma.product.upsert({
       where: { printfulProductId: String(p.id) },
       update: {
-        title:       detail.title,
-        description: detail.description,
+        title:       sp.name,
+        description: '',
         price:       basePrice,
         imageUrl:    prodUrls[0] ?? '',
         images:      prodUrls,
@@ -71,66 +72,50 @@ async function main() {
       create: {
         printfulProductId:  String(p.id),
         slug,
-        title:       detail.title,
-        description: detail.description,
+        title:       sp.name,
+        description: '',
         price:       basePrice,
         imageUrl:    prodUrls[0] ?? '',
         images:      prodUrls,
       },
     })
 
-    interface RawVariant {
-      id: number;
-      is_enabled?: boolean;
-      price: number;
-      title?: string;
-    }
-
-    interface RawImage {
-      variant_ids?: number[];
-      src: string;
-    }
-
-    const filtered = variantsRaw.filter((v: RawVariant) =>
-      rawImages.some((img: RawImage) => Array.isArray(img.variant_ids) && img.variant_ids.includes(v.id))
-    );
-
-    for (const v of filtered) {
-      const thisImgs = rawImages
-        .filter((img: RawImage) => Array.isArray(img.variant_ids) && img.variant_ids.includes(v.id))
-        .map((img: RawImage) => img.src)
-
-      const [color = 'Default', size = 'One Size'] = (v.title || '').split('/').map((s: string) => s.trim())
+    for (const v of variantsRaw) {
+      const thisImgs = Array.isArray(v.files) ? v.files.map((f: any) => f.url).filter((u: any) => !!u) : []
+      const [fallbackColor = 'Default', fallbackSize = 'One Size'] = (v.name || '').split('/').map((s: string) => s.trim())
+      const color = (v as any).color || fallbackColor
+      const size  = (v as any).size  || fallbackSize
+      const designUrls = thisImgs.length ? thisImgs : prodUrls
 
       await prisma.variant.upsert({
-        where: { printfulVariantId: String(v.id) },
+        where: { printfulVariantId: String((v as any).variant_id ?? v.id) },
         update: {
           product:    { connect: { printfulProductId: String(p.id) } },
-          price:      Math.round(Number(v.price) || 0),
+          price:      Math.round(Number(v.retail_price) * 100) || 0,
           color,
           size,
-          imageUrl:   thisImgs[0] ?? '',
-          previewUrl: thisImgs[0] ?? '',
-          designUrls: thisImgs,
+          imageUrl:   designUrls[0] ?? '',
+          previewUrl: designUrls[0] ?? '',
+          designUrls: designUrls,
           deleted:    false,
         },
         create: {
-          printfulVariantId: String(v.id),
+          printfulVariantId: String((v as any).variant_id ?? v.id),
           product:    { connect: { printfulProductId: String(p.id) } },
-          price:      Math.round(Number(v.price) || 0),
+          price:      Math.round(Number(v.retail_price) * 100) || 0,
           color,
           size,
-          imageUrl:   thisImgs[0] ?? '',
-          previewUrl: thisImgs[0] ?? '',
-          designUrls: thisImgs,
+          imageUrl:   designUrls[0] ?? '',
+          previewUrl: designUrls[0] ?? '',
+          designUrls: designUrls,
         },
       })
     }
 
-    console.log(`🔄 Synced: ${detail.title}`)
+    console.log(`Synced: ${sp.name}`)
   }
 
-  console.log('🎉 Done')
+  console.log('Done')
   await prisma.$disconnect()
 }
 

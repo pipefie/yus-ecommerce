@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "files.cdn.printful.com", pathname: "/**" },
       { protocol: "https", hostname: "img.printful.com", pathname: "/**" },
+      // Allow Printify mockup images
+      { protocol: "https", hostname: "images-api.printify.com", pathname: "/**" },
     ],
   },
 

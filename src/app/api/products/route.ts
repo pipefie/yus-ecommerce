@@ -11,17 +11,17 @@ export async function GET() {
 
   // 2) shape exactly what ShopClient/ProductCard need
   const payload = raws.map((p) => {
-    const v = p.variants[0]! // default variant
+    const v = p.variants.find((vv) => Array.isArray(vv.designUrls) && vv.designUrls.length > 0) || p.variants[0] || null
     const imageUrl =
-      Array.isArray(p.images) && p.images.length
-        ? p.images[0]
-        : p.imageUrl || '/placeholder.png'
-
+      (Array.isArray(p.images) && p.images.length)
+        ? (p.images as unknown as string[])[0]
+        : v?.previewUrl || v?.imageUrl || p.imageUrl || '/placeholder.png'
+    const price = v?.price ?? p.price
     return {
       slug:        p.slug,
       title:       p.title,
       description: p.description,
-      price:       v.price,
+      price,
       imageUrl,
     }
   })

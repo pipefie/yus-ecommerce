@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: Props) {
     ? prod.images.filter((x: unknown): x is string => typeof x === "string")
     : [];
 
-  const detail = {
+  const baseDetail = {
     id:          prod.slug,
     printfulProductId:  prod.printfulProductId,
     title:       prod.title,
@@ -70,6 +70,22 @@ export default async function ProductPage({ params }: Props) {
         : [],
     })),
   };
+
+  const detail = (() => {
+    if (baseDetail.variants.length > 0) return baseDetail
+    return {
+      ...baseDetail,
+      variants: [
+        {
+          id: 'fallback',
+          color: 'Default',
+          size: 'One Size',
+          price: baseDetail.price,
+          designUrls: baseDetail.images.length ? baseDetail.images : [],
+        },
+      ],
+    }
+  })()
 
   const productSchema = {
     "@context": "https://schema.org",

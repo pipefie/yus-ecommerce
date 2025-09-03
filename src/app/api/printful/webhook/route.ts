@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma'
 import slugify from 'slugify'
 
 const API_BASE = 'https://api.printful.com'
-const API_KEY = process.env.PRINTFUL_API_KEY!
+const API_KEY = process.env.PRINTFUL_TOKEN || process.env.PRINTFUL_API_KEY!
+const STORE_ID = process.env.PRINTFUL_STORE_ID
 const WEBHOOK_SECRET = process.env.PRINTFUL_WEBHOOK_SECRET!
 
 interface PrintfulFile {
@@ -21,9 +22,9 @@ interface PrintfulVariant {
 }
 
 async function fetchProduct(id: number) {
-  const res = await fetch(`${API_BASE}/store/products/${id}`, {
-    headers: { Authorization: `Bearer ${API_KEY}` },
-  })
+  const headers: Record<string,string> = { Authorization: `Bearer ${API_KEY}` }
+  if (STORE_ID) headers['X-PF-Store-Id'] = String(STORE_ID)
+  const res = await fetch(`${API_BASE}/sync/products/${id}`, { headers })
   if (!res.ok) throw new Error(`fetchProduct ${res.status}`)
   const json = await res.json()
   return json.result ?? json
@@ -36,7 +37,7 @@ async function upsertProduct(productId: number) {
     ? detail.sync_variants
     : []
   const slug = slugify(prod.name, { lower: true, strict: true })
-  const images = prod.thumbnail ? [prod.thumbnail] : []
+  const images = prod.thumbnail_url ? [prod.thumbnail_url] : []
   const basePrice =
     variants.reduce(
       (min: number, v: PrintfulVariant) =>
@@ -68,14 +69,15 @@ async function upsertProduct(productId: number) {
 
   for (const v of variants) {
     const designUrls: string[] = (Array.isArray(v.files) ? v.files : [])
-      .map((f: PrintfulFile) => f.preview_url || f.thumbnail_url)
+      .map((f: PrintfulFile) => (f as any).url || f.preview_url || f.thumbnail_url)
       .filter((u): u is string => Boolean(u))
     const image = designUrls[0] ?? ''
     const color = v.color || ''
     const size = v.size || ''
 
+    const key = String((v as any).variant_id ?? v.id)
     await prisma.variant.upsert({
-      where: { printfulVariantId: String(v.id) },
+      where: { printfulVariantId: key },
       update: {
         product: { connect: { printfulProductId: String(prod.id) } },
         price: Number(v.retail_price) || 0,
@@ -87,7 +89,7 @@ async function upsertProduct(productId: number) {
         deleted: false,
       },
       create: {
-        printfulVariantId: String(v.id),
+        printfulVariantId: key,
         product: { connect: { printfulProductId: String(prod.id) } },
         price: Number(v.retail_price) || 0,
         color,
@@ -141,7 +143,7 @@ export async function POST(req: NextRequest) {
       await prisma.variant.updateMany({ where: { product: { printfulProductId: String(id) } }, data: { deleted: true } })
     }
   } else if (type === 'variant_deleted') {
-    const id = body.data?.id || body.data?.variant?.id
+    const id = body.data?.variant?.variant_id || body.data?.variant?.id || body.data?.id
     if (id) {
       await prisma.variant.updateMany({ where: { printfulVariantId: String(id) }, data: { deleted: true } })
     }

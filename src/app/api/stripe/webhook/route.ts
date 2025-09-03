@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import crypto from "node:crypto"
 import { prisma } from "@/lib/prisma"
+import { createPrintfulOrderForLocalOrder, type Recipient } from "@/utils/printful"
 import { pushOrderToMailchimp } from "@/actions/marketing"
 
 export const config = {
@@ -77,6 +78,29 @@ export async function POST(req: Request) {
       String(order.id),
       order.totalAmount
     )
+
+    // Attempt to submit the order to Printful if we have shipping details
+    try {
+      const cd: any = (session as any).customer_details
+      const addr: any = cd?.address
+      if (addr && cd?.name) {
+        const recipient: Recipient = {
+          name: cd.name,
+          email: session.customer_email || undefined,
+          phone: (cd as any).phone || undefined,
+          address1: addr.line1,
+          address2: addr.line2 || undefined,
+          city: addr.city,
+          state_code: addr.state || (addr as any).state_code || undefined,
+          country_code: addr.country,
+          zip: addr.postal_code,
+        }
+        await createPrintfulOrderForLocalOrder(order.id, recipient)
+      }
+    } catch (e) {
+      console.error('Printful order submit failed', e)
+      // Non-fatal: order remains paid, can be retried
+    }
   }
 
   return NextResponse.json({ received: true }, { status: 200 })

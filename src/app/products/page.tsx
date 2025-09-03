@@ -24,20 +24,18 @@ export default async function ProductsPage() {
 
   // 2) Map into exactly the shape ShopClient expects
   const initialProducts = products.map((p) => {
-    // p.variants is now guaranteed
-    const v = p.variants[0]!;
-
+    const v = p.variants.find((vv) => Array.isArray(vv.designUrls) && vv.designUrls.length > 0) || p.variants[0] || null;
     const imageUrl =
-      Array.isArray(p.images) && p.images.length > 0
-        ? p.images[0]
-        : v.previewUrl || v.imageUrl || "/placeholder.png";
-
+      (Array.isArray(p.images) && p.images.length > 0)
+        ? (p.images as unknown as string[])[0]
+        : v?.previewUrl || v?.imageUrl || "/placeholder.png";
+    const price = v?.price ?? p.price;
     return {
       _id:        String(p.id),
       slug:       p.slug,
       title:      p.title,
       description:p.description,
-      price:      v.price,
+      price,
       imageUrl,
       nsfw:       false,
       updatedAt:  p.updatedAt,
