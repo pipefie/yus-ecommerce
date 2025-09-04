@@ -11,13 +11,7 @@ export const getAllProducts = unstable_cache(
   async () =>
     prisma.product.findMany({
       orderBy: { updatedAt: 'desc' },
-      include: { variants:  {
-          where: {
-            NOT: {
-              designUrls: { equals: [] },
-            },
-          },
-        },},
+      include: { variants: true },
     }),
   ['all-products'],
   { revalidate: 60 }
@@ -28,13 +22,7 @@ export const getProductBySlug = (slug: string) =>
     () =>
       prisma.product.findUnique({
         where: { slug },
-        include: { variants:  {
-          where: {
-            NOT: {
-              designUrls: { equals: [] },
-            },
-          },
-        },},
+        include: { variants: true },
       }),
     ['product', slug],
     { revalidate: 60 }

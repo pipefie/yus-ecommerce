@@ -1,7 +1,7 @@
 // src/components/ProductDetailClient.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import ReviewList from "./ReviewList";
@@ -15,6 +15,8 @@ export interface VariantWithImages {
   size:       string;
   price:      number;
   designUrls: string[];
+  imageUrl?:  string;
+  previewUrl?: string;
 }
 
 export interface ProductDetail {
@@ -48,20 +50,23 @@ export default function ProductDetailClient({ product }: Props) {
   const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' }
   const t = useTranslations()
   // derive the unique list of colors & sizes
-  const colors = useMemo(
-    () => {
-      const arr = Array.from(new Set(product.variants.map((v: VariantWithImages) => v.color)))
-      return arr.length ? arr : ['Default']
-    },
-    [product.variants]
-  );
-  const sizes = useMemo(
-    () => {
-      const arr = Array.from(new Set(product.variants.map((v: VariantWithImages) => v.size)))
-      return arr.length ? arr : ['One Size']
-    },
-    [product.variants]
-  );
+  const colors = useMemo(() => {
+    const arr = Array.from(new Set(product.variants.map((v) => (v.color || '').trim())));
+    return arr.length ? arr : ['Default']
+  }, [product.variants]);
+  const sizes = useMemo(() => {
+    const arr = Array.from(new Set(product.variants.map((v) => (v.size || '').trim())));
+    // Sort sizes in a friendly order if possible
+    const order = ['XXS','XS','S','M','L','XL','2XL','XXL','3XL','4XL','5XL'];
+    return (arr.length ? arr : ['One Size']).sort((a,b) => {
+      const ia = order.indexOf(a.toUpperCase());
+      const ib = order.indexOf(b.toUpperCase());
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  }, [product.variants]);
 
   // selected state
   const [selectedColor, setSelectedColor] = useState(colors[0]);
@@ -69,7 +74,7 @@ export default function ProductDetailClient({ product }: Props) {
 
   // variants available for the chosen color
   const colorVariants = useMemo(
-    () => product.variants.filter((v) => v.color === selectedColor && v.designUrls.length > 0),
+    () => product.variants.filter((v) => v.color === selectedColor),
     [product.variants, selectedColor]
   );
 
@@ -80,18 +85,24 @@ export default function ProductDetailClient({ product }: Props) {
     }
   }, [selectedColor, colorVariants, selectedSize, sizes]);
 
-  // all unique mockups for the selected color
+  // all unique mockups for the selected color, with robust fallbacks
   const colorImages = useMemo(() => {
-    const urls = colorVariants.flatMap((v) => v.designUrls).filter(Boolean);
-    return urls.length ? Array.from(new Set(urls)) : product.images;
+    const urls = [
+      // Prefer explicit design URLs
+      ...colorVariants.flatMap((v) => Array.isArray(v.designUrls) ? v.designUrls : []),
+      // Fallback to variant imageUrl if designUrls is missing
+      ...colorVariants.map((v: any) => (v as any).imageUrl).filter(Boolean),
+    ].filter(Boolean) as string[];
+    const unique = Array.from(new Set(urls));
+    return unique.length ? unique : (product.images?.length ? product.images : ["/placeholder.png"]);
   }, [colorVariants, product.images]);
 
   // find the matching variant; fallback to the first variant
   const activeVariant = useMemo(() => {
     return (
       product.variants.find(
-        (v) => v.color === selectedColor && v.size === selectedSize && v.designUrls.length > 0
-      ) || product.variants[0] || {
+        (v) => v.color === selectedColor && v.size === selectedSize && (v.designUrls?.length || (v as any).imageUrl)
+      ) || product.variants.find((v) => v.color === selectedColor) || product.variants[0] || {
         id: 'fallback',
         color: 'Default',
         size: 'One Size',
@@ -100,6 +111,10 @@ export default function ProductDetailClient({ product }: Props) {
       }
     )
   }, [selectedColor, selectedSize, product.variants, product.price, product.images])
+
+  const onSelectColor = useCallback((c: string) => {
+    setSelectedColor(c)
+  }, [])
 
     const handleAdd = () => {
       const imageUrl = colorImages[0] || product.images[0] || "/placeholder.png";
@@ -126,9 +141,9 @@ export default function ProductDetailClient({ product }: Props) {
     };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2  gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* left: carousel */}
-      <div>
+      <div className="md:sticky md:top-24 self-start">
         <Carousel 
           images={
             colorImages
@@ -141,42 +156,53 @@ export default function ProductDetailClient({ product }: Props) {
         <h1 className="text-3xl font-semibold">{product.title}</h1>
 
         <div className="mt-6 space-y-4">
-          {/* Color selector */}
+          {/* Color selector (swatches) */}
           <div>
-            <label className="block mb-1 font-medium">Color</label>
-            <select
-              className="bg-black w-fit border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Select color"
-              value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-            >
-              {colors.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <label className="block mb-2 font-medium">Color: <span className="text-gray-400">{selectedColor}</span></label>
+            <div className="flex flex-wrap gap-2">
+              {colors.map((c) => {
+                const v = product.variants.find(v => v.color === c)
+                const preview = v?.designUrls?.[0] || v?.imageUrl || product.images?.[0]
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => onSelectColor(c)}
+                    aria-label={`Select color ${c}`}
+                    className={`relative h-10 w-10 rounded-full ring-2 transition ${selectedColor === c ? 'ring-white' : 'ring-gray-600'} overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    title={c}
+                  >
+                    {preview ? (
+                      <Image src={preview} alt={c} fill sizes="40px" className="object-cover" />
+                    ) : (
+                      <span className="absolute inset-0 bg-gray-500" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Size selector */}
           <div>
-            <label className="block mb-1 font-medium">Size</label>
-            <select
-              className="bg-black w-fit border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Select size"
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
-            >
+            <label className="block mb-2 font-medium">Size</label>
+            <div className="flex flex-wrap gap-2">
               {sizes.map((s) => (
-                <option key={s} value={s}>
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSelectedSize(s)}
+                  aria-pressed={selectedSize === s}
+                  className={`px-3 py-2 rounded border transition ${selectedSize === s ? 'border-white bg-gray-800' : 'border-gray-600 hover:border-white'}`}
+                >
                   {s}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           {/* Price */}
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold" aria-live="polite">
             {symbols[currency] || ''}{((activeVariant.price * rate) / 100).toFixed(2)}
           </div>
 
@@ -205,33 +231,56 @@ function Carousel({ images }: { images: string[] }) {
   useEffect(() => setCurrent(0), [images]);
   if (!images?.length) return null;
 
+  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length)
+  const next = () => setCurrent((c) => (c + 1) % images.length)
+
   return (
-    <div>
-      <div className="mb-4">
+    <div className="relative">
+      <div className="mb-4 group relative overflow-hidden rounded">
         <Image
           src={images[current]}
-          alt={`View ${current + 1}`}
-          width={600}
-          height={600}
-          className="object-cover w-full h-auto rounded"
+          alt={`Product image ${current + 1}`}
+          width={900}
+          height={900}
+          priority
+          className="object-cover w-full h-auto transition-transform duration-300 group-hover:scale-[1.02]"
         />
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full h-9 w-9 flex items-center justify-center"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full h-9 w-9 flex items-center justify-center"
+            >
+              ›
+            </button>
+          </>
+        )}
       </div>
-      <div className="flex space-x-2 overflow-x-auto w-full">
+      <div className="flex gap-2 overflow-x-auto w-full" aria-label="Image thumbnails">
         {images.map((src, idx) => (
           <button
             key={idx}
             onClick={() => setCurrent(idx)}
+            aria-current={idx === current}
             aria-label={`View image ${idx + 1}`}
-            className={`ring-2 ${
-              idx === current ? "ring-gray-700" : "ring-gray-300"
-            } rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-500 transition`}
+            className={`ring-2 ${idx === current ? 'ring-white' : 'ring-transparent'} rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition`}
           >
             <Image
               src={src}
               alt={`Thumbnail ${idx + 1}`}
-              width={60}
-              height={60}
-              className="object-cover rounded-sm w-full h-auto"
+              width={72}
+              height={72}
+              className="object-cover rounded-sm w-[72px] h-[72px]"
             />
           </button>
         ))}

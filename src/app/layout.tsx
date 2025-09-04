@@ -24,7 +24,7 @@ export default async function RootLayout({
   const messages = (await import(`../../locales/${lang}.json`)).default;
   void messages; // keep for potential future use
   return (
-    <html lang={lang} className="scroll-smooth">
+    <html lang={lang} className="scroll-smooth" suppressHydrationWarning>
       <body
         className={ "pt-24 antialiased"}
       >

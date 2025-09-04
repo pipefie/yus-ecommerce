@@ -59,12 +59,16 @@ export default async function ProductPage({ params }: Props) {
     color: string
     size: string
     price: number
+    imageUrl?: string
+    previewUrl?: string
     designUrls: unknown
     }) => ({
       id:         String(v.id),
       color:      v.color,
       size:       v.size,
       price:      v.price,
+      imageUrl:   (v as any).imageUrl,
+      previewUrl: (v as any).previewUrl,
       designUrls: Array.isArray(v.designUrls)
         ? v.designUrls.filter((x: unknown): x is string => typeof x === "string")
         : [],
