@@ -44,6 +44,8 @@ export interface SummaryProduct {
 
 interface RawPrintfulFile {
   src: string;
+  type?: string;
+  placement?: string;
 }
 
 interface RawPrintfulVariant {
@@ -125,19 +127,88 @@ export async function fetchPrintfulProductDetail(
   const res = await callPrintful(`/sync/products/${productId}`);
   const syncProduct = (res as any).sync_product;
   const syncVariants: any[] = Array.isArray((res as any).sync_variants) ? (res as any).sync_variants : [];
+
+  // Helper to fetch full files for a variant (to get all previews/mockups)
+  async function fetchVariantFiles(variantId: number): Promise<RawPrintfulFile[]> {
+    try {
+      const detail = await callPrintful(`/sync/variant/${variantId}`);
+      const files: any[] = Array.isArray((detail as any)?.files) ? (detail as any).files : [];
+      // Prefer "preview" type files; fall back to any file that has a URL
+      const mapped = files
+        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url || f?.url))
+        .map((f: any) => ({
+          // Prefer preview image of the placed design; then thumbnail; then raw file
+          src: (f.preview_url || f.thumbnail_url || f.url) as string,
+          type: f.type as string | undefined,
+          placement: (f.options?.placement || f.placement) as string | undefined,
+        }));
+      // If there are preview files, keep only those; otherwise return all
+      const previews = mapped.filter((f) => (f.type || "").toLowerCase().includes("preview"));
+      return previews.length ? previews : mapped;
+    } catch {
+      return [];
+    }
+  }
+
+  // Helper to fetch catalog variant details (color/size) when missing
+  async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string }> {
+    try {
+      const res = await callPrintful(`/products/variant/${variantId}`);
+      const v = (res as any)?.variant || {};
+      return { color: v.color, size: v.size };
+    } catch {
+      return {};
+    }
+  }
+
+  // Enrich each variant with its full files list
+  const variantsEnriched = await Promise.all(
+    syncVariants.map(async (v: any) => {
+      const vid = v.variant_id ?? v.id;
+      const inlineFiles: RawPrintfulFile[] = Array.isArray(v.files)
+        ? v.files
+            .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url || f?.url))
+            .map((f: any) => ({
+              src: (f.preview_url || f.thumbnail_url || f.url) as string,
+              type: f.type as string | undefined,
+            }))
+        : [];
+      const extraFiles = await fetchVariantFiles(Number(vid));
+      const all = [...inlineFiles, ...extraFiles];
+      // Deduplicate by URL and maintain order: previews first if available
+      const seen = new Set<string>();
+      const unique: RawPrintfulFile[] = [];
+      for (const f of all) {
+        if (!f?.src || seen.has(f.src)) continue;
+        seen.add(f.src);
+        unique.push(f);
+      }
+      // fill catalog color/size if missing
+      let color: string | undefined = v.color;
+      let size: string | undefined = v.size;
+      if (!color || !size) {
+        const cat = await fetchCatalogVariant(Number(vid));
+        color = color || cat.color;
+        size = size || cat.size;
+      }
+
+      return {
+        id: vid,
+        price: Number(v.retail_price ?? 0),
+        title: v.name,
+        color,
+        size,
+        files: unique,
+      } as RawPrintfulVariant;
+    })
+  );
+
   return {
     id: syncProduct.id,
     title: syncProduct.name,
     description: "",
     images: syncProduct.thumbnail_url ? [{ src: syncProduct.thumbnail_url }] : [],
-    variants: syncVariants.map((v: any) => ({
-      id: v.variant_id ?? v.id,
-      price: Number(v.retail_price ?? 0),
-      title: v.name,
-      color: v.color,
-      size: v.size,
-      files: Array.isArray(v.files) ? v.files.map((f: any) => ({ src: f.url })) : [],
-    })),
+    variants: variantsEnriched,
   };
 }
 
@@ -150,6 +221,7 @@ export function mapToDetail(
     const parts = (v.name || v.title || "").split("/").map((s: string) => s.trim());
     const color = v.color || parts[0] || "Default";
     const size = v.size || parts[1] || "One Size";
+    // Build design URLs prioritizing preview/mockup files, then any available files, then product-level images
     const designUrls = Array.isArray(v.files) && v.files.length > 0
       ? v.files.map((f: RawPrintfulFile) => f.src)
       : images.length
