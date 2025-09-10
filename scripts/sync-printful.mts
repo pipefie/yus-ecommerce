@@ -54,14 +54,13 @@ async function fetchVariantFiles(variantId: number): Promise<{ url: string; type
   }
   const files: any[] = Array.isArray(json?.result?.files) ? json.result.files : []
   const mapped = files
-    .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url || f?.url))
+    .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
     .map((f: any) => ({
-      url: String(f.preview_url || f.thumbnail_url || f.url),
+      url: String(f.preview_url || f.thumbnail_url),
       type: f.type ? String(f.type) : undefined,
       placement: (f.options?.placement || f.placement) ? String(f.options?.placement || f.placement) : undefined,
     }))
-  const previews = mapped.filter(f => (f.type || '').toLowerCase().includes('preview'))
-  return previews.length ? previews : mapped
+  return mapped
 }
 
 async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string; productId?: number }> {
@@ -123,7 +122,7 @@ async function main() {
       // Inline files from product detail
       const inline = Array.isArray(v.files)
         ? v.files
-            .map((f: any) => f?.preview_url || f?.thumbnail_url || f?.url)
+            .map((f: any) => f?.preview_url || f?.thumbnail_url)
             .filter((u: any) => !!u)
         : []
       // Extra files by fetching full variant (often includes preview/mockups for front/back)

@@ -133,18 +133,16 @@ export async function fetchPrintfulProductDetail(
     try {
       const detail = await callPrintful(`/sync/variant/${variantId}`);
       const files: any[] = Array.isArray((detail as any)?.files) ? (detail as any).files : [];
-      // Prefer "preview" type files; fall back to any file that has a URL
+      // Only treat preview/mockup images as display assets on the product page.
+      // Ignore raw design archive URLs.
       const mapped = files
-        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url || f?.url))
+        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
         .map((f: any) => ({
-          // Prefer preview image of the placed design; then thumbnail; then raw file
-          src: (f.preview_url || f.thumbnail_url || f.url) as string,
-          type: f.type as string | undefined,
+          src: (f.preview_url || f.thumbnail_url) as string,
+          type: (f.type as string | undefined) || undefined,
           placement: (f.options?.placement || f.placement) as string | undefined,
         }));
-      // If there are preview files, keep only those; otherwise return all
-      const previews = mapped.filter((f) => (f.type || "").toLowerCase().includes("preview"));
-      return previews.length ? previews : mapped;
+      return mapped;
     } catch {
       return [];
     }
@@ -167,15 +165,16 @@ export async function fetchPrintfulProductDetail(
       const vid = v.variant_id ?? v.id;
       const inlineFiles: RawPrintfulFile[] = Array.isArray(v.files)
         ? v.files
-            .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url || f?.url))
+            // Keep only preview or thumbnail image links; skip raw file URLs
+            .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
             .map((f: any) => ({
-              src: (f.preview_url || f.thumbnail_url || f.url) as string,
-              type: f.type as string | undefined,
+              src: (f.preview_url || f.thumbnail_url) as string,
+              type: (f.type as string | undefined) || undefined,
             }))
         : [];
       const extraFiles = await fetchVariantFiles(Number(vid));
       const all = [...inlineFiles, ...extraFiles];
-      // Deduplicate by URL and maintain order: previews first if available
+      // Deduplicate by URL and maintain order
       const seen = new Set<string>();
       const unique: RawPrintfulFile[] = [];
       for (const f of all) {
@@ -294,15 +293,34 @@ export async function createPrintfulOrderForLocalOrder(orderId: number, recipien
     files?: Array<{ type?: string; url: string }>
   }> = []
 
+  // Helper to get printable files for a Printful catalog variant
+  async function fetchVariantPrintFiles(variantId: number): Promise<Array<{ type?: string; url: string }>> {
+    try {
+      const detail = await callPrintful(`/sync/variant/${variantId}`)
+      const files: any[] = Array.isArray((detail as any)?.files) ? (detail as any).files : []
+      return files
+        .filter((f: any) => !!f?.url) // design archives have raw URL
+        .filter((f: any) => !String(f?.type || '').toLowerCase().includes('preview')) // skip previews
+        .map((f: any) => ({ type: f.type as string | undefined, url: String(f.url) }))
+    } catch {
+      return []
+    }
+  }
+
   for (const it of items) {
     const variantId: number | null = it.variantId ?? null
     if (!variantId) continue
     const variant = await prisma.variant.findUnique({ where: { id: Number(variantId) } })
     if (!variant) continue
     const catalogVariantId = Number(variant.printfulVariantId)
-    const files: Array<{ type?: string; url: string }> = Array.isArray(variant.designUrls)
-      ? (variant.designUrls as unknown as string[]).map((u) => ({ url: u }))
-      : []
+    // Prefer real print files from Printful over stored preview/mockups
+    let files: Array<{ type?: string; url: string }> = await fetchVariantPrintFiles(catalogVariantId)
+    if (!files.length) {
+      // Fallback: attempt to use stored URLs if any (may be mockups; not ideal)
+      files = Array.isArray(variant.designUrls)
+        ? (variant.designUrls as unknown as string[]).map((u) => ({ url: u }))
+        : []
+    }
     outItems.push({
       variant_id: catalogVariantId,
       quantity: Number(it.quantity) || 1,

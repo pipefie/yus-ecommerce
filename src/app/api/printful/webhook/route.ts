@@ -69,7 +69,8 @@ async function upsertProduct(productId: number) {
 
   for (const v of variants) {
     const designUrls: string[] = (Array.isArray(v.files) ? v.files : [])
-      .map((f: PrintfulFile) => (f as any).url || f.preview_url || f.thumbnail_url)
+      // Only use preview/mockup CDN images for product page; skip raw design archive URLs
+      .map((f: PrintfulFile) => f.preview_url || f.thumbnail_url)
       .filter((u): u is string => Boolean(u))
     const image = designUrls[0] ?? ''
     const color = v.color || ''
