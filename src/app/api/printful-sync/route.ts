@@ -7,8 +7,30 @@ import {
   mapToDetail,
 } from "@/utils/printful"
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const url = new URL(req.url)
+    const shouldClear = url.searchParams.get('clear') === '1' || url.searchParams.get('clear') === 'true'
+
+    if (shouldClear) {
+      // Clear existing stored mockups so stale design archives can't persist
+      await prisma.variant.updateMany({
+        data: {
+          imageUrl:   '',
+          previewUrl: '',
+          // Prisma Json needs an explicit cast
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          designUrls: [] as any,
+        },
+      })
+      await prisma.product.updateMany({
+        data: {
+          imageUrl: '',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          images:   [] as any,
+        },
+      })
+    }
 
     const rawList = await fetchPrintfulProducts()
     const summaries = rawList.map(mapToSummary)
@@ -68,7 +90,7 @@ export async function GET() {
         })
       }
     }
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, cleared: shouldClear })
   } catch (err: unknown) {
     console.error("printful-sync error", err)
     const message = err instanceof Error ? err.message : "Unknown error"

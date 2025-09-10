@@ -41,26 +41,43 @@ async function fetchDetail(id: number): Promise<any> {
   return json.result ?? json
 }
 
-async function fetchVariantFiles(variantId: number): Promise<{ url: string; type?: string; placement?: string }[]> {
-  const url = `https://api.printful.com/sync/variant/${variantId}`
-  console.log('GET', url)
-  const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
-  if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
-  const res = await fetch(url, { headers })
-  const json = (await res.json()) as any
-  if (!res.ok) {
-    console.warn(`fetch variant ${variantId}: ${res.status} ${(json?.result)||''}`)
-    return []
+async function fetchVariantFiles(variantId: number): Promise<{ url: string; placement?: string }[]> {
+  // 1) Prefer Sync Variant previews (design applied)
+  {
+    const url = `https://api.printful.com/sync/variant/${variantId}`
+    console.log('GET', url)
+    const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
+    if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
+    const res = await fetch(url, { headers })
+    const json = (await res.json()) as any
+    if (res.ok) {
+      const files: any[] = Array.isArray(json?.result?.files) ? json.result.files : []
+      const previews = files
+        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
+        .map((f: any) => ({ url: String(f.preview_url || f.thumbnail_url), placement: String(f.options?.placement || f.placement || '') }))
+        .filter((f: any) => f.url)
+      if (previews.length) return previews
+    } else {
+      console.warn(`fetch variant ${variantId}: ${res.status} ${(json?.result)||''}`)
+    }
   }
-  const files: any[] = Array.isArray(json?.result?.files) ? json.result.files : []
-  const mapped = files
-    .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
-    .map((f: any) => ({
-      url: String(f.preview_url || f.thumbnail_url),
-      type: f.type ? String(f.type) : undefined,
-      placement: (f.options?.placement || f.placement) ? String(f.options?.placement || f.placement) : undefined,
-    }))
-  return mapped
+  // 2) Fallback to v2 Catalog blank mockups per placement
+  {
+    const url = `https://api.printful.com/v2/catalog-variants/${variantId}/images`
+    console.log('GET', url)
+    const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
+    if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
+    const res = await fetch(url, { headers })
+    const json = (await res.json()) as any
+    if (!res.ok) {
+      console.warn(`fetch catalog-variant images ${variantId}: ${res.status} ${(json?.data)||''}`)
+      return []
+    }
+    const imgs: any[] = Array.isArray(json?.data?.images) ? json.data.images : Array.isArray(json?.data) ? json.data : []
+    return imgs
+      .map((it: any) => ({ url: String(it.mockup_url || it.url || it.src || ''), placement: String(it.placement || it.view || it.side || '') }))
+      .filter((it: any) => it.url && it.placement)
+  }
 }
 
 async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string; productId?: number }> {
@@ -128,8 +145,19 @@ async function main() {
       // Extra files by fetching full variant (often includes preview/mockups for front/back)
       const variantCatalogId = Number((v as any).variant_id ?? v.id)
       const extra = await fetchVariantFiles(variantCatalogId)
-      const extraUrls = extra.map((f) => f.url)
-      const thisImgs = [...inline, ...extraUrls]
+      // Order by desired placements front,back,left,right then dedup
+      const byPlacement: Record<string, string[]> = {}
+      for (const it of extra) {
+        if (!it.url || !it.placement) continue
+        ;(byPlacement[it.placement.toLowerCase()] ||= []).push(it.url)
+      }
+      const order = ['front','back','left','right']
+      const ordered: string[] = []
+      for (const p of order) {
+        const u = byPlacement[p]?.[0]
+        if (u) ordered.push(u)
+      }
+      const thisImgs = [...ordered, ...inline]
       // Deduplicate while preserving order
       const dedup: string[] = []
       const seen = new Set<string>()

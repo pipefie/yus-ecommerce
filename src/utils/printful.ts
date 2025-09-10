@@ -32,6 +32,22 @@ async function callPrintful(path: string, opts: RequestInit = {}) {
   return (json as any).result;
 }
 
+// v2 API helper (new Mockup endpoints live under /v2)
+async function callPrintfulV2(path: string, opts: RequestInit = {}) {
+  const url = path.startsWith("/v2/") ? path : `/v2${path.startsWith("/") ? "" : "/"}${path}`;
+  const res = await fetch(BASE + url, {
+    ...opts,
+    headers: buildHeaders(opts.headers || {}),
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const detail = typeof (json as any)?.data === "string" ? (json as any).data : JSON.stringify(json);
+    throw new Error(`Printful ${url} ${res.status}: ${detail}`);
+  }
+  return (json as any).data ?? (json as any).result ?? json;
+}
+
 // Public types used across the app
 export interface SummaryProduct {
   printfulProductId: number;
@@ -128,32 +144,46 @@ export async function fetchPrintfulProductDetail(
   const syncProduct = (res as any).sync_product;
   const syncVariants: any[] = Array.isArray((res as any).sync_variants) ? (res as any).sync_variants : [];
 
-  // Helper to fetch full files for a variant (to get all previews/mockups)
+  // Helper to fetch full files for a variant (to get all previews/mockups with design applied)
   async function fetchVariantFiles(variantId: number): Promise<RawPrintfulFile[]> {
+    // 1) Prefer Sync Variant previews (these contain your design applied and placement info)
     try {
       const detail = await callPrintful(`/sync/variant/${variantId}`);
       const files: any[] = Array.isArray((detail as any)?.files) ? (detail as any).files : [];
-      // Only treat preview/mockup images as display assets on the product page.
-      // Ignore raw design archive URLs.
       const mapped = files
         .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
         .map((f: any) => ({
           src: (f.preview_url || f.thumbnail_url) as string,
           type: (f.type as string | undefined) || undefined,
           placement: (f.options?.placement || f.placement) as string | undefined,
-        }));
-      return mapped;
+        }))
+        .filter((f: any) => !!f.src);
+      if (mapped.length) return mapped;
+    } catch {
+      // ignore, try v2 as fallback
+    }
+    // 2) Fallback to v2 catalog blank mockups by placement
+    try {
+      const v2 = await callPrintfulV2(`/catalog-variants/${variantId}/images`);
+      const images: any[] = Array.isArray((v2 as any)?.images) ? (v2 as any).images : Array.isArray(v2) ? (v2 as any) : [];
+      const mappedV2: RawPrintfulFile[] = images
+        .map((it: any) => ({
+          src: String(it.mockup_url || it.url || it.src || ""),
+          placement: String(it.placement || it.view || it.side || ""),
+        }))
+        .filter((f) => !!f.src && !!f.placement);
+      return mappedV2;
     } catch {
       return [];
     }
   }
 
   // Helper to fetch catalog variant details (color/size) when missing
-  async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string }> {
+  async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string; product_id?: number }> {
     try {
       const res = await callPrintful(`/products/variant/${variantId}`);
       const v = (res as any)?.variant || {};
-      return { color: v.color, size: v.size };
+      return { color: v.color, size: v.size, product_id: v.product_id };
     } catch {
       return {};
     }
@@ -163,17 +193,9 @@ export async function fetchPrintfulProductDetail(
   const variantsEnriched = await Promise.all(
     syncVariants.map(async (v: any) => {
       const vid = v.variant_id ?? v.id;
-      const inlineFiles: RawPrintfulFile[] = Array.isArray(v.files)
-        ? v.files
-            // Keep only preview or thumbnail image links; skip raw file URLs
-            .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
-            .map((f: any) => ({
-              src: (f.preview_url || f.thumbnail_url) as string,
-              type: (f.type as string | undefined) || undefined,
-            }))
-        : [];
+      // Replace any inline previews with official blank mockups by placement from v2
       const extraFiles = await fetchVariantFiles(Number(vid));
-      const all = [...inlineFiles, ...extraFiles];
+      const all = [...extraFiles];
       // Deduplicate by URL and maintain order
       const seen = new Set<string>();
       const unique: RawPrintfulFile[] = [];
@@ -185,10 +207,12 @@ export async function fetchPrintfulProductDetail(
       // fill catalog color/size if missing
       let color: string | undefined = v.color;
       let size: string | undefined = v.size;
+      let product_id: number | undefined;
       if (!color || !size) {
         const cat = await fetchCatalogVariant(Number(vid));
         color = color || cat.color;
         size = size || cat.size;
+        product_id = cat.product_id;
       }
 
       return {
@@ -198,6 +222,8 @@ export async function fetchPrintfulProductDetail(
         color,
         size,
         files: unique,
+        // @ts-expect-error carry through for downstream if needed
+        product_id,
       } as RawPrintfulVariant;
     })
   );
@@ -220,12 +246,26 @@ export function mapToDetail(
     const parts = (v.name || v.title || "").split("/").map((s: string) => s.trim());
     const color = v.color || parts[0] || "Default";
     const size = v.size || parts[1] || "One Size";
-    // Build design URLs prioritizing preview/mockup files, then any available files, then product-level images
-    const designUrls = Array.isArray(v.files) && v.files.length > 0
-      ? v.files.map((f: RawPrintfulFile) => f.src)
-      : images.length
-        ? [images[0]]
-        : ["/placeholder.png"];
+    // Build mockup URLs strictly from official blank mockups by placement (front/back/left/right)
+    let designUrls: string[] = [];
+    if (Array.isArray(v.files) && v.files.length > 0) {
+      const byPlacement: Record<string, string[]> = {};
+      for (const f of v.files) {
+        const place = (f.placement || "").toLowerCase();
+        if (!place || !f.src) continue;
+        (byPlacement[place] ||= []).push(f.src);
+      }
+      const order = ["front", "back", "left", "right"];
+      for (const p of order) {
+        const u = byPlacement[p]?.[0];
+        if (u) designUrls.push(u);
+      }
+      // If nothing matched, fall back to all unique src values
+      if (!designUrls.length) designUrls = v.files.map((f) => f.src);
+    }
+    if (!designUrls.length) {
+      designUrls = images.length ? [images[0]] : ["/placeholder.png"];
+    }
     return {
       id: v.id,
       price: Math.round(Number(v.price) * 100) || 0,

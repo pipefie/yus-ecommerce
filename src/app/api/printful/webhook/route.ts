@@ -21,6 +21,58 @@ interface PrintfulVariant {
   files?: PrintfulFile[]
 }
 
+async function fetchVariantMockups(variantId: number): Promise<string[]> {
+  const headers: Record<string,string> = { Authorization: `Bearer ${API_KEY}` }
+  if (STORE_ID) headers['X-PF-Store-Id'] = String(STORE_ID)
+  try {
+    // 1) Prefer Sync Variant previews with design applied
+    const resSync = await fetch(`${API_BASE}/sync/variant/${variantId}`, { headers, cache: 'no-store' })
+    const jsonSync = await resSync.json().catch(() => ({} as any))
+    if (resSync.ok) {
+      const files: any[] = Array.isArray(jsonSync?.result?.files) ? jsonSync.result.files : []
+      const previews = files
+        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
+        .map((f: any) => ({
+          url: String(f.preview_url || f.thumbnail_url),
+          placement: String(f.options?.placement || f.placement || ''),
+        }))
+        .filter((x: any) => x.url)
+      if (previews.length) {
+        const byPlacement: Record<string, string[]> = {}
+        for (const it of previews) {
+          const p = it.placement.toLowerCase()
+          ;(byPlacement[p] ||= []).push(it.url)
+        }
+        const order = ['front','back','left','right']
+        const ordered: string[] = []
+        for (const p of order) { const u = byPlacement[p]?.[0]; if (u) ordered.push(u) }
+        return ordered.length ? ordered : previews.map(p => p.url)
+      }
+    }
+    // 2) Fallback to v2 blank mockups
+    const res = await fetch(`${API_BASE}/v2/catalog-variants/${variantId}/images`, { headers, cache: 'no-store' })
+    const json = await res.json().catch(() => ({} as any))
+    if (!res.ok) throw new Error(String(json?.data || json))
+    const images: any[] = Array.isArray(json?.data?.images) ? json.data.images : Array.isArray(json?.data) ? json.data : []
+    const byPlacement: Record<string, string[]> = {}
+    for (const it of images) {
+      const url = String(it.mockup_url || it.url || it.src || '')
+      const placement = String(it.placement || it.view || it.side || '').toLowerCase()
+      if (!url || !placement) continue
+      ;(byPlacement[placement] ||= []).push(url)
+    }
+    const order = ['front','back','left','right']
+    const ordered: string[] = []
+    for (const p of order) {
+      const u = byPlacement[p]?.[0]
+      if (u) ordered.push(u)
+    }
+    return ordered.length ? ordered : Object.values(byPlacement).flat()
+  } catch {
+    return []
+  }
+}
+
 async function fetchProduct(id: number) {
   const headers: Record<string,string> = { Authorization: `Bearer ${API_KEY}` }
   if (STORE_ID) headers['X-PF-Store-Id'] = String(STORE_ID)
@@ -68,15 +120,12 @@ async function upsertProduct(productId: number) {
   })
 
   for (const v of variants) {
-    const designUrls: string[] = (Array.isArray(v.files) ? v.files : [])
-      // Only use preview/mockup CDN images for product page; skip raw design archive URLs
-      .map((f: PrintfulFile) => f.preview_url || f.thumbnail_url)
-      .filter((u): u is string => Boolean(u))
+    const key = String((v as any).variant_id ?? v.id)
+    // Prefer official blank mockups from v2 for each placement
+    const designUrls: string[] = await fetchVariantMockups(Number(key))
     const image = designUrls[0] ?? ''
     const color = v.color || ''
     const size = v.size || ''
-
-    const key = String((v as any).variant_id ?? v.id)
     await prisma.variant.upsert({
       where: { printfulVariantId: key },
       update: {

@@ -30,7 +30,7 @@ export async function middleware(req: NextRequest) {
         "default-src 'self'",
         "script-src 'self'",                                  // no inline/eval in prod
         "style-src 'self'",
-        "img-src 'self' https://files.cdn.printful.com https://img.printful.com https://images-api.printify.com data:",
+        "img-src 'self' https://*.printful.com https://files.cdn.printful.com https://img.printful.com https://images-api.printify.com data:",
         "font-src 'self' data:",
         `connect-src ${connectSrc.join(' ')}`,
         "frame-ancestors 'none'",

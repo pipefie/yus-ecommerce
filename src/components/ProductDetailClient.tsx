@@ -87,15 +87,11 @@ export default function ProductDetailClient({ product }: Props) {
 
   // all unique mockups for the selected color, with robust fallbacks
   const colorImages = useMemo(() => {
-    // Only accept known image CDN hosts to avoid showing raw design/archive URLs
+    // Accept any http(s) image; backend now guarantees these are mockups
     const isAllowedHost = (u: string) => {
       try {
-        const h = new URL(u).hostname;
-        return (
-          h === 'files.cdn.printful.com' ||
-          h === 'img.printful.com' ||
-          h === 'images-api.printify.com'
-        );
+        const p = new URL(u).protocol;
+        return p === 'https:' || p === 'http:';
       } catch {
         return false;
       }
@@ -192,7 +188,7 @@ export default function ProductDetailClient({ product }: Props) {
                     title={c}
                   >
                     {preview ? (
-                      <Image src={preview} alt={c} fill sizes="40px" className="object-cover" />
+                      <Image src={preview} alt={c} fill sizes="40px" className="object-cover" unoptimized />
                     ) : (
                       <span className="absolute inset-0 bg-gray-500" />
                     )}
@@ -263,6 +259,7 @@ function Carousel({ images }: { images: string[] }) {
           height={900}
           priority
           className="object-cover w-full h-auto transition-transform duration-300 group-hover:scale-[1.02]"
+          unoptimized
         />
         {images.length > 1 && (
           <>
@@ -300,6 +297,7 @@ function Carousel({ images }: { images: string[] }) {
               width={72}
               height={72}
               className="object-cover rounded-sm w-[72px] h-[72px]"
+              unoptimized
             />
           </button>
         ))}
