@@ -27,12 +27,22 @@ export default async function HomePage() {
 
   // 2️⃣ reshape to exactly what your <ProductGrid> expects
   const items = products.map((p) => {
+    const isAllowedHost = (u: string) => {
+      try {
+        const h = new URL(u).hostname
+        return h === 'files.cdn.printful.com' || h === 'img.printful.com' || h === 'images-api.printify.com'
+      } catch {
+        return false
+      }
+    }
     const v = p.variants.find((vv) => Array.isArray(vv.designUrls) && vv.designUrls.length > 0) || p.variants[0] || null;
 
-    const imageUrl =
-      (Array.isArray(p.images) && p.images.length > 0)
-        ? (p.images as unknown as string[])[0]
-        : v?.previewUrl || v?.imageUrl || "/placeholder.png";
+    const imageUrl = (() => {
+      const imgs = (Array.isArray(p.images) ? (p.images as unknown as string[]) : []).filter(isAllowedHost)
+      if (imgs.length) return imgs[0]
+      const vImg = [v?.previewUrl, v?.imageUrl].map((x) => (x ? String(x) : '')).find((u) => u && isAllowedHost(u))
+      return vImg || "/placeholder.png"
+    })()
 
     return {
       slug:        p.slug,

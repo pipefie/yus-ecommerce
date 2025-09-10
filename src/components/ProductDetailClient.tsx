@@ -87,14 +87,33 @@ export default function ProductDetailClient({ product }: Props) {
 
   // all unique mockups for the selected color, with robust fallbacks
   const colorImages = useMemo(() => {
+    // Only accept known image CDN hosts to avoid showing raw design/archive URLs
+    const isAllowedHost = (u: string) => {
+      try {
+        const h = new URL(u).hostname;
+        return (
+          h === 'files.cdn.printful.com' ||
+          h === 'img.printful.com' ||
+          h === 'images-api.printify.com'
+        );
+      } catch {
+        return false;
+      }
+    };
+
     const urls = [
-      // Prefer explicit design URLs
+      // Prefer explicit design/mockup URLs from the variant
       ...colorVariants.flatMap((v) => Array.isArray(v.designUrls) ? v.designUrls : []),
-      // Fallback to variant imageUrl if designUrls is missing
+      // Fallback to variant imageUrl if present
       ...colorVariants.map((v: any) => (v as any).imageUrl).filter(Boolean),
-    ].filter(Boolean) as string[];
+    ]
+      .filter(Boolean)
+      .map(String)
+      .filter(isAllowedHost) as string[];
+
     const unique = Array.from(new Set(urls));
-    return unique.length ? unique : (product.images?.length ? product.images : ["/placeholder.png"]);
+    const fallbacks = (product.images || []).filter(isAllowedHost);
+    return unique.length ? unique : (fallbacks.length ? fallbacks : ["/placeholder.png"]);
   }, [colorVariants, product.images]);
 
   // find the matching variant; fallback to the first variant

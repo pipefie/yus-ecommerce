@@ -2,7 +2,6 @@
 import { notFound }      from "next/navigation";
 import type { Metadata }  from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
-import Script from "next/script";
 // Cached helpers reduce DB round trips for repeated page loads
 import { getProductBySlug, getProductSlugs } from "../../../lib/products";
 
@@ -108,9 +107,11 @@ export default async function ProductPage({ params }: Props) {
   return (
     <main className="container mx-auto px-4 py-12">
       <ProductDetailClient product={detail} />
-      <Script id="product-schema" type="application/ld+json">
-        {JSON.stringify(productSchema)}
-      </Script>
+      <script
+        id="product-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
     </main>
   );
 }
