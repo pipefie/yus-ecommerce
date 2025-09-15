@@ -144,35 +144,66 @@ export async function fetchPrintfulProductDetail(
   const syncProduct = (res as any).sync_product;
   const syncVariants: any[] = Array.isArray((res as any).sync_variants) ? (res as any).sync_variants : [];
 
-  // Helper to fetch full files for a variant (to get all previews/mockups with design applied)
-  async function fetchVariantFiles(variantId: number): Promise<RawPrintfulFile[]> {
-    // 1) Prefer Sync Variant previews (these contain your design applied and placement info)
+  // Helpers to fetch variant images, disambiguating Sync vs Catalog IDs
+  async function fetchVariantPreviewFiles(syncVariantId: number): Promise<RawPrintfulFile[]> {
     try {
-      const detail = await callPrintful(`/sync/variant/${variantId}`);
-      const files: any[] = Array.isArray((detail as any)?.files) ? (detail as any).files : [];
-      const mapped = files
-        .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
-        .map((f: any) => ({
-          src: (f.preview_url || f.thumbnail_url) as string,
-          type: (f.type as string | undefined) || undefined,
-          placement: (f.options?.placement || f.placement) as string | undefined,
-        }))
-        .filter((f: any) => !!f.src);
-      if (mapped.length) return mapped;
+      const detail = await callPrintful(`/sync/variant/${syncVariantId}`);
+      const files: any[] = Array.isArray((detail as any)?.sync_variant?.files)
+        ? (detail as any).sync_variant.files
+        : Array.isArray((detail as any)?.files)
+          ? (detail as any).files
+          : [];
+      const out: RawPrintfulFile[] = [];
+      for (const f of files) {
+        const url = String(f?.preview_url || f?.thumbnail_url || '');
+        if (!url) continue;
+        let placement: string | undefined = (f?.options?.placement || f?.placement) as string | undefined;
+        const type = String(f?.type || '').toLowerCase();
+        if (!placement) {
+          // Heuristics: map file types to placements
+          if (type.includes('back')) placement = 'back';
+          else if (type.includes('sleeve_left')) placement = 'left';
+          else if (type.includes('sleeve_right')) placement = 'right';
+          else if (type.includes('chest_left') || type.includes('front')) placement = 'front';
+          else if (type === 'preview') {
+            const name = String(f?.filename || url).toLowerCase();
+            if (name.includes('back')) placement = 'back';
+            else if (name.includes('front')) placement = 'front';
+            else if (name.includes('left')) placement = 'left';
+            else if (name.includes('right')) placement = 'right';
+          }
+          // default file often corresponds to main print area (front for tees)
+          else if (type === 'default') placement = 'front';
+        }
+        if (!placement) continue;
+        out.push({ src: url, placement });
+      }
+      return out;
     } catch {
-      // ignore, try v2 as fallback
+      return [];
     }
-    // 2) Fallback to v2 catalog blank mockups by placement
+  }
+
+  async function fetchVariantProductImage(syncVariantId: number): Promise<string | null> {
     try {
-      const v2 = await callPrintfulV2(`/catalog-variants/${variantId}/images`);
+      const detail = await callPrintful(`/sync/variant/${syncVariantId}`);
+      const img = (detail as any)?.sync_variant?.product?.image;
+      return typeof img === 'string' && img ? img : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function fetchCatalogVariantMockups(catalogVariantId: number): Promise<RawPrintfulFile[]> {
+    try {
+      const v2 = await callPrintfulV2(`/catalog-variants/${catalogVariantId}/images`);
       const images: any[] = Array.isArray((v2 as any)?.images) ? (v2 as any).images : Array.isArray(v2) ? (v2 as any) : [];
-      const mappedV2: RawPrintfulFile[] = images
+      return images
         .map((it: any) => ({
-          src: String(it.mockup_url || it.url || it.src || ""),
+          src: String(it.mockup_url || it.image_url || it.url || it.src || ""),
           placement: String(it.placement || it.view || it.side || ""),
         }))
         .filter((f) => !!f.src && !!f.placement);
-      return mappedV2;
     } catch {
       return [];
     }
@@ -192,10 +223,18 @@ export async function fetchPrintfulProductDetail(
   // Enrich each variant with its full files list
   const variantsEnriched = await Promise.all(
     syncVariants.map(async (v: any) => {
-      const vid = v.variant_id ?? v.id;
-      // Replace any inline previews with official blank mockups by placement from v2
-      const extraFiles = await fetchVariantFiles(Number(vid));
-      const all = [...extraFiles];
+      // Disambiguate IDs from Sync API
+      const syncId = Number(v.id);
+      const catalogId = Number(v.variant_id ?? v.id);
+
+      // 1) Try Sync previews (design applied) using Sync Variant ID
+      const previewFiles = await fetchVariantPreviewFiles(syncId);
+      // 2) Fallback to official blank mockups by placement using Catalog Variant ID
+      const mockupFiles = previewFiles.length ? [] : await fetchCatalogVariantMockups(catalogId);
+      // 3) Always try to prefix with product-level variant image for color-specific primary
+      const productImg = await fetchVariantProductImage(syncId);
+      const primary: RawPrintfulFile[] = productImg ? [{ src: productImg, placement: 'front' }] : [];
+      const all = [...primary, ...previewFiles, ...mockupFiles];
       // Deduplicate by URL and maintain order
       const seen = new Set<string>();
       const unique: RawPrintfulFile[] = [];
@@ -209,14 +248,15 @@ export async function fetchPrintfulProductDetail(
       let size: string | undefined = v.size;
       let product_id: number | undefined;
       if (!color || !size) {
-        const cat = await fetchCatalogVariant(Number(vid));
+        const cat = await fetchCatalogVariant(catalogId);
         color = color || cat.color;
         size = size || cat.size;
         product_id = cat.product_id;
       }
 
       return {
-        id: vid,
+        // Persist Catalog Variant ID when available so downstream calls (mockups, pricing) align
+        id: catalogId || syncId,
         price: Number(v.retail_price ?? 0),
         title: v.name,
         color,

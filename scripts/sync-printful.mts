@@ -41,10 +41,10 @@ async function fetchDetail(id: number): Promise<any> {
   return json.result ?? json
 }
 
-async function fetchVariantFiles(variantId: number): Promise<{ url: string; placement?: string }[]> {
-  // 1) Prefer Sync Variant previews (design applied)
+async function fetchVariantFiles(syncVariantId: number, catalogVariantId: number): Promise<{ url: string; placement?: string }[]> {
+  // 1) Prefer Sync Variant previews (design applied) using Sync Variant ID
   {
-    const url = `https://api.printful.com/sync/variant/${variantId}`
+    const url = `https://api.printful.com/sync/variant/${syncVariantId}`
     console.log('GET', url)
     const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
     if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
@@ -55,15 +55,15 @@ async function fetchVariantFiles(variantId: number): Promise<{ url: string; plac
       const previews = files
         .filter((f: any) => !!(f?.preview_url || f?.thumbnail_url))
         .map((f: any) => ({ url: String(f.preview_url || f.thumbnail_url), placement: String(f.options?.placement || f.placement || '') }))
-        .filter((f: any) => f.url)
+        .filter((f: any) => f.url && f.placement)
       if (previews.length) return previews
     } else {
       console.warn(`fetch variant ${variantId}: ${res.status} ${(json?.result)||''}`)
     }
   }
-  // 2) Fallback to v2 Catalog blank mockups per placement
+  // 2) Fallback to v2 Catalog blank mockups per placement using Catalog Variant ID
   {
-    const url = `https://api.printful.com/v2/catalog-variants/${variantId}/images`
+    const url = `https://api.printful.com/v2/catalog-variants/${catalogVariantId}/images`
     console.log('GET', url)
     const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
     if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
@@ -75,9 +75,21 @@ async function fetchVariantFiles(variantId: number): Promise<{ url: string; plac
     }
     const imgs: any[] = Array.isArray(json?.data?.images) ? json.data.images : Array.isArray(json?.data) ? json.data : []
     return imgs
-      .map((it: any) => ({ url: String(it.mockup_url || it.url || it.src || ''), placement: String(it.placement || it.view || it.side || '') }))
+      .map((it: any) => ({ url: String(it.mockup_url || it.image_url || it.url || it.src || ''), placement: String(it.placement || it.view || it.side || '') }))
       .filter((it: any) => it.url && it.placement)
   }
+}
+
+async function fetchVariantProductImage(syncVariantId: number): Promise<string | null> {
+  const url = `https://api.printful.com/sync/variant/${syncVariantId}`
+  console.log('GET', url)
+  const headers: Record<string, string> = { Authorization: `Bearer ${API_TOKEN}` }
+  if (STORE_ID) headers['X-PF-Store-Id'] = STORE_ID
+  const res = await fetch(url, { headers })
+  const json = (await res.json()) as any
+  if (!res.ok) return null
+  const img = json?.result?.sync_variant?.product?.image
+  return typeof img === 'string' && img ? img : null
 }
 
 async function fetchCatalogVariant(variantId: number): Promise<{ color?: string; size?: string; productId?: number }> {
@@ -136,15 +148,11 @@ async function main() {
     })
 
     for (const v of variantsRaw) {
-      // Inline files from product detail
-      const inline = Array.isArray(v.files)
-        ? v.files
-            .map((f: any) => f?.preview_url || f?.thumbnail_url)
-            .filter((u: any) => !!u)
-        : []
       // Extra files by fetching full variant (often includes preview/mockups for front/back)
+      const syncId = Number(v.id)
       const variantCatalogId = Number((v as any).variant_id ?? v.id)
-      const extra = await fetchVariantFiles(variantCatalogId)
+      const extra = await fetchVariantFiles(syncId, variantCatalogId)
+      const productImg = await fetchVariantProductImage(syncId)
       // Order by desired placements front,back,left,right then dedup
       const byPlacement: Record<string, string[]> = {}
       for (const it of extra) {
@@ -157,11 +165,13 @@ async function main() {
         const u = byPlacement[p]?.[0]
         if (u) ordered.push(u)
       }
-      const thisImgs = [...ordered, ...inline]
+      const merged = [productImg, ...ordered, ...prodUrls].filter((u): u is string => typeof u === 'string' && !!u)
       // Deduplicate while preserving order
-      const dedup: string[] = []
+      const thisImgs: string[] = []
       const seen = new Set<string>()
-      for (const u of thisImgs) { if (u && !seen.has(u)) { seen.add(u); dedup.push(u) } }
+      for (const u of merged) { if (!seen.has(u)) { seen.add(u); thisImgs.push(u) } }
+      // Already deduped; retain
+      const dedup: string[] = thisImgs
       const [fallbackColor = 'Default', fallbackSize = 'One Size'] = (v.name || '').split('/').map((s: string) => s.trim())
       let color = (v as any).color || fallbackColor
       let size  = (v as any).size  || fallbackSize
