@@ -64,7 +64,7 @@
     "autoprefixer": "^10.4.21",
     "cypress": "^14.5.3",
     "eslint": "^9",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "15.5.6",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "pino-pretty": "^13.1.1",
