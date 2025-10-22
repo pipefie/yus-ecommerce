@@ -1,15 +1,22 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import auth0 from "@/lib/auth0";
+import { getSessionUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export default async function OrdersPage() {
-  const session = await auth0.getSession();
-  if (!session) redirect("/signin?returnTo=/orders");
-  const userId = Number((session.user as any).id);
+  const user = await getSessionUser();
+  if (!user) redirect("/login?returnTo=/orders");
+
+  const dbUser = await prisma.user.findUnique({
+    where: { sub: user.sub },
+    select: { id: true },
+  });
+  if (!dbUser) {
+    redirect("/login?returnTo=/orders");
+  }
 
   const orders = await prisma.order.findMany({
-    where: { userId },
+    where: { userId: dbUser.id },
     orderBy: { createdAt: "desc" },
   });
 

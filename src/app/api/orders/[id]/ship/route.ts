@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getShippingRates, purchaseLabel, Address, Parcel } from '@/utils/shipping'
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+type RouteContext = { params: Promise<{ id: string }> }
+
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
+    const params = await context.params
     const { from, to, parcel }: { from: Address; to: Address; parcel: Parcel } = await req.json()
     const rates = await getShippingRates(from, to, parcel)
     const best = rates.rates[0]

@@ -86,7 +86,12 @@ export default function CheckoutPage() {
         <div className="bg-white p-6 rounded-lg shadow space-y-2">
           <div className="flex justify-between items-center">
             <h2 className="font-bold uppercase text-gray-700">Contact</h2>
-            <button className="text-sm text-green-700 hover:underline">Log in</button>
+            <Link
+              href={`/login?returnTo=${encodeURIComponent('/checkout')}`}
+              className="text-sm text-green-700 hover:underline"
+            >
+              Log in
+            </Link>
           </div>
           <input
             type="email"

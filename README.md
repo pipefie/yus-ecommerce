@@ -65,21 +65,26 @@ Older versions of this project used SQLite. To migrate existing data to Postgres
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, Auth0 credentials and database configuration.
+Copy `.env.example` to `.env.local` and provide values for all variables. At a minimum you will need API keys for Stripe, an OIDC client, and storage credentials.
 
 ```
 STRIPE_SECRET_KEY=your-stripe-key
 STRIPE_WEBHOOK_SECRET=your-webhook-secret
 NEXT_PUBLIC_URL=http://localhost:3000
-MONGO_URI=mongodb://localhost:27017/db
-AUTH0_SECRET=your-auth0-secret
-APP_BASE_URL=http://localhost:3000
-AUTH0_DOMAIN=your-auth0-domain
-AUTH0_CLIENT_ID=auth0-client-id
-AUTH0_CLIENT_SECRET=auth0-client-secret
-NEXT_PUBLIC_GA_ID=ga-id
-NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
-SENTRY_DSN=sentry-server-dsn
+BASE_URL=http://localhost:3000
+OIDC_ISSUER=https://your-idp/.well-known/openid-configuration
+OIDC_CLIENT_ID=oidc-client-id
+OIDC_CLIENT_SECRET=oidc-client-secret
+OIDC_REDIRECT_URI=http://localhost:3000/auth/callback
+OIDC_POST_LOGOUT_REDIRECT_URI=http://localhost:3000/
+OIDC_AUDIENCE=
+SESSION_SECRET=replace-with-64-char-random
+SESSION_TTL_HOURS=8
+CLOUDFRONT_BASE_URL=https://cdn.example.com
+ASSETS_BUCKET=yus-mockups
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
 PRINTFUL_API_KEY=printful-api-key
 PRINTFUL_STORE_ID=printful-store-id
 PRINTFUL_WEBHOOK_SECRET=printful-webhook-secret
@@ -90,23 +95,25 @@ SENDGRID_WELCOME_TEMPLATE=template-id
 MAILCHIMP_API_KEY=your-mailchimp-key
 MAILCHIMP_LIST_ID=list-id
 MAILCHIMP_STORE_ID=store-id
+NEXT_PUBLIC_GA_ID=ga-id
+NEXT_PUBLIC_SENTRY_DSN=sentry-client-dsn
+SENTRY_DSN=sentry-server-dsn
 NEXT_PUBLIC_ALGOLIA_APP_ID=algolia-app-id
 NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=algolia-search-key
 DATABASE_URL=file:./prisma/dev.db
-AUTH0_DOMAIN=your-auth0-domain
-AUTH0_CLIENT_ID=your-auth0-client-id
-AUTH0_CLIENT_SECRET=your-auth0-client-secret
 ```
+
+
 
 The `dbConnect` helper logs connection failures to the console so you can debug issues with your MongoDB configuration.
 
-## Auth0 Setup
+## OIDC Setup
 
-1. Sign up for [Auth0](https://auth0.com) and create a new tenant.
-2. Create a **Regular Web Application** in the Auth0 dashboard and note the domain, client ID and client secret.
-3. Add `http://localhost:3000/api/auth/callback/auth0` and your production URL to the application's **Allowed Callback URLs**.
-4. Define roles under **User Management → Roles** (e.g. `admin`, `customer`) and assign them to users.
-5. Set `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET` in your `.env.local` file.
+1. Register a confidential OIDC client (Auth0, Keycloak, authentik, etc.) and enable the authorization code + PKCE flow.
+2. Set the redirect URI to `http://localhost:3000/auth/callback` and the post-logout redirect URI to `http://localhost:3000/`.
+3. Grant the client access to the `openid profile email` scopes to receive `sub`, `email`, `name`, and `picture` claims.
+4. Populate the OIDC and session variables in `.env.local`, then run your Prisma migrations to sync the schema.
+5. Seed at least one user with the `admin` role to access the admin console.
 
 ## Learn More
 

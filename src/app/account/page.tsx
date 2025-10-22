@@ -1,11 +1,10 @@
 // src/app/account/page.tsx
 import { redirect } from "next/navigation";
-import auth0 from "@/lib/auth0";
+import { getSessionUser } from "@/lib/auth/session";
 
 export default async function AccountPage() {
-  const session = await auth0.getSession();
-  if (!session) redirect("/signin?returnTo=/account");
-  const { user } = session;
+  const user = await getSessionUser();
+  if (!user) redirect("/login?returnTo=/account");
 
   return (
     <main className="min-h-screen bg-black text-white px-6 pt-28">

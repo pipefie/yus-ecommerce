@@ -1,25 +1,26 @@
-// src/utils/stripe.ts
+﻿// src/utils/stripe.ts
 import Stripe from "stripe"
+import { env } from "@/lib/env"
 
-let _stripe: Stripe | null = null
+let stripeInstance: Stripe | null = null
 
 export function getStripe(): Stripe {
-  if (_stripe) return _stripe
-  const secretKey = process.env.STRIPE_SECRET_KEY
-  if (!secretKey) {
-    throw new Error("STRIPE_SECRET_KEY is not defined")
-  }
-  _stripe = new Stripe(secretKey, {
+  if (stripeInstance) return stripeInstance
+  const secretKey = env.STRIPE_SECRET_KEY
+  stripeInstance = new Stripe(secretKey, {
     maxNetworkRetries: 2,
     timeout: 10000,
   })
-  return _stripe
+  return stripeInstance
 }
 
-// Back-compat proxy for code importing { stripe }
-export const stripe = new Proxy({}, {
-  get(_target, prop) {
-    const s = getStripe() as any
-    return s[prop]
-  }
-}) as unknown as Stripe
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop, receiver) {
+    const instance = getStripe() as unknown as Record<PropertyKey, unknown>
+    const value = Reflect.get(instance, prop, receiver)
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+}) as Stripe

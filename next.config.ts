@@ -1,24 +1,31 @@
 // next.config.ts
-import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from 'next-intl/plugin';
 
+type RemotePattern = {
+  protocol: "https" | "http";
+  hostname: string;
+  pathname: string;
+};
 
-const nextConfig: NextConfig = {
+const remotePatterns: RemotePattern[] = [];
+const cloudfrontBase = process.env.CLOUDFRONT_BASE_URL ?? process.env.CF_PUBLIC_URL;
+if (cloudfrontBase) {
+  try {
+    const source = cloudfrontBase.startsWith("http") ? cloudfrontBase : `https://${cloudfrontBase}`;
+    const { hostname, protocol } = new URL(source);
+    remotePatterns.push({ protocol: protocol.replace(':', '') as RemotePattern["protocol"], hostname, pathname: '/**' });
+  } catch {
+    // ignore invalid URL
+  }
+}
+
+const nextConfig = {
   reactStrictMode: true,
   images: {
     minimumCacheTTL: 60,
-    // Whitelist Printful image hosts
-    remotePatterns: [
-      { protocol: "https", hostname: "files.cdn.printful.com", pathname: "/**" },
-      { protocol: "https", hostname: "img.printful.com", pathname: "/**" },
-      // Allow Printify mockup images
-      { protocol: "https", hostname: "images-api.printify.com", pathname: "/**" },
-    ],
+    remotePatterns,
   },
-
   experimental: {
-
     optimizePackageImports: ["react-icons"],
   },
 };

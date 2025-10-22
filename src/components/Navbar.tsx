@@ -67,14 +67,14 @@ export default function Navbar() {
                   {!user ? (
                     <>
                       <Link
-                        href="/signin"
+                        href="/login"
                         className="block px-2 py-1 text-white font-pixel hover:text-neon"
                         onClick={() => setAuthOpen(false)}
                       >
                         Sign In
                       </Link>
                       <Link
-                        href="/signup"
+                        href="/login?prompt=signup"
                         className="block px-2 py-1 text-white font-pixel hover:text-neon"
                         onClick={() => setAuthOpen(false)}
                       >

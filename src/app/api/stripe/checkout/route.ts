@@ -1,11 +1,13 @@
-// src/app/api/stripe/checkout/route.ts
+﻿// src/app/api/stripe/checkout/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { assertCsrf } from "@/utils/csrf"
 import { stripe } from "@/utils/stripe"
-import auth0 from "@/lib/auth0"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
-import type { Prisma } from "@prisma/client"
+import type { Prisma } from "@prisma/client";
+import type Stripe from "stripe";
+import { getSessionUser } from "@/lib/auth/session"
+import { getAssetUrl, getAssetUrls, assetPlaceholder } from "@/lib/assets"
 
 export const runtime = "nodejs"
 
@@ -21,11 +23,9 @@ const BodySchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  // 1) CSRF
   const csrfError = assertCsrf(req)
   if (csrfError) return csrfError
 
-  // 2) Parse input
   let body: unknown
   try {
     body = await req.json()
@@ -39,17 +39,22 @@ export async function POST(req: NextRequest) {
   }
   const { items } = parsed.data
 
-  // 3) Auth (server-derived identity; do NOT trust client)
   let email: string | undefined
+  let userId: number | null = null
   try {
-    const session = await auth0.getSession() // no-arg is safer in App Router
-    email = session?.user?.email
+    const user = await getSessionUser()
+    email = user?.email ?? undefined
+    if (user) {
+      const dbUser = await prisma.user.findUnique({
+        where: { sub: user.sub },
+        select: { id: true },
+      })
+      userId = dbUser?.id ?? null
+    }
   } catch {
     // proceed as guest
   }
 
-  // 4) Re-load authoritative product/variant data from Prisma.
-  //    Accept either numeric product IDs OR slugs in items[i]._id
   const numericIds: number[] = []
   const slugs: string[] = []
   for (const it of items) {
@@ -57,7 +62,6 @@ export async function POST(req: NextRequest) {
     if (Number.isFinite(n) && String(n) === it._id) {
       numericIds.push(n)
     } else {
-      // simple sanity guard to avoid absurd values; Prisma uses params anyway
       if (typeof it._id !== "string" || it._id.length > 200) {
         return NextResponse.json({ error: `Invalid product id: ${it._id}` }, { status: 400 })
       }
@@ -72,13 +76,19 @@ export async function POST(req: NextRequest) {
     if (slugs.length) or.push({ slug: { in: slugs } })
     products = await prisma.product.findMany({
       where: { OR: or },
-      include: { variants: true },
+      include: {
+        variants: true,
+        productImages: {
+          where: { selected: true, variantId: null },
+          orderBy: { sortIndex: "asc" },
+        },
+      },
     })
   } catch {
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
-  // 5) Build Stripe line_items (EUR) from authoritative data
-  let line_items
+
+  let line_items: Stripe.Checkout.SessionCreateParams.LineItem[]
   try {
     line_items = items.map((i) => {
       const pidNum = Number(i._id)
@@ -91,30 +101,26 @@ export async function POST(req: NextRequest) {
         throw new Error(`Product not found: ${i._id}`)
       }
 
-      const vid = i.variantId ? Number(i.variantId) : undefined
-      const variant = Number.isFinite(vid) ? product.variants.find((v) => v.id === vid) : null
+      const variantIdNumber = i.variantId ? Number(i.variantId) : undefined
+      const variant = Number.isFinite(variantIdNumber) ? product.variants.find((v) => v.id === variantIdNumber) : null
 
-      const unitAmountCents = variant?.price ?? product.price // INT cents from DB
+      const unitAmountCents = variant?.price ?? product.price
       if (!Number.isFinite(unitAmountCents) || unitAmountCents <= 0) {
         throw new Error(`Invalid price for ${i._id}`)
       }
 
       const qty = Math.max(1, Math.min(50, Number.isFinite(i.quantity) ? i.quantity : 1))
 
-      let images: string[] = []
-      if (variant?.previewUrl) {
-        images = [variant.previewUrl]
-      } else if (Array.isArray(product.images)) {
-        images = (product.images as unknown as string[]).filter(
-          (x): x is string => typeof x === "string",
-        )
-      }
+      const productImages = getAssetUrls(product.productImages.map((img) => img.url), { fallback: assetPlaceholder() })
+      const variantImage =
+        getAssetUrl(variant?.previewUrl ?? null) ?? getAssetUrl(variant?.imageUrl ?? null)
+      const images = variantImage ? [variantImage] : productImages.slice(0, 1)
 
       return {
         price_data: {
           currency: "eur",
-          product_data: { name: product.title, images: images.slice(0, 1) },
-          unit_amount: Math.round(unitAmountCents), // integer cents
+          product_data: { name: product.title, images },
+          unit_amount: Math.round(unitAmountCents),
         },
         quantity: qty,
       }
@@ -124,13 +130,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  // 6) Create Stripe session
   let checkout
   try {
     checkout = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
-      customer_email: email, // optional for guests
+      customer_email: email,
       shipping_address_collection: {
         allowed_countries: [
           'US','CA','GB','DE','FR','ES','IT','NL','BE','IE','PT','SE','NO','DK','FI','AT','CH','AU','NZ'
@@ -144,7 +149,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Stripe error" }, { status: 500 })
   }
 
-  // 7) Persist Order (pending) using Prisma
   const orderItems: Prisma.JsonArray = items.map((i) => {
     const pidNum = Number(i._id)
     const product =
@@ -165,11 +169,10 @@ export async function POST(req: NextRequest) {
   try {
     await prisma.order.create({
       data: {
-        // optional: link to local user if you keep a users table synced to auth emails
-        // userId: ...
+        userId: userId ?? undefined,
         stripeSessionId: checkout.id,
-        items: orderItems as Prisma.InputJsonValue, // Json field
-        totalAmount: checkout.amount_total!, // integer cents from Stripe
+        items: orderItems as Prisma.InputJsonValue,
+        totalAmount: checkout.amount_total!,
         currency: (checkout.currency ?? "eur").toLowerCase(),
         status: "pending",
       },

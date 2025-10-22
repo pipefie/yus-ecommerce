@@ -1,18 +1,18 @@
 // src/app/page.tsx
 import type { Metadata } from "next";
-import HeroSection    from "@/components/HeroSection";
+import HeroSection from "@/components/HeroSection";
 import AnimatedShapes from "@/components/AnimatedShapes";
-import ProductGrid    from "@/components/ProductGrid";
+import ProductGrid from "@/components/ProductGrid";
 import { getTranslations } from 'next-intl/server'
-// Cached DB helpers avoid repeat queries across components
 import { getAllProducts } from "../lib/products";
 import { cookies } from 'next/headers';
+import { getAssetUrls, assetPlaceholder } from "@/lib/assets";
 
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title:       "Y-US? Home",
+    title: "Y-US? Home",
     description: "Minimal design meets unfiltered chaos.",
   };
 }
@@ -21,34 +21,25 @@ export default async function HomePage() {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
   const t = await getTranslations({ locale: lang})
-  // 1️⃣ pull every product + its variants from the DB
-  // cached in src/lib/products.ts to minimize database load
   const products = await getAllProducts();
 
-  // 2️⃣ reshape to exactly what your <ProductGrid> expects
   const items = products.map((p) => {
-    const isAllowedHost = (u: string) => {
-      try {
-        const h = new URL(u).hostname
-        return h === 'files.cdn.printful.com' || h === 'img.printful.com' || h === 'images-api.printify.com'
-      } catch {
-        return false
-      }
-    }
-    const v = p.variants.find((vv) => Array.isArray(vv.designUrls) && vv.designUrls.length > 0) || p.variants[0] || null;
+    const productImages = getAssetUrls(
+      p.productImages
+        .filter((img) => !img.variantId)
+        .sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0))
+        .map((img) => img.url),
+      { fallback: assetPlaceholder() }
+    );
 
-    const imageUrl = (() => {
-      const imgs = (Array.isArray(p.images) ? (p.images as unknown as string[]) : []).filter(isAllowedHost)
-      if (imgs.length) return imgs[0]
-      const vImg = [v?.previewUrl, v?.imageUrl].map((x) => (x ? String(x) : '')).find((u) => u && isAllowedHost(u))
-      return vImg || "/placeholder.png"
-    })()
+    const variantWithPrice = p.variants.find((vv) => Number.isFinite(vv.price)) ?? p.variants[0] ?? null;
+    const imageUrl = productImages[0] ?? assetPlaceholder();
 
     return {
-      slug:        p.slug,
-      title:       p.title,
+      slug: p.slug,
+      title: p.title,
       description: p.description,
-      price:       v?.price ?? p.price,
+      price: variantWithPrice?.price ?? p.price,
       imageUrl,
     };
   });
