@@ -19,19 +19,39 @@ export async function createProductImageAction(formData: FormData) {
   const key = String(formData.get('key') ?? '').trim()
   const kind = String(formData.get('kind') ?? 'mockup').trim()
   const sortIndex = Number(formData.get('sortIndex') ?? 0)
+  const placementRaw = formData.get('placement')
+  const selected = formData.get('selected') === 'on'
 
   if (!productId || !key) {
     throw new Error('Missing productId or key')
   }
 
+  let variantId: number | null = null
+  if (variantIdRaw !== null && typeof variantIdRaw !== 'undefined') {
+    const raw = String(variantIdRaw).trim()
+    if (raw !== '') {
+      const parsed = Number(raw)
+      if (!Number.isFinite(parsed)) {
+        throw new Error('Invalid variant id')
+      }
+      variantId = parsed
+    }
+  }
+
+  const placement =
+    placementRaw !== null && typeof placementRaw !== 'undefined'
+      ? String(placementRaw).trim() || null
+      : null
+
   await prisma.productImage.create({
     data: {
       productId,
-      variantId: variantIdRaw ? Number(variantIdRaw) : null,
+      variantId,
       url: key,
       kind,
       sortIndex: Number.isFinite(sortIndex) ? sortIndex : 0,
-      selected: true,
+      selected,
+      placement,
       source: 'manual',
     },
   })
@@ -45,8 +65,29 @@ export async function updateProductImageAction(formData: FormData) {
   const kind = String(formData.get('kind') ?? '').trim()
   const sortIndex = Number(formData.get('sortIndex') ?? 0)
   const selected = formData.get('selected') === 'on'
+  const variantIdRaw = formData.get('variantId')
+  const placementRaw = formData.get('placement')
 
   if (!id) throw new Error('Missing image id')
+
+  let variantId: number | null | undefined
+  if (variantIdRaw !== null && typeof variantIdRaw !== 'undefined') {
+    const raw = String(variantIdRaw).trim()
+    if (raw === '') {
+      variantId = null
+    } else {
+      const parsed = Number(raw)
+      if (!Number.isFinite(parsed)) {
+        throw new Error('Invalid variant id')
+      }
+      variantId = parsed
+    }
+  }
+
+  const placement =
+    placementRaw !== null && typeof placementRaw !== 'undefined'
+      ? String(placementRaw).trim() || null
+      : undefined
 
   await prisma.productImage.update({
     where: { id },
@@ -54,6 +95,8 @@ export async function updateProductImageAction(formData: FormData) {
       kind: kind || undefined,
       sortIndex: Number.isFinite(sortIndex) ? sortIndex : undefined,
       selected,
+      variantId: typeof variantId !== 'undefined' ? variantId : undefined,
+      placement,
     },
   })
 

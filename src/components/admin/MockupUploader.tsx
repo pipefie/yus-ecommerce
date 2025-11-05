@@ -3,8 +3,11 @@
 import { FormEvent, useState, useTransition } from "react";
 
 type Props = {
-  productId: number;
   productSlug: string;
+  defaultMode?: "append" | "replace";
+  defaultDryRun?: boolean;
+  heading?: string;
+  description?: string;
 };
 
 type UploadResult =
@@ -13,7 +16,13 @@ type UploadResult =
   | { status: "success"; message: string }
   | { status: "error"; message: string };
 
-export default function MockupUploader({ productSlug }: Props) {
+export default function MockupUploader({
+  productSlug,
+  defaultMode = "append",
+  defaultDryRun = true,
+  heading,
+  description,
+}: Props) {
   const [state, setState] = useState<UploadResult>({ status: "idle", message: null });
   const [isPending, startTransition] = useTransition();
 
@@ -82,6 +91,8 @@ export default function MockupUploader({ productSlug }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 space-y-3 text-xs text-slate-200" encType="multipart/form-data">
+      {heading && <h4 className="text-sm font-semibold text-slate-100">{heading}</h4>}
+      {description && <p className="text-[13px] text-slate-400">{description}</p>}
       <label className="flex flex-col gap-1">
         <span className="text-slate-400">Mockup archive (.zip)</span>
         <input
@@ -97,7 +108,7 @@ export default function MockupUploader({ productSlug }: Props) {
           <span className="text-slate-400">Import mode</span>
           <select
             name="mode"
-            defaultValue="append"
+            defaultValue={defaultMode}
             className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200"
           >
             <option value="append">Append (keep existing)</option>
@@ -105,7 +116,7 @@ export default function MockupUploader({ productSlug }: Props) {
           </select>
         </label>
         <label className="flex items-center gap-2 text-slate-300">
-          <input name="dryRun" type="checkbox" defaultChecked />
+          <input name="dryRun" type="checkbox" defaultChecked={defaultDryRun} />
           Dry run (validate archive without uploading)
         </label>
       </div>
