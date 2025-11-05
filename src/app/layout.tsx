@@ -27,6 +27,7 @@ export default async function RootLayout({
     <html lang={lang} className="scroll-smooth" suppressHydrationWarning>
       <body
         className={ "pt-24 antialiased"}
+        suppressHydrationWarning
       >
         <Providers>
           <CartProvider>

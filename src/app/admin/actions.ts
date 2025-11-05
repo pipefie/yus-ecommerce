@@ -68,6 +68,78 @@ export async function deleteProductImageAction(formData: FormData) {
   revalidatePath('/admin/products')
 }
 
+function parsePriceToCents(input: FormDataEntryValue | null): number | null {
+  if (input === null || typeof input === 'undefined') return null
+  const raw = String(input).trim()
+  if (!raw) return null
+  const normalized = raw.replace(/,/g, '.').replace(/[^0-9.]/g, '')
+  if (!normalized) throw new Error('Invalid price')
+  const value = Number(normalized)
+  if (!Number.isFinite(value)) throw new Error('Invalid price')
+  return Math.round(value * 100)
+}
+
+export async function updateProductDetailsAction(formData: FormData) {
+  await requireAdmin()
+  const productId = Number(formData.get('productId'))
+  if (!Number.isFinite(productId)) throw new Error('Missing product id')
+
+  const priceCents = parsePriceToCents(formData.get('price'))
+  const imageInput = formData.get('imageKey')
+  const imageKey = typeof imageInput === 'string' ? imageInput.trim() : ''
+  const titleInput = formData.get('title')
+  const title = typeof titleInput === 'string' ? titleInput.trim() : ''
+  const descriptionInput = formData.get('description')
+  const description = typeof descriptionInput === 'string' ? descriptionInput.trim() : ''
+  const deleted = formData.get('deleted') === 'on'
+
+  const data: Record<string, unknown> = { deleted }
+  if (priceCents !== null) data.price = priceCents
+  if (imageInput !== null) data.imageUrl = imageKey || null
+  if (titleInput !== null && title) data.title = title
+  if (descriptionInput !== null) data.description = description
+
+  await prisma.product.update({
+    where: { id: productId },
+    data,
+  })
+
+  revalidatePath('/admin/products')
+}
+
+export async function updateVariantDetailsAction(formData: FormData) {
+  await requireAdmin()
+  const variantId = Number(formData.get('variantId'))
+  if (!Number.isFinite(variantId)) throw new Error('Missing variant id')
+
+  const priceCents = parsePriceToCents(formData.get('price'))
+  const colorInput = formData.get('color')
+  const sizeInput = formData.get('size')
+  const imageInput = formData.get('imageUrl')
+  const previewInput = formData.get('previewUrl')
+  const deleted = formData.get('deleted') === 'on'
+
+  const data: Record<string, unknown> = { deleted }
+  if (priceCents !== null) data.price = priceCents
+  if (colorInput !== null) data.color = typeof colorInput === 'string' ? colorInput.trim() : null
+  if (sizeInput !== null) data.size = typeof sizeInput === 'string' ? sizeInput.trim() : null
+  if (imageInput !== null) {
+    const value = typeof imageInput === 'string' ? imageInput.trim() : ''
+    data.imageUrl = value || null
+  }
+  if (previewInput !== null) {
+    const value = typeof previewInput === 'string' ? previewInput.trim() : ''
+    data.previewUrl = value || null
+  }
+
+  await prisma.variant.update({
+    where: { id: variantId },
+    data,
+  })
+
+  revalidatePath('/admin/products')
+}
+
 export async function updateUserRoleAction(formData: FormData) {
   await requireAdmin()
   const sub = String(formData.get('sub') ?? '')
