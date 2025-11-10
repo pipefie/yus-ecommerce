@@ -34,7 +34,7 @@ jobs:
       - run: npx playwright test
       - run: node scripts/backup-db.ts
         if: runner.os == 'Linux'
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v5
         with:
           name: database-backup
           path: backups/
