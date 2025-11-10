@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import { getAssetUrl, assetPlaceholder } from "@/lib/assets";
-import { getProductBySlug, getProductSlugs } from "../../../lib/products";
+import { getAllProducts, getProductBySlug, getProductSlugs } from "../../../lib/products";
 
 type PageParams = Promise<{ id: string }>;
 export const revalidate = 60;
@@ -145,9 +145,24 @@ export default async function ProductPage({ params }: { params: PageParams }) {
     },
   };
 
+  const catalog = await getAllProducts();
+  const relatedProducts = catalog
+    .filter((item) => item.slug !== prod.slug)
+    .slice(0, 4)
+    .map((item) => {
+      const hero = item.productImages[0]?.url ?? "";
+      return {
+        id: item.slug,
+        slug: item.slug,
+        title: item.title,
+        price: item.price,
+        image: getAssetUrl(hero) ?? assetPlaceholder(),
+      };
+    });
+
   return (
     <main className="container mx-auto px-4 py-12">
-      <ProductDetailClient product={detail} />
+      <ProductDetailClient product={detail} related={relatedProducts} />
       <script
         id="product-schema"
         type="application/ld+json"

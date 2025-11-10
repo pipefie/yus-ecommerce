@@ -34,10 +34,20 @@ const envSchema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: z.string().trim().optional(),
   SENTRY_DSN: z.string().trim().optional(),
 
+  ADMIN_EMAILS: z.string().trim().optional(),
+
   PRINTFUL_API_KEY: z.string().trim().optional(),
   PRINTFUL_TOKEN: z.string().trim().optional(),
   PRINTFUL_STORE_ID: z.string().trim().optional(),
   PRINTFUL_WEBHOOK_SECRET: z.string().trim().optional(),
+
+  INSTAGRAM_ACCESS_TOKEN: z.string().trim().optional(),
+  INSTAGRAM_USER_ID: z.string().trim().optional(),
+  TIKTOK_ACCESS_TOKEN: z.string().trim().optional(),
+  TIKTOK_USER_ID: z.string().trim().optional(),
+  TWITTER_BEARER_TOKEN: z.string().trim().optional(),
+  TWITTER_USER_ID: z.string().trim().optional(),
+  TWITTER_USERNAME: z.string().trim().optional(),
 });
 
 const parsed = envSchema.safeParse({
@@ -74,11 +84,20 @@ const parsed = envSchema.safeParse({
   NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   SENTRY_DSN: process.env.SENTRY_DSN,
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS,
 
   PRINTFUL_API_KEY: process.env.PRINTFUL_API_KEY,
   PRINTFUL_TOKEN: process.env.PRINTFUL_TOKEN,
   PRINTFUL_STORE_ID: process.env.PRINTFUL_STORE_ID,
   PRINTFUL_WEBHOOK_SECRET: process.env.PRINTFUL_WEBHOOK_SECRET,
+
+  INSTAGRAM_ACCESS_TOKEN: process.env.INSTAGRAM_ACCESS_TOKEN,
+  INSTAGRAM_USER_ID: process.env.INSTAGRAM_USER_ID,
+  TIKTOK_ACCESS_TOKEN: process.env.TIKTOK_ACCESS_TOKEN,
+  TIKTOK_USER_ID: process.env.TIKTOK_USER_ID,
+  TWITTER_BEARER_TOKEN: process.env.TWITTER_BEARER_TOKEN,
+  TWITTER_USER_ID: process.env.TWITTER_USER_ID,
+  TWITTER_USERNAME: process.env.TWITTER_USERNAME,
 });
 
 if (!parsed.success) {

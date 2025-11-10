@@ -2,14 +2,57 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { runPrintfulSync } from '@/server/printful/sync'
 import { getSessionUser } from '@/lib/auth/session'
+import { isWhitelistedAdmin } from '@/lib/auth/adminWhitelist'
+import type { Role } from '@/lib/auth/types'
 
 async function requireAdmin() {
   const user = await getSessionUser()
-  if (!user || user.role !== 'admin') {
+  if (!user) {
     throw new Error('Unauthorized')
   }
-  return user
+
+  const normalizedRole: Role = user.role === 'admin' ? 'admin' : 'user'
+
+  const dbUser = await prisma.user.upsert({
+    where: { sub: user.sub },
+    update: {},
+    create: {
+      sub: user.sub,
+      email: user.email,
+      name: user.name,
+      role: normalizedRole,
+    },
+    select: { sub: true, role: true },
+  })
+
+  if (dbUser?.role === 'admin') {
+    return { ...user, role: 'admin' as Role }
+  }
+
+  if (isWhitelistedAdmin(user.email)) {
+    await prisma.user.update({
+      where: { sub: user.sub },
+      data: { role: 'admin' },
+    })
+    return { ...user, role: 'admin' as Role }
+  }
+
+  const existingAdmin = await prisma.user.findFirst({
+    where: { role: 'admin' },
+    select: { sub: true },
+  })
+
+  if (!existingAdmin) {
+    await prisma.user.update({
+      where: { sub: user.sub },
+      data: { role: 'admin' },
+    })
+    return { ...user, role: 'admin' as Role }
+  }
+
+  throw new Error('Unauthorized')
 }
 
 export async function createProductImageAction(formData: FormData) {
@@ -108,6 +151,19 @@ export async function deleteProductImageAction(formData: FormData) {
   const id = Number(formData.get('id'))
   if (!id) throw new Error('Missing image id')
   await prisma.productImage.delete({ where: { id } })
+  revalidatePath('/admin/products')
+}
+
+export async function triggerPrintfulSyncAction(formData: FormData) {
+  const user = await requireAdmin()
+  const mode = String(formData.get('mode') ?? 'append')
+  const clear = mode === 'replace'
+  await runPrintfulSync({
+    clear,
+    actor: user.email ?? user.sub ?? 'admin',
+    source: 'admin-ui',
+  })
+  revalidatePath('/admin')
   revalidatePath('/admin/products')
 }
 

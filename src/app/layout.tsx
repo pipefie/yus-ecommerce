@@ -5,6 +5,7 @@ import Providers from "@/components/Providers";
 import { CartProvider } from "@/context/CartContext";
 import CookieBanner from "../components/CookieBanner";
 import AnalyticsScripts from "../components/AnalyticsScripts";
+import AnalyticsProvider from "@/components/AnalyticsProvider";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 
@@ -32,11 +33,13 @@ export default async function RootLayout({
         <Providers>
           <CartProvider>
             <NextIntlClientProvider locale={lang} messages={messages}>
-              <Navbar/>
-              <AnalyticsScripts />
-              <main>{children}</main>
-              <Footer/>
-              <CookieBanner />
+              <AnalyticsProvider>
+                <Navbar/>
+                <AnalyticsScripts />
+                <main>{children}</main>
+                <Footer/>
+                <CookieBanner />
+              </AnalyticsProvider>
             </NextIntlClientProvider>
           </CartProvider>
         </Providers>

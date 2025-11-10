@@ -19,13 +19,19 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const selectedParam = typeof params?.product === "string" ? params.product : "";
   const selectedId = /^\d+$/.test(selectedParam) ? Number(selectedParam) : null;
 
-  const products = await prisma.product.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: {
-      variants: { orderBy: { id: "asc" } },
-      productImages: { orderBy: { sortIndex: "asc" } },
-    },
-  });
+  const [products, archivedCount, missingMockupsCount] = await Promise.all([
+    prisma.product.findMany({
+      orderBy: { updatedAt: "desc" },
+      include: {
+        variants: { orderBy: { id: "asc" } },
+        productImages: { orderBy: { sortIndex: "asc" } },
+      },
+    }),
+    prisma.product.count({ where: { deleted: true } }),
+    prisma.product.count({
+      where: { deleted: false, productImages: { none: { selected: true } } },
+    }),
+  ]);
 
   const normalizedQuery = query.toLowerCase();
   const filteredProducts = normalizedQuery
@@ -145,6 +151,17 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       </aside>
 
       <section className="space-y-6">
+        {(archivedCount > 0 || missingMockupsCount > 0) && (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-100">
+            <p className="font-semibold text-amber-200">Catalog warnings</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {archivedCount > 0 && <li>{archivedCount} Printful products are archived and hidden from shoppers.</li>}
+              {missingMockupsCount > 0 && (
+                <li>{missingMockupsCount} active products need mockups—upload ZIP archives to keep PDPs fresh.</li>
+              )}
+            </ul>
+          </div>
+        )}
         {!selectedProduct && (
           <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-10 text-center text-sm text-slate-400">
             <p>Select a product to view configuration options.</p>

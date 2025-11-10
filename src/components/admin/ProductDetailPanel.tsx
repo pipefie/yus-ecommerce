@@ -6,6 +6,7 @@ import {
 } from "@/app/admin/actions";
 import type { Product, ProductImage, Variant } from "@prisma/client";
 import { ProductMockupGallery } from "@/components/admin/ProductMockupGallery";
+import { VariantManager } from "@/components/admin/VariantManager";
 
 type ProductWithRelations = Product & {
   variants: Variant[];
@@ -113,80 +114,11 @@ export function ProductDetailPanel({
       >
         <h3 className="text-sm font-semibold text-slate-200">Variants &amp; inventory</h3>
         <p className="text-xs text-slate-400">
-          Update pricing, rename color/size labels, or archive individual variants.
+          Pick any variant from the selector to update pricing, rename color/size labels, or archive it without scrolling
+          through the entire list.
         </p>
-        <div className="mt-4 space-y-4">
-          {product.variants.map((variant) => (
-            <form
-              key={variant.id}
-              action={updateVariantDetailsAction}
-              className="grid gap-3 rounded border border-slate-800/80 bg-slate-950/60 p-4 text-xs text-slate-200 md:grid-cols-2 xl:grid-cols-4"
-            >
-              <input type="hidden" name="variantId" value={variant.id} />
-              <div className="space-y-1">
-                <span className="block text-[10px] uppercase tracking-wide text-slate-500">Variant ID</span>
-                <span className="font-mono text-slate-300">{variant.id}</span>
-              </div>
-              <label className="flex flex-col gap-1">
-                <span className="text-slate-400">Color</span>
-                <input
-                  name="color"
-                  defaultValue={variant.color ?? ""}
-                  className="rounded border border-slate-800 bg-slate-950 px-3 py-2"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-slate-400">Size</span>
-                <input
-                  name="size"
-                  defaultValue={variant.size ?? ""}
-                  className="rounded border border-slate-800 bg-slate-950 px-3 py-2"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-slate-400">Price (EUR)</span>
-                <input
-                  name="price"
-                  defaultValue={formatPriceInput(variant.price)}
-                  className="rounded border border-slate-800 bg-slate-950 px-3 py-2"
-                  inputMode="decimal"
-                />
-              </label>
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="text-slate-400">Primary image key or URL</span>
-                <input
-                  name="imageUrl"
-                  defaultValue={variant.imageUrl ?? ""}
-                  className="rounded border border-slate-800 bg-slate-950 px-3 py-2"
-                />
-              </label>
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="text-slate-400">Preview image key or URL</span>
-                <input
-                  name="previewUrl"
-                  defaultValue={variant.previewUrl ?? ""}
-                  className="rounded border border-slate-800 bg-slate-950 px-3 py-2"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-slate-300">
-                <input type="checkbox" name="deleted" defaultChecked={variant.deleted} />
-                Archive variant
-              </label>
-              <div className="flex items-end justify-end md:col-span-2 xl:col-span-1">
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded bg-slate-200/10 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-200/20"
-                >
-                  Save variant
-                </button>
-              </div>
-            </form>
-          ))}
-          {!product.variants.length && (
-            <p className="text-xs text-slate-400">
-              No variants synced yet. Run the Printful sync to populate color/size options.
-            </p>
-          )}
+        <div className="mt-4">
+          <VariantManager variants={product.variants} updateAction={updateVariantDetailsAction} />
         </div>
       </section>
 

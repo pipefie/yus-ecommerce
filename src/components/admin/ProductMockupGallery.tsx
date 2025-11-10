@@ -5,6 +5,7 @@ import {
   deleteProductImageAction,
 } from "@/app/admin/actions";
 import type { Product, ProductImage, Variant } from "@prisma/client";
+import { MockupReorderBoard, type MockupForReorder } from "@/components/admin/MockupReorderBoard";
 
 type ProductWithRelations = Product & {
   variants: Variant[];
@@ -20,20 +21,41 @@ export function ProductMockupGallery({ product }: { product: ProductWithRelation
     );
   }
 
-  return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {product.productImages.map((image) => {
-        const updateFormId = `update-image-${image.id}`;
-        const variant = image.variantId
-          ? product.variants.find((entry) => entry.id === image.variantId) ?? null
-          : null;
-        const resolved = getAssetUrl(image.url) ?? assetPlaceholder();
+  const sortedImages = [...product.productImages].sort((a, b) => {
+    const left = typeof a.sortIndex === "number" ? a.sortIndex : Number.MAX_SAFE_INTEGER;
+    const right = typeof b.sortIndex === "number" ? b.sortIndex : Number.MAX_SAFE_INTEGER;
+    return left === right ? a.id - b.id : left - right;
+  });
 
-        return (
-          <article
-            key={image.id}
-            className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 shadow-sm"
-          >
+  const variantsById = new Map(product.variants.map((variant) => [variant.id, variant]));
+
+  const reorderPayload: MockupForReorder[] = sortedImages.map((image, index) => {
+    const variant = image.variantId ? variantsById.get(image.variantId) ?? null : null;
+    const resolved = getAssetUrl(image.url) ?? assetPlaceholder();
+    return {
+      id: image.id,
+      title: image.selected ? "Hero slot" : image.kind ?? "Mockup",
+      subtitle: variant ? `${variant.color ?? "Unlabeled color"} • ${variant.size ?? "OS"}` : "Product-level",
+      resolvedUrl: resolved,
+      selected: image.selected,
+      sortIndex: typeof image.sortIndex === "number" ? image.sortIndex : index,
+    };
+  });
+
+  return (
+    <div className="space-y-6">
+      <MockupReorderBoard images={reorderPayload} updateAction={updateProductImageAction} />
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {sortedImages.map((image) => {
+          const updateFormId = `update-image-${image.id}`;
+          const variant = image.variantId ? variantsById.get(image.variantId) ?? null : null;
+          const resolved = getAssetUrl(image.url) ?? assetPlaceholder();
+
+          return (
+            <article
+              key={image.id}
+              className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 shadow-sm"
+            >
             <div className="relative">
               <div className="relative h-48 w-full overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900">
                 <Image
@@ -161,6 +183,7 @@ export function ProductMockupGallery({ product }: { product: ProductWithRelation
           </article>
         );
       })}
+      </div>
     </div>
   );
 }
