@@ -1,59 +1,167 @@
 @import "tailwindcss";
 
 :root {
-  --color-neon: #39ff14;
+  --brand-bg: #020611;
+  --brand-surface: #070d1f;
+  --brand-surface-soft: #0b122b;
+  --brand-gradient: radial-gradient(circle at 20% 20%, #1c2b6c, transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(255, 45, 92, 0.35), transparent 45%),
+    radial-gradient(circle at 60% 80%, rgba(53, 249, 166, 0.35), transparent 55%);
+  --brand-text: #f8fafc;
+  --brand-muted: #94a3b8;
+  --brand-border: rgba(255, 255, 255, 0.12);
+  --brand-glow: 0 0 30px rgba(149, 255, 38, 0.2);
   --font-pixel: "Press Start 2P", cursive;
+  --color-neon: #95ff26;
+  --color-secondary: #ff66d9;
 }
 
-.font-pixel { font-family: var(--font-pixel); }
-.text-neon { color: var(--color-neon); }
-.border-neon { border-color: var(--color-neon); }
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--brand-bg);
+  --color-foreground: var(--brand-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  font-family: var(--font-geist-sans, "Inter", system-ui, -apple-system, BlinkMacSystemFont);
+  min-height: 100vh;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(7, 16, 41, 0.8), rgba(4, 27, 34, 0.7)), var(--brand-gradient);
+  z-index: -2;
+  opacity: 0.9;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/grid.svg"), radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 40%);
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.font-pixel {
+  font-family: var(--font-pixel);
+}
+
+.text-neon {
+  color: var(--color-neon);
+}
+
+.border-neon {
+  border-color: var(--color-neon);
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--brand-surface) 88%, transparent);
+  border: 1px solid var(--brand-border);
+  box-shadow: 0 20px 60px rgba(2, 8, 23, 0.6);
+  backdrop-filter: blur(16px);
+}
+
+.section-shell {
+  @apply relative mx-auto flex w-full flex-col gap-8 px-4 py-16 sm:px-8 lg:px-12;
+}
+
+.section-kicker {
+  @apply uppercase tracking-[0.4em] text-xs text-slate-400;
+}
+
+.section-heading {
+  @apply text-3xl font-semibold sm:text-4xl;
+}
+
+.grid-highlight {
+  background: radial-gradient(circle at top, rgba(149, 255, 38, 0.2), transparent 60%);
+  border-image: linear-gradient(
+      120deg,
+      rgba(149, 255, 38, 0.7),
+      rgba(255, 102, 217, 0.6),
+      rgba(41, 196, 255, 0.7)
+    )
+    1;
+}
+
+.card-outline {
+  border: 1px solid var(--brand-border);
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
 }
 
 @keyframes glitch {
-  0%   { clip: rect(24px, 9999px, 10px, 0); transform: translate(0.5px, -0.5px); }
-  10%  { clip: rect(12px, 9999px, 80px, 0); transform: translate(-0.5px, 0.5px); }
-  20%  { clip: rect(44px, 9999px, 56px, 0); transform: translate(-1px, 1px); }
-  30%  { clip: rect(72px, 9999px, 30px, 0); transform: translate(1px, -1px); }
-  40%  { clip: rect(10px, 9999px, 90px, 0); transform: translate(-0.5px, 0.5px); }
-  50%  { clip: rect(90px, 9999px, 60px, 0); transform: translate(0.5px, -0.5px); }
-  60%  { clip: rect(30px, 9999px, 20px, 0); transform: translate(-1px, 1px); }
-  70%  { clip: rect(50px, 9999px, 80px, 0); transform: translate(1px, -1px); }
-  80%  { clip: rect(20px, 9999px, 70px, 0); transform: translate(-0.5px, 0.5px); }
-  90%  { clip: rect(60px, 9999px, 40px, 0); transform: translate(0.5px, -0.5px); }
-  100% { clip: rect(44px, 9999px, 10px, 0); transform: translate(-1px, 1px); }
+  0% {
+    clip-path: inset(24px 0 10px 0);
+    transform: translate(0.5px, -0.5px);
+  }
+  10% {
+    clip-path: inset(12px 0 80px 0);
+    transform: translate(-0.5px, 0.5px);
+  }
+  20% {
+    clip-path: inset(44px 0 56px 0);
+    transform: translate(-1px, 1px);
+  }
+  30% {
+    clip-path: inset(72px 0 30px 0);
+    transform: translate(1px, -1px);
+  }
+  40% {
+    clip-path: inset(10px 0 90px 0);
+    transform: translate(-0.5px, 0.5px);
+  }
+  50% {
+    clip-path: inset(90px 0 60px 0);
+    transform: translate(0.5px, -0.5px);
+  }
+  60% {
+    clip-path: inset(30px 0 20px 0);
+    transform: translate(-1px, 1px);
+  }
+  70% {
+    clip-path: inset(50px 0 80px 0);
+    transform: translate(1px, -1px);
+  }
+  80% {
+    clip-path: inset(20px 0 70px 0);
+    transform: translate(-0.5px, 0.5px);
+  }
+  90% {
+    clip-path: inset(60px 0 40px 0);
+    transform: translate(0.5px, -0.5px);
+  }
+  100% {
+    clip-path: inset(44px 0 10px 0);
+    transform: translate(-1px, 1px);
+  }
 }
 
 .animate-\[glitch_2s_infinite\] {
   animation: glitch 2s infinite linear alternate-reverse;
 }
 
-/* Slow spin */
 .animate-spin-slow {
   animation: spin 10s linear infinite;
 }
 
-:root {
-  --color-neon: #39ff14;
+::-webkit-scrollbar {
+  width: 10px;
 }
-.text-neon { color: var(--color-neon); }
-.border-neon { border-color: var(--color-neon); }
+
+::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-neon), var(--color-secondary));
+  border-radius: 999px;
+}

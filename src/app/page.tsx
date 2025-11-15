@@ -51,13 +51,19 @@ export default async function HomePage() {
 
       <section
         id="products"
-        className="container mx-auto py-16 z-10 relative"
+        className="relative z-10 mx-auto max-w-6xl px-4 py-16"
       >
-        <h2 className="font-pixel text-4xl text-center mb-8">
-          {t('featured_tees')}
-        </h2>
-        {/* @ts-expect-error: already serialized */}
-        <ProductGrid products={items} />
+        <div className="text-center">
+          <p className="section-kicker text-neon">{t('featured_tees')}</p>
+          <h2 className="mt-3 text-3xl font-semibold">Hand-picked chaos for this week.</h2>
+          <p className="mt-3 text-sm text-slate-300">
+            Limited units per design. When it&apos;s gone, it&apos;s gone. Tap in.
+          </p>
+        </div>
+        <div className="mt-10">
+          {/* @ts-expect-error: already serialized */}
+          <ProductGrid products={items} />
+        </div>
       </section>
     </div>
   );
