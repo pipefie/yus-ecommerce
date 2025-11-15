@@ -128,3 +128,25 @@ model ProductImage {
   @@index([productId, selected])
   @@index([variantId])
 }
+
+enum SyncStatus {
+  success
+  failed
+}
+
+model PrintfulSyncLog {
+  id                Int        @id @default(autoincrement())
+  startedAt         DateTime   @default(now())
+  finishedAt        DateTime?
+  status            SyncStatus
+  actor             String?
+  source            String?
+  cleared           Boolean    @default(false)
+  processedProducts Int        @default(0)
+  processedVariants Int        @default(0)
+  archivedProducts  Int        @default(0)
+  archivedVariants  Int        @default(0)
+  error             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}

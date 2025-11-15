@@ -88,7 +88,9 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret
 PRINTFUL_API_KEY=printful-api-key
 PRINTFUL_STORE_ID=printful-store-id
 PRINTFUL_WEBHOOK_SECRET=printful-webhook-secret
+PRINTFUL_SYNC_KEY=your-sync-secret
 DEFAULT_CURRENCY=EUR
+ADMIN_EMAILS=founder@example.com
 SENDGRID_API_KEY=your-sendgrid-key
 SENDGRID_FROM=from@example.com
 SENDGRID_WELCOME_TEMPLATE=template-id
@@ -103,7 +105,21 @@ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=algolia-search-key
 DATABASE_URL=file:./prisma/dev.db
 ```
 
+### Printful Sync
 
+- Run a manual sync from **Admin → Dashboard → Printful Sync**. The button invokes the same backend job and records the outcome so everyone can see when the catalog last updated.
+- Automate it with `POST /api/admin/printful/sync` by using either an authenticated admin session or a `Bearer ${PRINTFUL_SYNC_KEY}` header (ideal for cron jobs).
+- `GET /api/printful-sync` remains available for local testing and accepts `?clear=1` to wipe cached assets first.
+
+Each run creates a `PrintfulSyncLog` row. After pulling these changes run `npx prisma migrate dev` to add the new table before triggering a sync.
+
+### Admin bootstrap
+
+- Set `ADMIN_EMAILS` to a comma-separated list (e.g. `founder@example.com,ops@example.com`). Any matching OIDC user is promoted to admin on login even if other admins already exist, so you always have a back door into `/admin` without touching the database manually.
+
+### Migration sanity check
+
+Run `npm run check:migrations` (automatically part of `npm run lint`) to ensure every folder under `prisma/migrations` still contains its `migration.sql`. This prevents corrupted or half-deleted migrations from sneaking into the repo and breaking `prisma migrate`.
 
 The `dbConnect` helper logs connection failures to the console so you can debug issues with your MongoDB configuration.
 
@@ -209,4 +225,3 @@ web attacks:
 - `X-Content-Type-Options: nosniff` prevents MIME type sniffing.
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()` disables these
   features unless explicitly allowed.
-

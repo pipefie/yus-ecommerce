@@ -4,7 +4,9 @@ import { handleCallback } from "@/lib/auth/oidc";
 import { sessionSecret, createSessionToken, buildSessionCookie } from "@/lib/auth/session";
 import { PKCE_COOKIE_NAME, ID_TOKEN_COOKIE_NAME } from "@/lib/auth/constants";
 import { env } from "@/lib/env";
-import { upsertOidcUser } from "@/lib/db/users";
+import { prisma } from "@/lib/prisma";
+import { upsertOidcUser, updateUserRole } from "@/lib/db/users";
+import { isWhitelistedAdmin } from "@/lib/auth/adminWhitelist";
 
 function validateReturnTo(input: string | undefined | null, origin: string): string {
   if (!input) return "/";
@@ -72,12 +74,27 @@ export async function GET(req: NextRequest) {
     return fail("missing_sub");
   }
 
-  const user = await upsertOidcUser({
+  let user = await upsertOidcUser({
     sub,
     email: typeof claims.email === "string" ? claims.email : undefined,
     name: typeof claims.name === "string" ? claims.name : undefined,
     picture: typeof claims.picture === "string" ? claims.picture : undefined,
   });
+
+  const forceAdmin = isWhitelistedAdmin(user.email);
+
+  if (user.role !== "admin") {
+    const otherAdmin = await prisma.user.findFirst({
+      where: { role: "admin", sub: { not: user.sub } },
+      select: { sub: true },
+    });
+    if (forceAdmin || !otherAdmin) {
+      const promoted = await updateUserRole(user.sub, "admin");
+      if (promoted) {
+        user = promoted;
+      }
+    }
+  }
 
   const res = NextResponse.redirect(
     new URL(validateReturnTo(pkcePayload.returnTo, url.origin), url.origin),
@@ -100,5 +117,3 @@ export async function GET(req: NextRequest) {
   }
   return res;
 }
-
-

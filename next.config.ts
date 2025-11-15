@@ -19,6 +19,12 @@ if (cloudfrontBase) {
   }
 }
 
+remotePatterns.push(
+  { protocol: "https", hostname: "files.cdn.printful.com", pathname: "/**" },
+  { protocol: "https", hostname: "cdn.printful.com", pathname: "/**" },
+  { protocol: "https", hostname: "images.printful.com", pathname: "/**" },
+);
+
 const nextConfig = {
   reactStrictMode: true,
   images: {

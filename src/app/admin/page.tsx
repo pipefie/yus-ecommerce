@@ -1,4 +1,5 @@
 ﻿import { prisma } from "@/lib/prisma";
+import { triggerPrintfulSyncAction } from "@/app/admin/actions";
 
 function formatCurrency(cents: number): string {
   return `€ ${(cents / 100).toFixed(2)}`;
@@ -17,13 +18,24 @@ function getLastNDates(days: number): Date[] {
 }
 
 export default async function AdminDashboard() {
-  const [orderAggregate, ordersCount, paidOrders] = await Promise.all([
+  const [orderAggregate, ordersCount, paidOrders, recentSyncs, archivedProducts, missingMockups] = await Promise.all([
     prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: "paid" } }),
     prisma.order.count(),
     prisma.order.findMany({
       where: { status: "paid" },
       orderBy: { createdAt: "desc" },
       take: 50,
+    }),
+    prisma.printfulSyncLog.findMany({
+      orderBy: { startedAt: "desc" },
+      take: 5,
+    }),
+    prisma.product.count({ where: { deleted: true } }),
+    prisma.product.count({
+      where: {
+        deleted: false,
+        productImages: { none: { selected: true } },
+      },
     }),
   ]);
 
@@ -61,8 +73,111 @@ export default async function AdminDashboard() {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
+  const lastSync = recentSyncs[0] ?? null;
+  const lastSyncFinished = lastSync?.finishedAt ?? lastSync?.startedAt ?? null;
+  const syncAgeHours = lastSyncFinished ? (Date.now() - lastSyncFinished.getTime()) / 36e5 : null;
+  const syncIsStale = syncAgeHours === null || syncAgeHours > 6;
+  const syncStatusColor =
+    lastSync?.status === "failed"
+      ? "bg-red-500/20 text-red-300 border-red-500/50"
+      : syncIsStale
+        ? "bg-amber-500/20 text-amber-200 border-amber-500/50"
+        : "bg-emerald-500/20 text-emerald-200 border-emerald-500/40";
+
   return (
     <div className="space-y-8">
+      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Printful Sync</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className={`rounded-full border px-3 py-1 ${syncStatusColor}`}>
+                {lastSync?.status === "failed" ? "Sync failed" : syncIsStale ? "Stale" : "Healthy"}
+              </span>
+              <span className="text-slate-400">
+                Last run: {lastSyncFinished ? lastSyncFinished.toLocaleString() : "Never"}
+              </span>
+            </div>
+            {lastSync?.error && (
+              <p className="mt-2 text-xs text-red-300">Error: {lastSync.error}</p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">
+              Processed: {lastSync?.processedProducts ?? 0} products / {lastSync?.processedVariants ?? 0} variants
+              {lastSync && (
+                <> • Archived: {lastSync.archivedProducts} products / {lastSync.archivedVariants} variants</>
+              )}
+            </p>
+          </div>
+          <form action={triggerPrintfulSyncAction} className="flex flex-wrap gap-3">
+            <button
+              type="submit"
+              name="mode"
+              value="append"
+              className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-100 transition hover:bg-slate-700"
+            >
+              Sync catalog
+            </button>
+            <button
+              type="submit"
+              name="mode"
+              value="replace"
+              className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:bg-red-500/20"
+            >
+              Clear & Sync
+            </button>
+          </form>
+        </div>
+        {recentSyncs.length > 0 && (
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-left text-xs text-slate-300">
+              <thead className="text-[11px] uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="py-2 pr-3">Started</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">Processed</th>
+                  <th className="py-2 pr-3">Actor</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/70">
+                {recentSyncs.map((log) => (
+                  <tr key={log.id}>
+                    <td className="py-2 pr-3">{log.startedAt.toLocaleString()}</td>
+                    <td className="py-2 pr-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 ${
+                          log.status === "failed" ? "bg-red-500/20 text-red-300" : "bg-emerald-500/20 text-emerald-200"
+                        }`}
+                      >
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-slate-400">
+                      {log.processedProducts} products / {log.processedVariants} variants
+                      <span className="text-slate-500">
+                        {" "}
+                        (archived {log.archivedProducts}/{log.archivedVariants})
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-slate-400">{log.actor ?? "unknown"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      {(archivedProducts > 0 || missingMockups > 0) && (
+        <section className="rounded-lg border border-amber-500/50 bg-amber-500/5 p-6 text-sm text-amber-100">
+          <h3 className="text-xs uppercase tracking-wide text-amber-300">Catalog attention</h3>
+          <ul className="mt-3 list-disc space-y-2 pl-5">
+            {archivedProducts > 0 && <li>{archivedProducts} products are flagged as removed in Printful.</li>}
+            {missingMockups > 0 && (
+              <li>{missingMockups} active products are missing mockups—upload fresh archives to keep PDPs sharp.</li>
+            )}
+          </ul>
+        </section>
+      )}
+
       <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">Revenue (paid)</p>
