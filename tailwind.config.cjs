@@ -7,7 +7,7 @@ module.exports = {
     theme: {
       extend: {
         colors: {
-          neon: '#95ff26',
+          neon: '#39ff14',
           'y2k-pink': '#ff69b4'
         },
         fontFamily: {

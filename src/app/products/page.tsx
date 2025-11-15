@@ -48,18 +48,19 @@ export default async function ProductsPage() {
   });
 
   return (
-    <div className="min-h-screen pt-32 text-white">
-      <div className="mx-auto max-w-6xl px-4 pb-16">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#080b16] to-black pt-32">
+      <div className="mx-auto max-w-6xl px-4 pb-16 text-white">
         <div className="glass-panel mb-10 rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
           <p className="section-kicker text-neon">{t("shop_our_tees")}</p>
-          <h1 className="mt-4 text-3xl font-semibold">Curated capsules. Limited runs. Zero filler.</h1>
+          <h1 className="mt-4 text-3xl font-semibold">Shop all tees</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Filter by capsule, search your favorite chaos, and build a wardrobe that doesn’t look like anyone else’s.
-            Each drop is made-to-order so nothing goes to waste.
+            Browse every product, filter by category, and find the size that fits you best.
           </p>
         </div>
-        {/* @ts-expect-error: already serialized */}
-        <ShopClient initialProducts={initialProducts} />
+        <div className="rounded-3xl border border-white/10 bg-white p-6 text-gray-900 shadow-2xl">
+          {/* @ts-expect-error: already serialized */}
+          <ShopClient initialProducts={initialProducts} />
+        </div>
       </div>
     </div>
   );

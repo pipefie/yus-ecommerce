@@ -1,8 +1,8 @@
 // src/components/ProductGrid.tsx
 "use client"
 
-import { useEffect } from "react"
 import ProductCard, { Product } from "./ProductCard"
+import { useEffect } from "react"
 import { trackEvent } from "@/lib/analytics/eventQueue"
 
 interface ProductGridProps {
@@ -22,25 +22,19 @@ export default function ProductGrid({ products }: ProductGridProps) {
   }, [products])
 
   if (!products) {
-    return (
-      <div className="glass-panel rounded-3xl p-8 text-center text-slate-300">
-        Loading products…
-      </div>
-    )
+    return <p className="text-center text-white">Loading products…</p>
   }
 
   if (products.length === 0) {
-    return (
-      <div className="glass-panel rounded-3xl p-8 text-center text-slate-300">
-        No products found. Check back after the next drop.
-      </div>
-    )
+    return <p className="text-center text-white">No products found.</p>
   }
 
   return (
-    <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-      {products.map((product) => (
-        <ProductCard key={product.slug} product={product} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {products.map((p) => (
+        <ProductCard 
+          key={p.slug} 
+          product={p} />
       ))}
     </div>
   )
