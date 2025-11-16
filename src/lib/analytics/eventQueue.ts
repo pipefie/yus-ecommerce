@@ -14,12 +14,40 @@ const viewedKeys = new Set<string>();
 let flushing = false;
 let initialized = false;
 
+function generateSessionId(): string {
+  if (typeof crypto !== "undefined") {
+    if (typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    if (typeof crypto.getRandomValues === "function") {
+      // RFC4122 version 4 compliant fallback using available crypto.
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+      return (
+        hex.slice(0, 4).join("") +
+        "-" +
+        hex.slice(4, 6).join("") +
+        "-" +
+        hex.slice(6, 8).join("") +
+        "-" +
+        hex.slice(8, 10).join("") +
+        "-" +
+        hex.slice(10, 16).join("")
+      );
+    }
+  }
+  // Non-crypto fallback to avoid crashing older browsers.
+  return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+}
+
 function getSessionId(): string {
   if (typeof window === "undefined") return "server";
   const KEY = "yus_event_session";
   let existing = window.sessionStorage.getItem(KEY);
   if (!existing) {
-    existing = crypto.randomUUID();
+    existing = generateSessionId();
     window.sessionStorage.setItem(KEY, existing);
   }
   return existing;
