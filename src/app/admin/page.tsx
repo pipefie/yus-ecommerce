@@ -18,6 +18,7 @@ function getLastNDates(days: number): Date[] {
 }
 
 export default async function AdminDashboard() {
+  const printfulClient = (prisma as typeof prisma & { printfulSyncLog?: typeof prisma.printfulSyncLog }).printfulSyncLog;
   const [orderAggregate, ordersCount, paidOrders, recentSyncs, archivedProducts, missingMockups] = await Promise.all([
     prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: "paid" } }),
     prisma.order.count(),
@@ -26,10 +27,10 @@ export default async function AdminDashboard() {
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-    prisma.printfulSyncLog.findMany({
+    printfulClient?.findMany({
       orderBy: { startedAt: "desc" },
       take: 5,
-    }),
+    }) ?? Promise.resolve([]),
     prisma.product.count({ where: { deleted: true } }),
     prisma.product.count({
       where: {

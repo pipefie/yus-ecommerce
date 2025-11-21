@@ -63,11 +63,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect("/");
   }
 
+  const printfulClient = (prisma as typeof prisma & { printfulSyncLog?: typeof prisma.printfulSyncLog }).printfulSyncLog;
   const [lastSync, archivedCount, missingMockups] = await Promise.all([
-    prisma.printfulSyncLog.findFirst({
+    printfulClient?.findFirst({
       orderBy: { startedAt: "desc" },
       select: { status: true, finishedAt: true, startedAt: true },
-    }),
+    }) ?? Promise.resolve(null),
     prisma.product.count({ where: { deleted: true } }),
     prisma.product.count({
       where: {
