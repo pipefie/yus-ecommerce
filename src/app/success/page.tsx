@@ -4,6 +4,8 @@ import type Stripe from "stripe";
 import PurchaseTracker from "../../components/PurchaseTracker";
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers';
+import { Section } from "@/components/ui/layout";
+import { Eyebrow, PageTitle, SectionTitle } from "@/components/ui/typography";
 export const revalidate = 0
 
 export default async function SuccessPage({
@@ -29,26 +31,27 @@ export default async function SuccessPage({
   }
 
   return (
-    <div className="pt-16 min-h-screen flex flex-col items-center justify-center bg-black text-white px-4 text-center">
-      <h1 className="font-pixel text-4xl text-neon mb-4">{t('thank_you')}</h1>
+    <Section as="main" padding="wide" className="min-h-screen flex flex-col items-center justify-center bg-surface-soft text-foreground text-center">
+      <Eyebrow align="center">Order confirmed</Eyebrow>
+      <PageTitle align="center" className="font-display text-neon">{t('thank_you')}</PageTitle>
       {items.length > 0 && (
-        <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-neon mb-6">
-          <h2 className="font-pixel text-2xl mb-4">Order Summary</h2>
-          <ul className="space-y-2 mb-4">
+        <div className="mt-6 w-full max-w-md rounded-3xl border border-subtle bg-surface-soft/80 p-6 shadow-soft">
+          <SectionTitle align="center">Order Summary</SectionTitle>
+          <ul className="space-y-2 mb-4 mt-3 text-left text-sm text-muted">
             {items.map((item) => (
               <li key={item.id} className="flex justify-between">
                 <span>{item.description} × {item.quantity}</span>
-                <span>{symbols[currency] || ''}{((item.amount_total ?? 0) / 100).toFixed(2)}</span>
+                <span className="text-foreground">{symbols[currency] || ''}{((item.amount_total ?? 0) / 100).toFixed(2)}</span>
               </li>
             ))}
           </ul>
-          <div className="flex justify-between font-bold border-t border-gray-700 pt-2">
+          <div className="flex justify-between font-bold border-t border-subtle pt-2">
             <span>Total</span>
             <span>{symbols[currency] || ''}{total.toFixed(2)}</span>
           </div>
         </div>
       )}
-      <Link href="/products" className="px-6 py-3 bg-neon text-black font-pixel rounded hover:bg-neon/80 transition">
+      <Link href="/products" className="mt-4 inline-flex items-center justify-center rounded-full bg-neon px-6 py-3 font-semibold text-slate-950 transition hover:brightness-105">
         {t('back_to_shop')}
       </Link>
       {items.length > 0 && 
@@ -59,6 +62,6 @@ export default async function SuccessPage({
           }))} 
           total={total} 
         />)}
-    </div>
+    </Section>
   );
 }

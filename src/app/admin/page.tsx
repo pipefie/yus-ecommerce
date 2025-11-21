@@ -39,6 +39,15 @@ export default async function AdminDashboard() {
     }),
   ]);
 
+  const behaviorSince = new Date();
+  behaviorSince.setDate(behaviorSince.getDate() - 14);
+  const recentEvents = await prisma.userEvent.findMany({
+    where: { ts: { gte: behaviorSince } },
+    select: { event: true, entityType: true, entityId: true, metadata: true, ts: true },
+    orderBy: { ts: "desc" },
+    take: 800,
+  });
+
   const totalRevenue = orderAggregate._sum.totalAmount ?? 0;
   const uniqueCustomers = new Set(paidOrders.map((order) => order.userId ?? order.stripeSessionId)).size;
 
@@ -72,6 +81,30 @@ export default async function AdminDashboard() {
     .map(([key, value]) => ({ productId: key, ...value }))
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
+
+  const eventTally = recentEvents.reduce(
+    (acc, evt) => {
+      acc.total++;
+      acc.byEvent.set(evt.event, (acc.byEvent.get(evt.event) ?? 0) + 1);
+      if (evt.event === "add_to_cart" && evt.entityId) {
+        acc.addToCart.set(evt.entityId, (acc.addToCart.get(evt.entityId) ?? 0) + 1);
+      }
+      if (evt.event === "view_product" && evt.entityId) {
+        acc.views.set(evt.entityId, (acc.views.get(evt.entityId) ?? 0) + 1);
+      }
+      return acc;
+    },
+    {
+      total: 0,
+      byEvent: new Map<string, number>(),
+      addToCart: new Map<string, number>(),
+      views: new Map<string, number>(),
+    },
+  );
+
+  const sortedEvents = Array.from(eventTally.byEvent.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topViewed = Array.from(eventTally.views.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topAdds = Array.from(eventTally.addToCart.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   const lastSync = recentSyncs[0] ?? null;
   const lastSyncFinished = lastSync?.finishedAt ?? lastSync?.startedAt ?? null;
@@ -259,6 +292,49 @@ export default async function AdminDashboard() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-6">
+        <h2 className="text-sm font-semibold text-slate-200">Behavioral signals (last 14 days)</h2>
+        <p className="text-xs text-slate-500">Events streamed from client-side analytics for on-site behavior.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Total events</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-50">{eventTally.total}</p>
+            <ul className="mt-3 space-y-1 text-xs text-slate-400">
+              {sortedEvents.map(([name, count]) => (
+                <li key={name} className="flex items-center justify-between">
+                  <span>{name}</span>
+                  <span className="text-slate-200">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Top viewed products</p>
+            <ul className="mt-3 space-y-1 text-xs text-slate-400">
+              {topViewed.length === 0 && <li className="text-slate-500">No views recorded</li>}
+              {topViewed.map(([productId, count]) => (
+                <li key={productId} className="flex items-center justify-between">
+                  <span>{productId}</span>
+                  <span className="text-slate-200">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Top add-to-cart products</p>
+            <ul className="mt-3 space-y-1 text-xs text-slate-400">
+              {topAdds.length === 0 && <li className="text-slate-500">No add-to-cart events</li>}
+              {topAdds.map(([productId, count]) => (
+                <li key={productId} className="flex items-center justify-between">
+                  <span>{productId}</span>
+                  <span className="text-slate-200">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
     </div>

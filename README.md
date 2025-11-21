@@ -20,6 +20,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Design tokens & theming
+
+- Central tokens live in `src/theme/design-tokens.ts` (colors, gradients, typography scale, radii, shadows, layout spacing). Edit these values to change the brand look globally.
+- CSS variables are defined in `src/app/globals.css` from the token values; Tailwind is mapped to those variables in `tailwind.config.cjs` (e.g., `colors.neon`, `colors.surface`, `fontFamily.sans/display`).
+- Layout/typography primitives are in `src/components/ui/layout.tsx` (`Section`, `Container`, `Stack`, `Inline`) and `src/components/ui/typography.tsx` (`Eyebrow`, `PageTitle`, `SectionTitle`, `BodyText`). Use these instead of ad-hoc spacing/heading styles to keep rhythm consistent.
+- To change fonts: update `typography.fontFamily` in `design-tokens.ts` (e.g., primary `sans`, secondary `display`) and ensure corresponding `next/font` setup loads the families; the CSS variables and Tailwind mappings pick them up automatically.
+- To adjust colors/gradients: edit `colors.*` and `gradients.*` in `design-tokens.ts`; `globals.css` reads them into CSS variables (e.g., `--color-primary`, `--gradient-hero`) used across components.
+- To tweak spacing/density/radius/shadows: modify `layout.*`, `radius.*`, and `shadows.*` in `design-tokens.ts`; cards/sections/buttons consume these variables via utility classes (`border-subtle`, `bg-surface`, `shadow-soft`, radius tokens) and layout primitives.
+- Hero video: set `NEXT_PUBLIC_HERO_VIDEO` to the hosted MP4 URL once available; the hero will use a lightweight poster until then to keep LCP fast.
+
 ## Mandatory Environment Variables
 
 Before starting the app, create a `.env.local` file in the project root with at least the following variables:

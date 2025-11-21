@@ -66,12 +66,12 @@ export default function CartPage() {
 
   if (!items.length) {
     return (
-      <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+      <main className="min-h-screen bg-surface-soft pt-20 pb-24 text-foreground">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-lg rounded-3xl border border-slate-800/80 bg-slate-950/80 p-10 text-center">
-            <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-4 text-3xl font-semibold">Your cart is empty</h1>
-            <p className="mt-3 text-slate-400">
+          <div className="mx-auto max-w-lg rounded-3xl border border-subtle bg-surface-soft/80 p-10 text-center shadow-soft">
+            <p className="text-sm uppercase tracking-[0.4em] text-muted">{t("your_cart")}</p>
+            <h1 className="mt-4 text-3xl font-semibold text-foreground">Your cart is empty</h1>
+            <p className="mt-3 text-muted">
               Looks like you haven’t picked your next obsession yet. Explore new drops and come back with loot.
             </p>
             <Link
@@ -87,16 +87,16 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+    <main className="min-h-screen bg-surface-soft pt-20 pb-24 text-foreground">
       <div className="container mx-auto px-4">
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-2 text-4xl font-semibold">Ready to checkout?</h1>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">{t("your_cart")}</p>
+            <h1 className="mt-2 text-4xl font-semibold text-foreground">Ready to checkout?</h1>
           </div>
           <button
             onClick={clear}
-            className="text-sm text-slate-400 underline-offset-4 transition hover:text-white hover:underline"
+            className="text-sm text-muted underline-offset-4 transition hover:text-foreground hover:underline"
           >
             Clear cart
           </button>
@@ -109,9 +109,9 @@ export default function CartPage() {
               return (
                 <article
                   key={item.variantId ?? item._id}
-                  className="flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-950/70 p-4 shadow-[0_0_40px_rgba(15,23,42,0.4)] sm:flex-row"
+                  className="flex flex-col gap-4 rounded-3xl border border-subtle bg-surface-soft/80 p-4 shadow-soft sm:flex-row"
                 >
-                  <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-slate-900 sm:h-32 sm:w-32">
+                  <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-surface sm:h-32 sm:w-32">
                     <Image
                       src={item.imageUrl || "/placeholder.png"}
                       alt={item.title}
@@ -123,13 +123,13 @@ export default function CartPage() {
                   <div className="flex flex-1 flex-col gap-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm uppercase tracking-[0.2em] text-slate-500">{item.slug}</p>
-                        <h3 className="text-xl font-semibold text-white">{item.title}</h3>
-                        <p className="text-sm text-slate-400 line-clamp-2">{item.description}</p>
+                        <p className="text-sm uppercase tracking-[0.2em] text-muted">{item.slug}</p>
+                        <h3 className="text-xl font-semibold text-foreground">{item.title}</h3>
+                        <p className="text-sm text-muted line-clamp-2">{item.description}</p>
                       </div>
                       <button
                         onClick={() => remove({ ...item, quantity: item.quantity })}
-                        className="text-xs text-slate-400 underline-offset-4 transition hover:text-emerald-300 hover:underline"
+                        className="text-xs text-muted underline-offset-4 transition hover:text-neon hover:underline"
                       >
                         Remove
                       </button>
@@ -139,15 +139,15 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => remove({ ...item, quantity: 1 })}
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-lg text-white transition hover:border-white"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-subtle text-lg text-foreground transition hover:border-neon"
                         >
                           −
                         </button>
-                        <span className="w-12 text-center text-lg font-semibold">{item.quantity}</span>
+                        <span className="w-12 text-center text-lg font-semibold text-foreground">{item.quantity}</span>
                         <button
                           type="button"
                           onClick={() => add({ ...item, quantity: 1 })}
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-lg text-white transition hover:border-white"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-subtle text-lg text-foreground transition hover:border-neon"
                         >
                           +
                         </button>
@@ -163,13 +163,13 @@ export default function CartPage() {
             })}
           </section>
 
-          <aside className="space-y-6 rounded-3xl border border-slate-800/80 bg-slate-950/70 p-6 shadow-[0_0_60px_rgba(15,23,42,0.45)]">
+          <aside className="space-y-6 rounded-3xl border border-subtle bg-surface-soft/80 p-6 shadow-soft">
             <div>
-              <h2 className="text-xl font-semibold text-white">Order summary</h2>
-              <p className="text-sm text-slate-400">Shipping & taxes calculated at checkout.</p>
+              <h2 className="text-xl font-semibold text-foreground">Order summary</h2>
+              <p className="text-sm text-muted">Shipping & taxes calculated at checkout.</p>
             </div>
 
-            <dl className="space-y-3 text-sm text-slate-300">
+            <dl className="space-y-3 text-sm text-muted">
               <div className="flex justify-between">
                 <dt>Subtotal</dt>
                 <dd>
@@ -187,9 +187,9 @@ export default function CartPage() {
               </div>
             </dl>
 
-            <div className="flex items-center justify-between border-t border-slate-800 pt-4">
-              <span className="text-sm uppercase tracking-[0.2em] text-slate-500">Total</span>
-              <span className="text-3xl font-semibold">
+            <div className="flex items-center justify-between border-t border-subtle pt-4">
+              <span className="text-sm uppercase tracking-[0.2em] text-muted">Total</span>
+              <span className="text-3xl font-semibold text-foreground">
                 {CURRENCY_SYMBOLS[currency] ?? ""}
                 {total.toFixed(2)}
               </span>
@@ -205,8 +205,8 @@ export default function CartPage() {
               {loading ? "Processing…" : t("checkout")}
             </button>
 
-            <div className="rounded-2xl border border-slate-800/80 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">Need help?</p>
+            <div className="rounded-2xl border border-subtle p-4 text-sm text-muted">
+              <p className="font-semibold text-foreground">Need help?</p>
               <p>We can edit your order up to 2 hours after checkout. Just reply to the confirmation email.</p>
             </div>
           </aside>

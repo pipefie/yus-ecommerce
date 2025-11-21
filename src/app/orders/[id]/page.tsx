@@ -1,6 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { Section } from "@/components/ui/layout";
+import { Eyebrow, PageTitle, BodyText } from "@/components/ui/typography";
 
 type OrderPageParams = Promise<{ id: string }>;
 
@@ -21,12 +23,15 @@ export default async function OrderDetail({ params }: { params: OrderPageParams 
   if (!order) notFound();
 
   return (
-    <div className="pt-16 container mx-auto px-4 py-8">
-      <h1 className="font-pixel text-3xl mb-6">Order #{order.id}</h1>
-      <p className="mb-2">
-        Status: <span className="capitalize">{order.status}</span>
-      </p>
-      <p>Total: {order.currency.toUpperCase()} {(order.totalAmount / 100).toFixed(2)}</p>
-    </div>
+    <Section as="main" padding="wide" className="min-h-screen bg-surface-soft text-foreground space-y-4">
+      <Eyebrow align="center">Order detail</Eyebrow>
+      <PageTitle align="center" className="font-display">Order #{order.id}</PageTitle>
+      <div className="mx-auto max-w-md space-y-3 rounded-2xl border border-subtle bg-card p-5">
+        <BodyText tone="muted">Status: <span className="capitalize text-foreground">{order.status}</span></BodyText>
+        <BodyText tone="muted">
+          Total: <span className="text-foreground">{order.currency.toUpperCase()} {(order.totalAmount / 100).toFixed(2)}</span>
+        </BodyText>
+      </div>
+    </Section>
   );
 }

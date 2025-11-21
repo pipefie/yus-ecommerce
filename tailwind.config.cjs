@@ -7,11 +7,19 @@ module.exports = {
     theme: {
       extend: {
         colors: {
-          neon: '#39ff14',
-          'y2k-pink': '#ff69b4'
+          neon: 'var(--color-primary)',
+          'y2k-pink': 'var(--color-accent)',
+          surface: 'var(--color-surface)',
+          'surface-soft': 'var(--color-surface-soft)',
+          card: 'var(--color-card)',
+          border: 'var(--color-border)',
+          muted: 'var(--color-muted)',
+          foreground: 'var(--color-foreground)',
         },
         fontFamily: {
-          pixel: ['"Press Start 2P"', 'cursive']
+          pixel: ['"Press Start 2P"', 'cursive'],
+          display: ['var(--font-display)', 'cursive'],
+          sans: ['var(--font-sans)', 'sans-serif'],
         }
       }
     },

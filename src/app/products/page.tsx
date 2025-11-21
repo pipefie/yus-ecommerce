@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { cookies } from "next/headers";
 import { getAssetUrls, assetPlaceholder } from "@/lib/assets";
+import { Section } from "@/components/ui/layout";
+import { Eyebrow, SectionTitle, BodyText } from "@/components/ui/typography";
 
 export const revalidate = 60;
 
@@ -48,28 +50,28 @@ export default async function ProductsPage() {
   });
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-black via-[#080b16] to-black pt-32">
+    <div className="relative min-h-screen bg-surface-soft pt-32 text-foreground">
       <div
-        className="pointer-events-none absolute inset-0 opacity-60"
+        className="pointer-events-none absolute inset-0 opacity-70"
         aria-hidden
         style={{
           background:
-            "radial-gradient(circle at 20% 20%, rgba(80,90,120,0.3), transparent 55%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.08), transparent 45%), radial-gradient(circle at 60% 80%, rgba(60,180,130,0.2), transparent 60%)",
+            "radial-gradient(circle at 20% 20%, rgba(80,90,120,0.24), transparent 55%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.08), transparent 45%), radial-gradient(circle at 60% 80%, rgba(60,180,130,0.18), transparent 60%)",
         }}
       />
-      <div className="relative z-10 mx-auto max-w-6xl px-4 pb-16 text-white">
-        <div className="glass-panel mb-10 rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
-          <p className="section-kicker text-neon">{t("shop_our_tees")}</p>
-          <h1 className="mt-4 text-3xl font-semibold">Shop all tees</h1>
-          <p className="mt-3 text-sm text-slate-300">
+      <Section className="relative z-10">
+        <div className="glass-panel mb-10 rounded-3xl border border-subtle bg-card p-8 text-center shadow-soft">
+          <Eyebrow align="center" className="text-neon">{t("shop_our_tees")}</Eyebrow>
+          <SectionTitle align="center">Shop all tees</SectionTitle>
+          <BodyText tone="muted" className="mt-3 text-center">
             Browse every product, filter by category, and find the size that fits you best.
-          </p>
+          </BodyText>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+        <div className="rounded-3xl border border-subtle bg-surface-soft/70 p-6 backdrop-blur">
           {/* @ts-expect-error: already serialized */}
           <ShopClient initialProducts={initialProducts} />
         </div>
-      </div>
+      </Section>
     </div>
   );
 }

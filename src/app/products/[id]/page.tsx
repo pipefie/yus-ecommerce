@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import { getAssetUrl, assetPlaceholder } from "@/lib/assets";
 import { getAllProducts, getProductBySlug, getProductSlugs } from "../../../lib/products";
+import { Section } from "@/components/ui/layout";
 
 type PageParams = Promise<{ id: string }>;
 export const revalidate = 60;
@@ -161,13 +162,13 @@ export default async function ProductPage({ params }: { params: PageParams }) {
     });
 
   return (
-    <main className="container mx-auto px-4 py-12">
+    <Section as="main" padding="wide" className="text-foreground">
       <ProductDetailClient product={detail} related={relatedProducts} />
       <script
         id="product-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
-    </main>
+    </Section>
   );
 }

@@ -38,97 +38,99 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 flex h-24 items-center justify-between bg-black/80 px-6 backdrop-blur">
-        <Link href="/" className="flex items-center" aria-label="Y-US? home">
-          <Image src="/logoWhite.png" alt="Y-US? Logo" width={70} height={70} priority />
-        </Link>
+      <nav className="fixed inset-x-0 top-0 z-50 bg-surface/80 backdrop-blur">
+        <div className="container-shell flex h-24 items-center justify-between">
+          <Link href="/" className="flex items-center" aria-label="Y-US? home">
+            <Image src="/logoWhite.png" alt="Y-US? Logo" width={70} height={70} priority />
+          </Link>
 
-        <ul className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-wide text-white/80 lg:flex">
-          {links.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} className="transition hover:text-neon">
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+          <ul className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-wide text-white/80 lg:flex">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="transition hover:text-neon">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-        <div className="flex items-center gap-3 text-white">
-          <LanguageSwitcher />
-          <div className="relative">
+          <div className="flex items-center gap-3 text-white">
+            <LanguageSwitcher />
+            <div className="relative">
+              <button
+                onClick={() => setAuthOpen((o) => !o)}
+                className="rounded-full border border-subtle bg-white/5 p-2 transition hover:border-neon hover:text-neon"
+                aria-label="Account"
+              >
+                <User size={22} />
+              </button>
+              {authOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-subtle bg-surface-soft/95 p-3 text-sm shadow-soft">
+                  {!user ? (
+                    <>
+                      <Link
+                        href="/login"
+                        className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/login?prompt=signup"
+                        className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/account"
+                        className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Account
+                      </Link>
+                      <a
+                        href="/auth/logout?returnTo=/"
+                        className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
+                        onClick={() => setAuthOpen(false)}
+                      >
+                        Sign Out
+                      </a>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <button
-              onClick={() => setAuthOpen((o) => !o)}
-              className="rounded-full border border-white/30 p-2 transition hover:text-neon"
-              aria-label="Account"
+              onClick={() => setOpen(true)}
+              className="relative rounded-full border border-subtle bg-white/5 p-2 transition hover:border-neon hover:text-neon"
+              aria-label="Open cart"
             >
-              <User size={22} />
+              <ShoppingCart size={22} />
+              {totalQty > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-neon text-[11px] font-semibold text-black">
+                  {totalQty}
+                </span>
+              )}
             </button>
-            {authOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-white/20 bg-black/90 p-3 text-sm">
-                {!user ? (
-                  <>
-                    <Link
-                      href="/login"
-                      className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/login?prompt=signup"
-                      className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/account"
-                      className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Account
-                    </Link>
-                    <a
-                      href="/auth/logout?returnTo=/"
-                      className="block rounded-lg px-2 py-1 text-white transition hover:text-neon"
-                      onClick={() => setAuthOpen(false)}
-                    >
-                      Sign Out
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              className="rounded-full border border-subtle bg-white/5 p-2 transition hover:border-neon hover:text-neon lg:hidden"
+              aria-label="Menu"
+            >
+              {menuOpen ? <X size={22} /> : <Plus size={22} />}
+            </button>
           </div>
-          <button
-            onClick={() => setOpen(true)}
-            className="relative rounded-full border border-white/30 p-2 transition hover:text-neon"
-            aria-label="Open cart"
-          >
-            <ShoppingCart size={22} />
-            {totalQty > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-neon text-[11px] font-semibold text-black">
-                {totalQty}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setMenuOpen((o) => !o)}
-            className="rounded-full border border-white/30 p-2 transition hover:text-neon lg:hidden"
-            aria-label="Menu"
-          >
-            {menuOpen ? <X size={22} /> : <Plus size={22} />}
-          </button>
         </div>
       </nav>
 
       <CartSidebar open={open} onClose={() => setOpen(false)} />
 
       <div
-        className={`fixed inset-0 z-40 bg-black/95 px-6 py-20 transition-transform duration-500 ${
+        className={`fixed inset-0 z-40 bg-surface-soft/95 px-6 py-20 transition-transform duration-500 ${
           menuOpen ? "translate-y-0" : "-translate-y-full pointer-events-none"
         }`}
       >

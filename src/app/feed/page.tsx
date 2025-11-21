@@ -4,6 +4,8 @@ import useSWR from "swr";
 import Image from "next/image";
 import Link from "next/link";
 import type { SocialPost } from "@/lib/socialFeed";
+import { Section } from "@/components/ui/layout";
+import { Eyebrow, PageTitle, BodyText } from "@/components/ui/typography";
 
 type FeedResponse = { feed: SocialPost[] };
 const fetcher = (url: string) => fetch(url).then((res) => res.json() as Promise<FeedResponse>);
@@ -19,23 +21,21 @@ export default function FeedPage() {
   const posts = data?.feed ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Social feed</p>
-          <h1 className="mt-4 text-4xl font-semibold">Memes, drops & chaos—live from our socials</h1>
-          <p className="mt-3 text-slate-400">
-            Fresh pulls from Instagram, TikTok, and X. Tap into the stream and follow along where it happens first.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          {(isLoading ? placeholderPosts : posts).map((post) => (
-            <FeedCard key={post.id} post={post} />
-          ))}
-        </div>
+    <Section as="main" padding="wide" className="min-h-screen bg-surface-soft text-foreground space-y-10">
+      <div className="mx-auto max-w-3xl text-center">
+        <Eyebrow align="center">Social feed</Eyebrow>
+        <PageTitle align="center">Memes, drops & chaos—live from our socials</PageTitle>
+        <BodyText tone="muted" className="mt-3 text-center">
+          Fresh pulls from Instagram, TikTok, and X. Tap into the stream and follow along where it happens first.
+        </BodyText>
       </div>
-    </main>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {(isLoading ? placeholderPosts : posts).map((post) => (
+          <FeedCard key={post.id} post={post} />
+        ))}
+      </div>
+    </Section>
   );
 }
 

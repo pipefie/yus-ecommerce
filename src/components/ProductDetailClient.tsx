@@ -237,7 +237,7 @@ export default function ProductDetailClient({ product, related }: Props) {
           title: "Product description",
           content: (
             <div
-              className="prose prose-invert max-w-none text-sm text-slate-300"
+              className="prose prose-invert max-w-none text-sm text-muted"
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
           ),
@@ -270,7 +270,7 @@ export default function ProductDetailClient({ product, related }: Props) {
           id: "delivery",
           title: "Delivery policy",
           content: (
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-muted">
               Orders leave the studio in 2–3 business days. EU deliveries typically arrive within 5–7 days, while
               international shipments may take up to 12 days. You will receive a tracking number as soon as your parcel
               departs.
@@ -281,7 +281,7 @@ export default function ProductDetailClient({ product, related }: Props) {
           id: "returns",
           title: "Returns & exchanges",
           content: (
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-muted">
               Need a different size or found an issue? Reach out within 14 days of delivery and we will arrange a swift
               exchange or refund. Items must be unworn, with tags, and returned in the original packaging.
             </p>
@@ -294,18 +294,18 @@ export default function ProductDetailClient({ product, related }: Props) {
   const [openSection, setOpenSection] = useState<string>(infoSections[0]?.id ?? "description");
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 text-foreground">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <Carousel images={colorImages} productId={product.id} />
 
-        <div className="space-y-8 rounded-3xl border border-slate-800/60 bg-slate-950/60 p-6 shadow-[0_0_60px_rgba(45,212,191,0.05)]">
+        <div className="space-y-8 rounded-3xl border border-subtle bg-surface-soft/80 p-6 shadow-soft backdrop-blur">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-emerald-300/80">
               <span className="rounded-full border border-emerald-400/40 px-3 py-1">new drop</span>
               <span className="rounded-full border border-emerald-400/40 px-3 py-1">premium cotton</span>
             </div>
-            <h1 className="text-4xl font-semibold text-white">{product.title}</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-4xl font-semibold text-foreground">{product.title}</h1>
+            <p className="text-sm text-muted">
               Crafted in micro-batches with breathable materials and eco inks. Built for long nights, bright lights, and
               unexpected adventures.
             </p>
@@ -313,7 +313,7 @@ export default function ProductDetailClient({ product, related }: Props) {
 
           <div className="grid gap-6">
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-slate-400">Colorway</p>
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted">Colorway</p>
               <div className="flex flex-wrap gap-3">
                 {colors.map((color) => {
                   const preview =
@@ -345,7 +345,7 @@ export default function ProductDetailClient({ product, related }: Props) {
             </div>
 
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-slate-400">Size</p>
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted">Size</p>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((size) => (
                   <button
@@ -367,13 +367,13 @@ export default function ProductDetailClient({ product, related }: Props) {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-400">Price</p>
-                <p className="text-4xl font-semibold text-white" aria-live="polite">
+                <p className="text-xs uppercase tracking-wide text-muted">Price</p>
+                <p className="text-4xl font-semibold text-foreground" aria-live="polite">
                   {currencySymbol}
                   {((activeVariant.price * rate) / 100).toFixed(2)}
                 </p>
               </div>
-              <div className="text-right text-xs text-slate-400">
+              <div className="text-right text-xs text-muted">
                 <p>VAT & duties included</p>
                 <p>Ships worldwide</p>
               </div>
@@ -388,22 +388,22 @@ export default function ProductDetailClient({ product, related }: Props) {
             </button>
           </div>
 
-          <div className="grid gap-3 text-sm text-slate-300 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800/60 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Free support</p>
-              <p>DM us anytime for styling or sizing help.</p>
+          <div className="grid gap-3 text-sm text-muted md:grid-cols-2">
+            <div className="rounded-2xl border border-subtle bg-card/60 p-3">
+              <p className="text-xs uppercase tracking-wide text-muted">Free support</p>
+              <p className="text-foreground">DM us anytime for styling or sizing help.</p>
             </div>
-            <div className="rounded-2xl border border-slate-800/60 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Secure checkout</p>
-              <p>Protected payments via Stripe & Apple Pay.</p>
+            <div className="rounded-2xl border border-subtle bg-card/60 p-3">
+              <p className="text-xs uppercase tracking-wide text-muted">Secure checkout</p>
+              <p className="text-foreground">Protected payments via Stripe & Apple Pay.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <section className="rounded-3xl border border-slate-800/80 bg-slate-950/60 p-6">
-        <h2 className="text-lg font-semibold text-white">Product details</h2>
-        <div className="mt-4 divide-y divide-slate-800">
+      <section className="rounded-3xl border border-subtle bg-surface-soft/80 p-6 shadow-soft">
+        <h2 className="text-lg font-semibold text-foreground">Product details</h2>
+        <div className="mt-4 divide-y divide-border">
           {infoSections.map((section) => {
             const isOpen = openSection === section.id;
             return (
@@ -411,12 +411,12 @@ export default function ProductDetailClient({ product, related }: Props) {
                 <button
                   type="button"
                   onClick={() => setOpenSection((prev) => (prev === section.id ? "" : section.id))}
-                  className="flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-white"
+                  className="flex w-full items-center justify-between py-4 text-left text-sm font-semibold text-foreground"
                 >
                   {section.title}
                   <span className="text-lg text-emerald-300">{isOpen ? "−" : "+"}</span>
                 </button>
-                {isOpen ? <div className="pb-4 text-sm text-slate-300">{section.content}</div> : null}
+                {isOpen ? <div className="pb-4 text-sm text-muted">{section.content}</div> : null}
               </div>
             );
           })}
@@ -429,20 +429,20 @@ export default function ProductDetailClient({ product, related }: Props) {
         <section className="space-y-4">
           <div className="flex flex-col gap-2">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">You might also vibe with</p>
-            <h3 className="text-2xl font-semibold text-white">Related drops</h3>
+            <h3 className="text-2xl font-semibold text-foreground">Related drops</h3>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {related.map((item) => (
               <Link
                 key={item.id}
                 href={`/products/${item.slug}`}
-                className="group rounded-3xl border border-slate-800/80 bg-slate-950/60 p-4 transition hover:-translate-y-1 hover:border-emerald-400/60"
+                className="group rounded-3xl border border-subtle bg-surface-soft/70 p-4 transition hover:-translate-y-1 hover:border-emerald-400/60 shadow-soft"
               >
                 <div className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-slate-900">
                   <Image src={item.image} alt={item.title} fill className="object-cover" sizes="240px" />
                 </div>
-                <p className="text-sm font-semibold text-white">{item.title}</p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <p className="text-sm text-muted">
                   {currencySymbol}
                   {((item.price * rate) / 100).toFixed(2)}
                 </p>
