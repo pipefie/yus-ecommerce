@@ -27,17 +27,17 @@ export default async function RootLayout({
   return (
     <html lang={lang} className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={ "pt-24 antialiased"}
+        className="pt-24 antialiased bg-black text-white selection:bg-emerald-400Selection:text-black"
         suppressHydrationWarning
       >
         <Providers>
           <CartProvider>
             <NextIntlClientProvider locale={lang} messages={messages}>
               <AnalyticsProvider>
-                <Navbar/>
+                <Navbar />
                 <AnalyticsScripts />
                 <main>{children}</main>
-                <Footer/>
+                <Footer />
                 <CookieBanner />
               </AnalyticsProvider>
             </NextIntlClientProvider>

@@ -23,7 +23,7 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-20 pb-24">
+    <main className="min-h-screen bg-black text-white pt-20 pb-24">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Contact</p>

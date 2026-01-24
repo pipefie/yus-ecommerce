@@ -21,7 +21,7 @@ export default function CartPage() {
   const t = useTranslations();
 
   const subtotal = (items.reduce((sum, item) => sum + item.price * item.quantity, 0) / 100) * rate;
-  const shippingEstimate = items.length ? 0 : 0;
+  const shippingEstimate = 0;
   const total = subtotal + shippingEstimate;
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function CartPage() {
 
   if (!items.length) {
     return (
-      <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+      <main className="min-h-screen bg-black pt-20 pb-24 text-white">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-lg rounded-3xl border border-slate-800/80 bg-slate-950/80 p-10 text-center">
             <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
@@ -87,7 +87,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+    <main className="min-h-screen bg-black pt-20 pb-24 text-white">
       <div className="container mx-auto px-4">
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <div>

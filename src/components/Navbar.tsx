@@ -38,7 +38,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 h-24 bg-black/70 backdrop-blur">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-24 items-center justify-between border-b border-white/10 bg-black/80 px-6 backdrop-blur-md">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
@@ -47,6 +47,7 @@ export default function Navbar() {
             width={70}
             height={70}
             priority
+            className="opacity-90 transition hover:opacity-100"
           />
         </Link>
 
@@ -57,69 +58,69 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={() => setAuthOpen((o) => !o)}
-              className="p-2 text-neon hover:text-neon/70 transition"
+              className="p-2 text-slate-300 transition hover:text-white"
               aria-label="Account"
             >
-              <User size={28} />
+              <User size={24} />
             </button>
-              {authOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-black/90 backdrop-blur p-3 rounded-lg shadow-neon">
-                  {!user ? (
-                    <>
-                      <Link
-                        href="/login"
-                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                        onClick={() => setAuthOpen(false)}
-                      >
-                        Sign In
-                      </Link>
-                      <Link
-                        href="/login?prompt=signup"
-                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                        onClick={() => setAuthOpen(false)}
-                      >
-                        Sign Up
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      {/* Optional: show Account when logged in */}
-                      <Link
-                        href="/account"
-                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                        onClick={() => setAuthOpen(false)}
-                      >
-                        Account
-                      </Link>
-                      <a
-                        href="/auth/logout?returnTo=/"
-                        className="block px-2 py-1 text-white font-pixel hover:text-neon"
-                        onClick={() => setAuthOpen(false)}
-                      >
-                        Sign Out
-                      </a>
-                    </>
-                  )}
-                </div>
-              )}
+            {authOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-white/10 bg-black p-2 shadow-2xl">
+                {!user ? (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block rounded-lg px-4 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      onClick={() => setAuthOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/login?prompt=signup"
+                      className="block rounded-lg px-4 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      onClick={() => setAuthOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {/* Optional: show Account when logged in */}
+                    <Link
+                      href="/account"
+                      className="block rounded-lg px-4 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      onClick={() => setAuthOpen(false)}
+                    >
+                      Account
+                    </Link>
+                    <a
+                      href="/auth/logout?returnTo=/"
+                      className="block rounded-lg px-4 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      onClick={() => setAuthOpen(false)}
+                    >
+                      Sign Out
+                    </a>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           {/* Menu Toggle */}
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="p-2 text-neon hover:text-neon/70 transition"
+            className="p-2 text-slate-300 transition hover:text-white"
             aria-label="Menu"
           >
-            {menuOpen ? <X size={28} /> : <Plus size={28} />}
+            {menuOpen ? <X size={24} /> : <Plus size={24} />}
           </button>
           {/* Cart */}
           <button
             onClick={() => setOpen(true)}
-            className="relative p-2 text-neon"
+            className="relative p-2 text-slate-300 transition hover:text-white"
             aria-label="Open cart"
           >
             <ShoppingCart size={24} />
             {totalQty > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-slate-950">
                 {totalQty}
               </span>
             )}
@@ -127,23 +128,22 @@ export default function Navbar() {
         </div>
 
       </nav>
-      
+
       {/* Cart Sidebar (moved outside nav) */}
       <CartSidebar open={open} onClose={() => setOpen(false)} />
       {/*<CurrencySwitcher />*/}
 
       {/* Full-screen Overlay Menu */}
       <div
-        className={`fixed inset-0 z-20 bg-black flex flex-col items-center justify-center transform ${
-          menuOpen ? "translate-y-0" : "-translate-y-full"
-        } transition-transform duration-500 ease-in-out`}
+        className={`fixed inset-0 z-40 flex flex-col items-center justify-center bg-black/95 transition-transform duration-500 ease-in-out ${menuOpen ? "translate-y-0" : "-translate-y-full"
+          }`}
       >
-        <ul className="space-y-6 text-center">
+        <ul className="space-y-8 text-center">
           {links.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="text-4xl font-pixel text-white hover:text-neon transition"
+                className="text-3xl font-semibold text-slate-300 transition hover:text-white hover:tracking-wide"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
@@ -151,16 +151,16 @@ export default function Navbar() {
             </li>
           ))}
         </ul>
-        <div className="mt-12 flex space-x-6">
+        <div className="mt-16 flex space-x-8">
           {socials.map((s) => (
             <a
               key={s.href}
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-70 transition"
+              className="opacity-60 transition hover:opacity-100 hover:scale-110"
             >
-              <Image src={s.icon} alt="" width={32} height={32} />
+              <Image src={s.icon} alt="" width={24} height={24} className="invert" />
             </a>
           ))}
         </div>
