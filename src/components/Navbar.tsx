@@ -158,9 +158,9 @@ export default function Navbar() {
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="opacity-60 transition hover:opacity-100 hover:scale-110"
+              className="transition hover:scale-110"
             >
-              <Image src={s.icon} alt="" width={24} height={24} className="invert" />
+              <Image src={s.icon} alt="" width={24} height={24} />
             </a>
           ))}
         </div>

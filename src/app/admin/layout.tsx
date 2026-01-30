@@ -94,7 +94,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         : "border-emerald-500/60 bg-emerald-500/15 text-emerald-200";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-black text-slate-100">
       <div className="mx-auto flex max-w-7xl gap-6 px-6 py-10 xl:px-10">
         <aside className="sticky top-10 hidden h-[calc(100vh-5rem)] w-64 flex-shrink-0 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 lg:flex lg:flex-col">
           <div className="mb-6">
@@ -111,7 +111,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   ? "Manage catalog, mockups, pricing"
                   : item.href === "/admin/orders"
                     ? "Order status & fulfilment"
-                  : undefined,
+                    : undefined,
             }))}
           />
           <div className="mt-6 space-y-3 text-xs">
