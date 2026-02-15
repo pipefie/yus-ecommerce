@@ -11,6 +11,7 @@ import { sendGAEvent } from "@/utils/ga";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useTranslations } from "next-intl";
 import { trackEvent } from "@/lib/analytics/eventQueue";
+import { ShieldCheck, Clock } from "lucide-react";
 
 export interface VariantWithImages {
   id: string;
@@ -298,7 +299,7 @@ export default function ProductDetailClient({ product, related }: Props) {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <Carousel images={colorImages} productId={product.id} />
 
-        <div className="space-y-8 rounded-3xl border border-slate-800/60 bg-slate-950/60 p-6 shadow-[0_0_60px_rgba(45,212,191,0.05)]">
+        <div className="space-y-8 rounded-3xl border border-white/10 bg-black p-6 shadow-[0_0_60px_rgba(45,212,191,0.05)]">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-emerald-300/80">
               <span className="rounded-full border border-emerald-400/40 px-3 py-1">new drop</span>
@@ -325,9 +326,8 @@ export default function ProductDetailClient({ product, related }: Props) {
                       type="button"
                       onClick={() => onSelectColor(color)}
                       aria-label={`Select color ${color}`}
-                      className={`relative h-12 w-12 overflow-hidden rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                        selectedColor === color ? "border-white" : "border-transparent"
-                      }`}
+                      className={`relative h-12 w-12 overflow-hidden rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${selectedColor === color ? "border-white" : "border-transparent"
+                        }`}
                       title={color}
                     >
                       {preview ? (
@@ -353,11 +353,10 @@ export default function ProductDetailClient({ product, related }: Props) {
                     type="button"
                     onClick={() => onSelectSize(size)}
                     aria-pressed={selectedSize === size}
-                    className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
-                      selectedSize === size
+                    className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${selectedSize === size
                         ? "border-white bg-white/10 text-white"
                         : "border-slate-700 text-slate-300 hover:border-white"
-                    }`}
+                      }`}
                   >
                     {size}
                   </button>
@@ -386,6 +385,18 @@ export default function ProductDetailClient({ product, related }: Props) {
               {t("add_to_cart")}
               <span className="ml-2 transition group-hover:translate-x-1">→</span>
             </button>
+
+            {/* CRO: Shipping Timer */}
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-950/30 px-3 py-2 text-xs text-emerald-300">
+              <Clock size={14} />
+              <span>Order within <span className="font-bold text-white">2h 15m</span> for dispatch today.</span>
+            </div>
+
+            {/* CRO: Trust Badge */}
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+              <ShieldCheck size={14} className="text-emerald-400" />
+              <span>Verified Secure Checkout</span>
+            </div>
           </div>
 
           <div className="grid gap-3 text-sm text-slate-300 md:grid-cols-2">
@@ -401,7 +412,7 @@ export default function ProductDetailClient({ product, related }: Props) {
         </div>
       </div>
 
-      <section className="rounded-3xl border border-slate-800/80 bg-slate-950/60 p-6">
+      <section className="rounded-3xl border border-white/10 bg-black p-6">
         <h2 className="text-lg font-semibold text-white">Product details</h2>
         <div className="mt-4 divide-y divide-slate-800">
           {infoSections.map((section) => {
@@ -436,7 +447,7 @@ export default function ProductDetailClient({ product, related }: Props) {
               <Link
                 key={item.id}
                 href={`/products/${item.slug}`}
-                className="group rounded-3xl border border-slate-800/80 bg-slate-950/60 p-4 transition hover:-translate-y-1 hover:border-emerald-400/60"
+                className="group rounded-3xl border border-white/10 bg-black p-4 transition hover:-translate-y-1 hover:border-emerald-400/60"
               >
                 <div className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-slate-900">
                   <Image src={item.image} alt={item.title} fill className="object-cover" sizes="240px" />

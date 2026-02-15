@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react"
 import gsap from "gsap"
 import ScrollTrigger from "gsap/dist/ScrollTrigger"
 
-export default function HeroSection() {
+export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function HeroSection() {
     >
       {/* Full-screen autoplay video */}
       <video
-        src="/videos/hero-loop.mp4"
+        src={videoUrl || "/videos/hero-loop.mp4"}
         autoPlay
         muted
         loop

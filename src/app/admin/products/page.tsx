@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getAssetUrl, assetPlaceholder } from "@/lib/assets";
 import { ProductDetailPanel } from "@/components/admin/ProductDetailPanel";
+import { createProductAction } from "@/app/admin/actions";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -36,14 +37,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const normalizedQuery = query.toLowerCase();
   const filteredProducts = normalizedQuery
     ? products.filter((product) => {
-        const matchesProduct =
-          product.title.toLowerCase().includes(normalizedQuery) ||
-          product.slug.toLowerCase().includes(normalizedQuery);
-        const matchesVariant = product.variants.some((variant) =>
-          `${variant.color} ${variant.size}`.toLowerCase().includes(normalizedQuery),
-        );
-        return matchesProduct || matchesVariant;
-      })
+      const matchesProduct =
+        product.title.toLowerCase().includes(normalizedQuery) ||
+        product.slug.toLowerCase().includes(normalizedQuery);
+      const matchesVariant = product.variants.some((variant) =>
+        `${variant.color} ${variant.size}`.toLowerCase().includes(normalizedQuery),
+      );
+      return matchesProduct || matchesVariant;
+    })
     : products;
 
   const selectedProduct =
@@ -59,6 +60,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <p className="text-xs text-slate-400">
             Search by product name, slug, or variant attributes. Select a row to manage details.
           </p>
+          <form action={createProductAction} className="mt-3">
+            <button type="submit" className="w-full rounded-lg border border-dashed border-slate-700 bg-slate-900/40 py-2 text-xs font-semibold text-slate-300 transition hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400">
+              + Create Manual Product
+            </button>
+          </form>
         </div>
         <form method="get" className="mb-4 space-y-2">
           <label className="flex flex-col gap-1 text-xs text-slate-400">
@@ -119,11 +125,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               <Link
                 key={product.id}
                 href={href}
-                className={`flex gap-3 rounded-xl border px-3 py-3 transition ${
-                  isActive
-                    ? "border-slate-700 bg-slate-800/80 text-white shadow"
-                    : "border-slate-900 bg-slate-950/40 text-slate-300 hover:border-slate-800 hover:bg-slate-900/60 hover:text-white"
-                }`}
+                className={`flex gap-3 rounded-xl border px-3 py-3 transition ${isActive
+                  ? "border-slate-700 bg-slate-800/80 text-white shadow"
+                  : "border-slate-900 bg-slate-950/40 text-slate-300 hover:border-slate-800 hover:bg-slate-900/60 hover:text-white"
+                  }`}
               >
                 <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-slate-800/80">
                   <Image src={imageSrc} alt="" fill sizes="48px" className="object-cover" />

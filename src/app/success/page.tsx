@@ -9,7 +9,7 @@ export const revalidate = 0
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
@@ -17,9 +17,9 @@ export default async function SuccessPage({
   let items: Stripe.LineItem[] = [];
   let total = 0;
   let currency = 'USD';
-  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' };
+  const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
 
-  const sessionId = searchParams.session_id;
+  const { session_id: sessionId } = await searchParams;
   if (sessionId) {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
@@ -51,13 +51,13 @@ export default async function SuccessPage({
       <Link href="/products" className="px-6 py-3 bg-neon text-black font-pixel rounded hover:bg-neon/80 transition">
         {t('back_to_shop')}
       </Link>
-      {items.length > 0 && 
-        (<PurchaseTracker 
+      {items.length > 0 &&
+        (<PurchaseTracker
           items={items.map(item => ({
             ...item,
             description: item.description ?? "",
-          }))} 
-          total={total} 
+          }))}
+          total={total}
         />)}
     </div>
   );

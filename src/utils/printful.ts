@@ -89,7 +89,7 @@ export async function fetchPrintfulProducts(): Promise<RawPrintfulProduct[]> {
   let offset = 0;
   const limit = 50;
   const out: RawPrintfulProduct[] = [];
-  for (;;) {
+  for (; ;) {
     const items: any[] = await callPrintful(`/sync/products?offset=${offset}&limit=${limit}`);
     if (!Array.isArray(items) || items.length === 0) break;
     for (const sp of items) {
@@ -263,7 +263,6 @@ export async function fetchPrintfulProductDetail(
         color,
         size,
         files: unique,
-        // @ts-expect-error carry through for downstream if needed
         product_id,
       } as RawPrintfulVariant;
     })

@@ -252,3 +252,22 @@ export async function updateUserRoleAction(formData: FormData) {
 
   revalidatePath('/admin/permissions')
 }
+
+import { redirect } from 'next/navigation'
+
+export async function createProductAction() {
+  await requireAdmin()
+  const timestamp = Date.now()
+  const product = await prisma.product.create({
+    data: {
+      title: 'New Manual Product',
+      slug: `draft-product-${timestamp}`,
+      printfulProductId: `manual-${timestamp}`,
+      imageUrl: '',
+      description: '<p>Edit me...</p>',
+      price: 0,
+      images: [],
+    }
+  })
+  redirect(`/admin/products/${product.slug}`)
+}

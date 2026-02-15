@@ -52,7 +52,6 @@ export default async function ProductsPage() {
           <h1 className="mt-3 text-4xl font-semibold text-white">{t('shop_our_tees')}</h1>
           <p className="mt-3 text-slate-400">Limited drops, unlimited vibes.</p>
         </div>
-        {/* @ts-expect-error: already serialized */}
         <ShopClient initialProducts={initialProducts} />
       </div>
     </div>

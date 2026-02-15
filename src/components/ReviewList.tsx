@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 interface Review {
-  _id: string;
+  id: string;
   author: string;
   rating: number;
   comment: string;
@@ -76,11 +76,10 @@ export default function ReviewList({ productId }: { productId: string }) {
 
       {banner ? (
         <p
-          className={`mt-4 rounded-2xl border px-4 py-2 text-sm ${
-            banner.type === "success"
-              ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-200"
-              : "border-amber-500/50 bg-amber-500/10 text-amber-200"
-          }`}
+          className={`mt-4 rounded-2xl border px-4 py-2 text-sm ${banner.type === "success"
+            ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-200"
+            : "border-amber-500/50 bg-amber-500/10 text-amber-200"
+            }`}
         >
           {banner.message}
         </p>
@@ -90,7 +89,7 @@ export default function ReviewList({ productId }: { productId: string }) {
         <div className="space-y-4 overflow-y-auto pr-2 max-h-[360px]">
           {reviews.length ? (
             reviews.map((review) => (
-              <article key={review._id} className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-4">
+              <article key={review.id} className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-white">{review.author}</p>

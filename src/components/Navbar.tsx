@@ -38,7 +38,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-50 flex h-24 items-center justify-between border-b border-white/10 bg-black/80 px-6 backdrop-blur-md">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-24 items-center justify-between border-b border-white/10 bg-black px-6 backdrop-blur-md">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image

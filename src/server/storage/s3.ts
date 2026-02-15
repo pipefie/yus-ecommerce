@@ -6,10 +6,12 @@ import { env } from "@/lib/env";
 const credentials =
   env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
     ? {
-        accessKeyId: env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-      }
+      accessKeyId: env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+    }
     : undefined;
+
+import { Readable } from "stream";
 
 export const s3 = new S3Client({
   region: env.AWS_REGION ?? "us-east-1",
@@ -25,7 +27,7 @@ export async function putObjectStream({
 }: {
   bucket: string;
   key: string;
-  body: NodeJS.ReadableStream;
+  body: Readable;
   contentType: string;
   cacheControl?: string;
 }) {

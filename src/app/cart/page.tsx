@@ -21,7 +21,7 @@ export default function CartPage() {
   const t = useTranslations();
 
   const subtotal = (items.reduce((sum, item) => sum + item.price * item.quantity, 0) / 100) * rate;
-  const shippingEstimate = 0;
+  const shippingEstimate: number = 0;
   const total = subtotal + shippingEstimate;
 
   useEffect(() => {
