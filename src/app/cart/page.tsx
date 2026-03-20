@@ -181,10 +181,7 @@ export default function CartPage() {
                 <dt>Shipping</dt>
                 <dd>{shippingEstimate === 0 ? "Included" : `${CURRENCY_SYMBOLS[currency] ?? ""}${shippingEstimate.toFixed(2)}`}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt>Rewards</dt>
-                <dd className="text-emerald-300">+200 pts</dd>
-              </div>
+
             </dl>
 
             <div className="flex items-center justify-between border-t border-slate-800 pt-4">

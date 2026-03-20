@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { prisma } from '@/lib/prisma'
+import logger from '@/lib/logger'
 import slugify from 'slugify'
 
 const API_BASE = 'https://api.printful.com'
@@ -161,12 +162,14 @@ export async function POST(req: NextRequest) {
     .update(raw)
     .digest('hex')
 
-  if (signature !== expected) {
+  const sigBuf = Buffer.from(signature, 'hex')
+  const expBuf = Buffer.from(expected, 'hex')
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   const body = JSON.parse(raw)
-  console.log('ðŸ”” Printful webhook', body.type)
+  logger.info({ type: body.type }, 'Printful webhook received')
 
   try {
     await prisma.userEvent.create({
@@ -180,7 +183,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (err) {
-    console.error('Failed to record UserEvent', err)
+    logger.error({ err }, 'Failed to record Printful webhook UserEvent')
   }
 
   const type = body.type

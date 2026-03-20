@@ -11,7 +11,7 @@ import { sendGAEvent } from "@/utils/ga";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useTranslations } from "next-intl";
 import { trackEvent } from "@/lib/analytics/eventQueue";
-import { ShieldCheck, Clock } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export interface VariantWithImages {
   id: string;
@@ -307,8 +307,7 @@ export default function ProductDetailClient({ product, related }: Props) {
             </div>
             <h1 className="text-4xl font-semibold text-white">{product.title}</h1>
             <p className="text-sm text-slate-400">
-              Crafted in micro-batches with breathable materials and eco inks. Built for long nights, bright lights, and
-              unexpected adventures.
+              Not for everyone. Definitely for you.
             </p>
           </div>
 
@@ -385,12 +384,6 @@ export default function ProductDetailClient({ product, related }: Props) {
               {t("add_to_cart")}
               <span className="ml-2 transition group-hover:translate-x-1">→</span>
             </button>
-
-            {/* CRO: Shipping Timer */}
-            <div className="flex items-center gap-2 rounded-lg bg-emerald-950/30 px-3 py-2 text-xs text-emerald-300">
-              <Clock size={14} />
-              <span>Order within <span className="font-bold text-white">2h 15m</span> for dispatch today.</span>
-            </div>
 
             {/* CRO: Trust Badge */}
             <div className="flex items-center justify-center gap-2 text-xs text-slate-400">

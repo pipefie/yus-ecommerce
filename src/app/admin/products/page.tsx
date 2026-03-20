@@ -114,7 +114,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             const href = buildProductHref(product.id, query);
             const isActive = selectedProduct?.id === product.id;
             const mainAsset = product.productImages.find((img) => img.selected) ?? product.productImages[0];
-            const imageSrc = getAssetUrl(mainAsset?.url) ?? product.imageUrl ?? assetPlaceholder();
+            const imageSrc = getAssetUrl(mainAsset?.url) ?? (product.imageUrl || null) ?? assetPlaceholder();
             const updated =
               product.updatedAt instanceof Date
                 ? product.updatedAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })

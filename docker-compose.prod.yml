@@ -1,0 +1,49 @@
+# Production — Hetzner VPS
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Requires a .env file in this directory with all required variables.
+# See CLAUDE.md → Environment Variables for the full list.
+#
+# Nginx (on the host) proxies :80/:443 → localhost:3000
+# Make sure Nginx sets: proxy_set_header X-Forwarded-Proto https;
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"   # bind to loopback only — Nginx handles public traffic
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-yus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}    # required — set in .env
+      POSTGRES_DB: ${POSTGRES_DB:-yus}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # NOT exposed to host — app connects via internal Docker network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yus} -d ${POSTGRES_DB:-yus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pgdata:
+    driver: local

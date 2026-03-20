@@ -26,6 +26,7 @@ remotePatterns.push(
 );
 
 const nextConfig = {
+  output: 'standalone' as const,
   reactStrictMode: true,
   images: {
     minimumCacheTTL: 60,

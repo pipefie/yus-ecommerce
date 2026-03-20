@@ -1,7 +1,14 @@
-// src/components/Footer.tsx
+'use client'
+
 import Link from "next/link"
+import { useActionState } from "react"
+import { subscribeToNewsletterAction } from "@/actions/newsletter"
+
+const INITIAL = { success: false, error: '' }
 
 export default function Footer() {
+  const [state, formAction, isPending] = useActionState(subscribeToNewsletterAction, INITIAL)
+
   return (
     <footer className="border-t border-white/10 bg-black px-4 py-12 text-white">
       <div className="container mx-auto grid gap-10 md:grid-cols-3">
@@ -39,19 +46,29 @@ export default function Footer() {
         {/* Newsletter Signup */}
         <div>
           <h4 className="mb-4 text-xs uppercase tracking-[0.2em] text-emerald-300">Stay Updated</h4>
-          <form className="flex flex-col gap-3">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder-slate-500 transition focus:border-emerald-400 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="w-full rounded-2xl bg-emerald-400/90 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
-            >
-              Join the list
-            </button>
-          </form>
+          {state.success ? (
+            <p className="text-sm text-emerald-300">you&apos;re on the list.</p>
+          ) : (
+            <form action={formAction} className="flex flex-col gap-3">
+              <input
+                type="email"
+                name="email"
+                placeholder="Your email"
+                required
+                className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder-slate-500 transition focus:border-emerald-400 focus:outline-none"
+              />
+              {state.error && (
+                <p className="text-xs text-red-400">{state.error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={isPending}
+                className="w-full rounded-2xl bg-emerald-400/90 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-60"
+              >
+                {isPending ? 'Joining…' : 'Join the list'}
+              </button>
+            </form>
+          )}
         </div>
       </div>
 

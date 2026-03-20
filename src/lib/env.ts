@@ -36,6 +36,7 @@ const envSchema = z.object({
 
   ADMIN_EMAILS: z.string().trim().optional(),
   RESEND_API_KEY: z.string().trim().optional(),
+  RESEND_FROM: z.string().trim().optional(),
 
   PRINTFUL_API_KEY: z.string().trim().optional(),
   PRINTFUL_TOKEN: z.string().trim().optional(),
@@ -87,6 +88,7 @@ const parsed = envSchema.safeParse({
   SENTRY_DSN: process.env.SENTRY_DSN,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM: process.env.RESEND_FROM,
 
   PRINTFUL_API_KEY: process.env.PRINTFUL_API_KEY,
   PRINTFUL_TOKEN: process.env.PRINTFUL_TOKEN,

@@ -7,7 +7,7 @@ import { z } from "zod"
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { getSessionUser } from "@/lib/auth/session"
-import { getAssetUrl, getAssetUrls, assetPlaceholder } from "@/lib/assets"
+import { getAssetUrl, getAssetUrls } from "@/lib/assets"
 
 export const runtime = "nodejs"
 
@@ -111,15 +111,17 @@ export async function POST(req: NextRequest) {
 
       const qty = Math.max(1, Math.min(50, Number.isFinite(i.quantity) ? i.quantity : 1))
 
-      const productImages = getAssetUrls(product.productImages.map((img) => img.url), { fallback: assetPlaceholder() })
+      const productImages = getAssetUrls(product.productImages.map((img) => img.url))
       const variantImage =
         getAssetUrl(variant?.previewUrl ?? null) ?? getAssetUrl(variant?.imageUrl ?? null)
-      const images = variantImage ? [variantImage] : productImages.slice(0, 1)
+      const rawImages = variantImage ? [variantImage] : productImages.slice(0, 1)
+      // Stripe requires absolute URLs — skip relative paths like /placeholder.png
+      const images = rawImages.filter((img) => /^https?:\/\//i.test(img))
 
       return {
         price_data: {
           currency: "eur",
-          product_data: { name: product.title, images },
+          product_data: { name: product.title, ...(images.length ? { images } : {}) },
           unit_amount: Math.round(unitAmountCents),
         },
         quantity: qty,

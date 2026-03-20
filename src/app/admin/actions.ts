@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 import { runPrintfulSync } from '@/server/printful/sync'
 import { getSessionUser } from '@/lib/auth/session'
 import { isWhitelistedAdmin } from '@/lib/auth/adminWhitelist'
@@ -254,6 +255,14 @@ export async function updateUserRoleAction(formData: FormData) {
 }
 
 import { redirect } from 'next/navigation'
+
+export async function updateOrderStatusAction(orderId: number, status: string) {
+  await requireAdmin()
+  const parsed = z.enum(['pending', 'paid', 'fulfilled', 'refunded']).safeParse(status)
+  if (!parsed.success) throw new Error('Invalid status')
+  await prisma.order.update({ where: { id: orderId }, data: { status: parsed.data } })
+  revalidatePath('/admin/orders')
+}
 
 export async function createProductAction() {
   await requireAdmin()

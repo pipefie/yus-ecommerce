@@ -37,11 +37,6 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
         className="absolute inset-0 w-auto min-w-full min-h-full object-cover"
       />
 
-      {/* Glitching brand text */}
-      <h1 className="relative z-20 font-pixel text-6xl text-neon animate-[glitch_2s_infinite]">
-        Y-US?
-      </h1>
-
       {/* Neon rotating ring (Quechua-style) */}
       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
         <svg
@@ -61,13 +56,21 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
         </svg>
       </div>
 
-      {/* Call-to-action */}
-      <a
-        href="#products"
-        className="relative z-20 inline-block px-6 py-3 border-2 border-neon text-neon font-bold font-pixel rounded hover:bg-neon hover:text-black transition"
-      >
-        Shop Now
-      </a>
+      {/* Centered content stack */}
+      <div className="relative z-20 flex flex-col items-center gap-4 text-center">
+        <h1 className="font-pixel text-6xl text-neon animate-[glitch_2s_infinite]">
+          Y-US?
+        </h1>
+        <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+          internet absurdity. wearable form.
+        </p>
+        <a
+          href="#products"
+          className="mt-2 inline-block px-6 py-3 border-2 border-neon text-neon font-bold font-pixel rounded hover:bg-neon hover:text-black transition"
+        >
+          Shop Now
+        </a>
+      </div>
     </section>
   )
 }

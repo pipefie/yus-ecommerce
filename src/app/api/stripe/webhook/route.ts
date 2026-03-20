@@ -4,8 +4,12 @@ import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import crypto from "node:crypto"
 import { prisma } from "@/lib/prisma"
+import { env } from "@/lib/env"
 import { createPrintfulOrderForLocalOrder, type Recipient } from "@/utils/printful"
 import { pushOrderToMailchimp } from "@/actions/marketing"
+import { sendOrderConfirmation } from "@/lib/emails/sendOrderConfirmation"
+import { stripe as stripeClient } from "@/utils/stripe"
+import logger from "@/lib/logger"
 
 export const config = {
   api: { bodyParser: false } // Stripe needs raw body
@@ -39,14 +43,16 @@ export async function POST(req: Request) {
 
   const buf = await req.arrayBuffer()
   const payload = Buffer.from(buf)
-  const secret = process.env.STRIPE_WEBHOOK_SECRET!
+  const secret = env.STRIPE_WEBHOOK_SECRET
 
   const expected = crypto
     .createHmac("sha256", secret)
     .update(`${timestamp}.${payload.toString()}`)
     .digest("hex")
 
-  if (expected !== signature) {
+  const sigBuf = Buffer.from(signature, "hex")
+  const expBuf = Buffer.from(expected, "hex")
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return NextResponse.json(
       { error: "Invalid signature" },
       { status: 400 }
@@ -68,39 +74,73 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session
 
+    // Find existing order to check for idempotency
+    const existing = await prisma.order.findUnique({ where: { stripeSessionId: session.id } })
 
-    // Mark the order as paid
-    const order = await prisma.order.update({
-      where: { stripeSessionId: session.id },
-      data: { status: "paid" }
-    })
-    await pushOrderToMailchimp(
-      session.customer_email || "",
-      String(order.id),
-      order.totalAmount
-    )
+    // Mark the order as paid (idempotent: skip if already past pending)
+    const alreadyProcessed = existing?.status === "paid" || existing?.status === "fulfilled"
+    const order = alreadyProcessed
+      ? existing
+      : await prisma.order.update({
+          where: { stripeSessionId: session.id },
+          data: { status: "paid" },
+        })
 
-    // Attempt to submit the order to Printful if we have shipping details
-    try {
-      const cd: any = (session as any).customer_details
-      const addr: any = cd?.address
-      if (addr && cd?.name) {
-        const recipient: Recipient = {
-          name: cd.name,
-          email: session.customer_email || undefined,
-          phone: (cd as any).phone || undefined,
-          address1: addr.line1,
-          address2: addr.line2 || undefined,
-          city: addr.city,
-          state_code: addr.state || (addr as any).state_code || undefined,
-          country_code: addr.country,
-          zip: addr.postal_code,
+    if (!order) {
+      return NextResponse.json({ received: true }, { status: 200 })
+    }
+
+    if (!alreadyProcessed) {
+      await pushOrderToMailchimp(
+        session.customer_email || "",
+        String(order.id),
+        order.totalAmount
+      )
+
+      // Send order confirmation email
+      if (session.customer_email) {
+        try {
+          const lineItems = await stripeClient.checkout.sessions.listLineItems(session.id, { limit: 100 })
+          const lines = lineItems.data.map((item) => ({
+            name: item.description ?? 'Item',
+            quantity: item.quantity ?? 1,
+            unitPriceCents: item.amount_total ?? 0,
+            currency: session.currency ?? 'eur',
+          }))
+          await sendOrderConfirmation({
+            to: session.customer_email,
+            customerName: (session as any).customer_details?.name ?? undefined,
+            orderId: order.id,
+            lines,
+            totalCents: session.amount_total ?? order.totalAmount,
+            currency: session.currency ?? 'eur',
+          })
+        } catch (e) {
+          logger.error({ err: e, orderId: order.id }, 'Order confirmation email failed')
         }
-        await createPrintfulOrderForLocalOrder(order.id, recipient)
       }
-    } catch (e) {
-      console.error('Printful order submit failed', e)
-      // Non-fatal: order remains paid, can be retried
+
+      // Attempt to submit the order to Printful if we have shipping details
+      try {
+        const cd: any = (session as any).customer_details
+        const addr: any = cd?.address
+        if (addr && cd?.name) {
+          const recipient: Recipient = {
+            name: cd.name,
+            email: session.customer_email || undefined,
+            phone: (cd as any).phone || undefined,
+            address1: addr.line1,
+            address2: addr.line2 || undefined,
+            city: addr.city,
+            state_code: addr.state || (addr as any).state_code || undefined,
+            country_code: addr.country,
+            zip: addr.postal_code,
+          }
+          await createPrintfulOrderForLocalOrder(order.id, recipient)
+        }
+      } catch (e) {
+        logger.error({ err: e }, 'Printful order submit failed — will need manual retry')
+      }
     }
   }
 

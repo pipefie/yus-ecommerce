@@ -1,59 +1,77 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
+const WINDOW_MS = 60 * 1000
+const MAX_POSTS = 5
+const buckets = new Map<string, { count: number; reset: number }>()
 
-export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const productId = searchParams.get("productId");
-
-    if (!productId) {
-        return NextResponse.json({ error: "Product ID required" }, { status: 400 });
-    }
-
-    // Handle both ID (numbers) and Slug (strings) if necessary, but schema uses Int ID.
-    // The frontend passes 'product.id' which is a number (or stringified number).
-    const id = parseInt(productId);
-    if (isNaN(id)) {
-        return NextResponse.json([], { status: 200 });
-    }
-
-    const reviews = await prisma.review.findMany({
-        where: {
-            productId: id,
-            // For checking: authorize admin to see pending? For now public sees only approved?
-            // Let's show all for now or approved.
-            // status: "approved" 
-        },
-        orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json(reviews);
+function allowed(key: string) {
+  const now = Date.now()
+  const bucket = buckets.get(key)
+  if (!bucket || bucket.reset < now) {
+    buckets.set(key, { count: 1, reset: now + WINDOW_MS })
+    return true
+  }
+  if (bucket.count >= MAX_POSTS) return false
+  bucket.count++
+  return true
 }
 
-export async function POST(req: Request) {
-    try {
-        const { productId, author, comment, rating } = await req.json();
+const ReviewSchema = z.object({
+  productId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/).transform(Number)]),
+  author: z.string().min(1).max(100),
+  comment: z.string().min(1).max(2000),
+  rating: z.number().int().min(1).max(5),
+})
 
-        // Basic validation
-        if (!productId || !author || !comment || !rating) {
-            return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-        }
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const productId = searchParams.get("productId");
 
-        const id = typeof productId === 'string' ? parseInt(productId) : productId;
+  if (!productId) {
+    return NextResponse.json({ error: "Product ID required" }, { status: 400 });
+  }
 
-        const review = await prisma.review.create({
-            data: {
-                productId: id,
-                author,
-                comment,
-                rating: Number(rating),
-                status: "pending", // Default to pending
-            },
-        });
+  const id = parseInt(productId);
+  if (isNaN(id)) {
+    return NextResponse.json([], { status: 200 });
+  }
 
-        return NextResponse.json(review);
-    } catch (error) {
-        console.error("Review posting error:", error);
-        return NextResponse.json({ error: "Failed to post review" }, { status: 500 });
-    }
+  const reviews = await prisma.review.findMany({
+    where: { productId: id, status: "approved" },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json(reviews);
+}
+
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown"
+  if (!allowed(ip)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
+
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = ReviewSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid fields", details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const { productId, author, comment, rating } = parsed.data
+
+  try {
+    const review = await prisma.review.create({
+      data: { productId, author, comment, rating, status: "pending" },
+    });
+    return NextResponse.json({ id: review.id, status: review.status });
+  } catch {
+    return NextResponse.json({ error: "Failed to post review" }, { status: 500 });
+  }
 }

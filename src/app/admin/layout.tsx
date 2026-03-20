@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/inventory", label: "Inventory" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/cms", label: "Store Settings" },
   { href: "/admin/permissions", label: "Permissions" },
 ];
 
@@ -111,7 +112,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   ? "Manage catalog, mockups, pricing"
                   : item.href === "/admin/orders"
                     ? "Order status & fulfilment"
-                    : undefined,
+                    : item.href === "/admin/cms"
+                      ? "Hero video, global config"
+                      : undefined,
             }))}
           />
           <div className="mt-6 space-y-3 text-xs">

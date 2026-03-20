@@ -48,6 +48,13 @@ export default async function SuccessPage({
           </div>
         </div>
       )}
+      <div className="mt-6 mb-6 max-w-md rounded-2xl border border-emerald-400/20 bg-emerald-950/20 px-6 py-4 text-sm text-emerald-300">
+        <p className="font-semibold">Your drop is in production.</p>
+        <p className="mt-1 text-emerald-300/70">
+          We&apos;re printing your order now. Expect dispatch in 3–5 business days.
+          You&apos;ll get a tracking email as soon as it ships.
+        </p>
+      </div>
       <Link href="/products" className="px-6 py-3 bg-neon text-black font-pixel rounded hover:bg-neon/80 transition">
         {t('back_to_shop')}
       </Link>

@@ -71,8 +71,9 @@ export async function middleware(req: NextRequest) {
       'Content-Security-Policy',
       [
         "default-src 'self'",
-        "script-src 'self'",
-        "style-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+        "style-src 'self' 'unsafe-inline'",
+        "frame-src https://js.stripe.com",
         `img-src ${imgSrc.join(' ')}`,
         "font-src 'self' data:",
         `connect-src ${connectSrc.join(' ')}`,

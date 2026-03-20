@@ -38,7 +38,7 @@ export default function ProductCard({ product }: { product: Product }) {
         />
       </div>
       <div className="p-5">
-        <h3 className="text-sm font-semibold text-white line-clamp-1 mb-1">
+        <h3 className="text-base font-semibold text-white line-clamp-2 leading-tight mb-1">
           {product.title}
         </h3>
         <div className="flex items-center justify-between">
