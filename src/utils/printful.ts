@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/utils/printful.ts
 // Printful integration based on the provided openapi.json (Sync API)
 // Uses OAuth Bearer token and optional X-PF-Store-Id header for account-level tokens.
@@ -417,3 +418,4 @@ export async function createPrintfulOrderForLocalOrder(orderId: number, recipien
     confirm: true,
   })
 }
+

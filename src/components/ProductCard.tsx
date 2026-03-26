@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
+import { trackEvent } from "@/lib/analytics/eventQueue";
 
 export interface Product {
   slug:      string;
@@ -19,6 +20,12 @@ export default function ProductCard({ product }: { product: Product }) {
     <Link
       href={`/products/${product.slug}`}   // ← ALWAYS use `slug`
       className="group block overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-200"
+      onClick={() => {
+        trackEvent("click_product", "product", {
+          entityId: product.slug,
+          metadata: { source: "featured-grid" },
+        })
+      }}
     >
       <div className="aspect-w-1 aspect-h-1 bg-gray-50 relative">
         <Image

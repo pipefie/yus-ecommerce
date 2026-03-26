@@ -1,10 +1,9 @@
-import auth0 from '@/lib/auth0'
 import { redirect } from 'next/navigation'
+import { getSessionUser } from '@/lib/auth/session'
 
 export default async function AdminOrdersPage() {
-  const session = await auth0.getSession()
-  const user = session?.user as { role?: string } | undefined
-  if (!session || user?.role !== 'admin') {
+  const user = await getSessionUser()
+  if (!user || user.role !== 'admin') {
     redirect('/')
   }
   const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/admin/orders`)

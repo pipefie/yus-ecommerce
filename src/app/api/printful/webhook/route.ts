@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { prisma } from '@/lib/prisma'
@@ -165,7 +166,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = JSON.parse(raw)
-  console.log('🔔 Printful webhook', body.type)
+  console.log('ðŸ”” Printful webhook', body.type)
 
   try {
     await prisma.userEvent.create({

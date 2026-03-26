@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/api/stripe/webhook/route.ts
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
@@ -105,3 +106,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true }, { status: 200 })
 }
+

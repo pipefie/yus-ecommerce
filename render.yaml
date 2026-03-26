@@ -22,14 +22,24 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
-      - key: AUTH0_SECRET
+      - key: BASE_URL
+        value: https://yus-ecommerce-web.onrender.com
+      - key: OIDC_ISSUER
         sync: false
-      - key: AUTH0_DOMAIN
+      - key: OIDC_CLIENT_ID
         sync: false
-      - key: AUTH0_CLIENT_ID
+      - key: OIDC_CLIENT_SECRET
         sync: false
-      - key: AUTH0_CLIENT_SECRET
+      - key: OIDC_REDIRECT_URI
+        value: https://yus-ecommerce-web.onrender.com/auth/callback
+      - key: OIDC_POST_LOGOUT_REDIRECT_URI
+        value: https://yus-ecommerce-web.onrender.com/
+      - key: OIDC_AUDIENCE
         sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: SESSION_TTL_HOURS
+        value: "8"
       - key: PRINTFUL_API_KEY
         sync: false
       - key: PRINTFUL_STORE_ID
@@ -38,6 +48,16 @@ services:
         sync: false
       - key: DEFAULT_CURRENCY
         value: EUR
+      - key: CLOUDFRONT_BASE_URL
+        sync: false
+      - key: ASSETS_BUCKET
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
     healthCheckPath: /
 
 databases:
