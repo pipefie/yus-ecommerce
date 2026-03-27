@@ -75,17 +75,21 @@ enum OrderStatus {
 }
 
 model Order {
-  id             Int      @id @default(autoincrement())
-  userId         Int?
-  user           User?    @relation(fields: [userId], references: [id])
-  stripeSessionId String       @unique
-  items          Json
-  totalAmount    Int
-  currency       String   @default("eur")
-  status         String   @default("pending")
-  trackingNumber String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  userId          Int?
+  user            User?    @relation(fields: [userId], references: [id])
+  stripeSessionId String   @unique
+  items           Json
+  totalAmount     Int
+  currency        String   @default("eur")
+  status          String   @default("pending")
+  trackingNumber  String?
+  customerEmail   String?  // persisted from Stripe session at payment time
+  customerName    String?  // persisted from Stripe session at payment time
+  shippingAddress Json?    // {line1, line2, city, state, country, zip}
+  printfulOrderId String?  // Printful's order ID after submission
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 

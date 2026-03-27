@@ -180,3 +180,92 @@ export async function sendOrderConfirmation(params: OrderConfirmationParams): Pr
     logger.info({ orderId: params.orderId, to: params.to }, 'Order confirmation email sent')
   }
 }
+
+// ─── Tracking / Shipment email ─────────────────────────────────────────────
+
+interface TrackingEmailParams {
+  to: string
+  customerName?: string
+  orderId: number
+  trackingNumber: string
+  trackingUrl?: string
+}
+
+function buildTrackingHtml(p: TrackingEmailParams): string {
+  const greeting = p.customerName ? `Hey ${p.customerName.split(' ')[0]},` : 'Hey,'
+  const year = new Date().getFullYear()
+  const ctaUrl = p.trackingUrl ?? `https://www.google.com/search?q=${encodeURIComponent(p.trackingNumber)}`
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><title>Your order shipped — Y-US?</title></head>
+<body style="margin:0;padding:0;background:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#000;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+
+        <tr><td style="padding-bottom:32px;text-align:center;">
+          <span style="font-family:'Courier New',monospace;font-size:28px;font-weight:900;letter-spacing:0.15em;color:#39ff14;">Y-US?</span>
+        </td></tr>
+
+        <tr><td style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:36px 32px;">
+
+          <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#f1f5f9;">your drop is on its way.</p>
+          <p style="margin:0 0 28px;font-size:14px;color:#64748b;">
+            ${greeting} Order <span style="color:#39ff14;font-weight:600;">#${p.orderId}</span> has shipped.
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#042f1e;border:1px solid #14532d;border-radius:10px;margin-bottom:24px;">
+            <tr><td style="padding:16px 18px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#4ade80;">Tracking number</p>
+              <p style="margin:0;font-size:18px;font-weight:700;color:#fff;font-family:'Courier New',monospace;">${p.trackingNumber}</p>
+              <p style="margin:4px 0 0;font-size:12px;color:#86efac;">Expect delivery in 3–5 business days from dispatch.</p>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center">
+              <a href="${ctaUrl}" style="display:inline-block;background:#39ff14;color:#000;font-size:13px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;padding:14px 32px;border-radius:50px;">
+                Track your package
+              </a>
+            </td></tr>
+          </table>
+
+        </td></tr>
+
+        <tr><td style="padding-top:28px;text-align:center;">
+          <p style="margin:0 0 6px;font-size:12px;color:#334155;">
+            Questions? <a href="mailto:support@y-us.store" style="color:#39ff14;text-decoration:none;">support@y-us.store</a>
+          </p>
+          <p style="margin:0;font-size:11px;color:#1e293b;">&copy; ${year} Y-US? &mdash; internet absurdity. wearable form.</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
+export async function sendTrackingEmail(params: TrackingEmailParams): Promise<void> {
+  if (!env.RESEND_API_KEY) {
+    logger.warn('RESEND_API_KEY not set — skipping tracking email')
+    return
+  }
+
+  const from = env.RESEND_FROM ?? 'Y-US? <orders@y-us.store>'
+  const resend = new Resend(env.RESEND_API_KEY)
+
+  const { error } = await resend.emails.send({
+    from,
+    to: params.to,
+    subject: `Your Y-US? order #${params.orderId} is on its way — ${params.trackingNumber}`,
+    html: buildTrackingHtml(params),
+  })
+
+  if (error) {
+    logger.error({ error, orderId: params.orderId }, 'Failed to send tracking email')
+  } else {
+    logger.info({ orderId: params.orderId, to: params.to }, 'Tracking email sent')
+  }
+}

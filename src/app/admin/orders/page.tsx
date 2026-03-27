@@ -153,6 +153,9 @@ export default async function AdminOrdersPage(props: {
                   <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Update
                   </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Detail
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -184,6 +187,14 @@ export default async function AdminOrdersPage(props: {
                       <td className="px-5 py-4 text-slate-400">{date}</td>
                       <td className="px-5 py-4">
                         <UpdateStatusForm orderId={order.id} current={order.status} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="text-xs text-slate-400 transition hover:text-slate-200"
+                        >
+                          View →
+                        </Link>
                       </td>
                     </tr>
                   )

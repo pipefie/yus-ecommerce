@@ -1,5 +1,6 @@
 ﻿import { prisma } from "@/lib/prisma";
 import { triggerPrintfulSyncAction } from "@/app/admin/actions";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 
 function formatCurrency(cents: number): string {
   return `€ ${(cents / 100).toFixed(2)}`;
@@ -117,14 +118,15 @@ export default async function AdminDashboard() {
             >
               Sync catalog
             </button>
-            <button
-              type="submit"
+            <ConfirmButton
+              message="This will wipe your entire product catalog and re-sync everything from Printful. Any manual edits to products will be lost. Are you sure?"
+              formAction={triggerPrintfulSyncAction}
               name="mode"
               value="replace"
-              className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:bg-red-500/20"
+              className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
             >
-              Clear & Sync
-            </button>
+              Clear &amp; Sync
+            </ConfirmButton>
           </form>
         </div>
         {recentSyncs.length > 0 && (

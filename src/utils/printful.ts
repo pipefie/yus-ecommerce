@@ -410,11 +410,14 @@ export async function createPrintfulOrderForLocalOrder(orderId: number, recipien
   }
 
   if (!outItems.length) throw new Error(`Order ${orderId} has no printable items`)
-  return await createPrintfulOrder({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: any = await createPrintfulOrder({
     external_id: String(orderId),
     recipient,
     items: outItems,
     confirm: true,
   })
+  const printfulOrderId = String(result?.result?.id ?? result?.id ?? '')
+  return { printfulOrderId }
 }
 

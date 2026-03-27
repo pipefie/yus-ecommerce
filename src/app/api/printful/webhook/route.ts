@@ -4,6 +4,8 @@ import crypto from 'node:crypto'
 import { prisma } from '@/lib/prisma'
 import logger from '@/lib/logger'
 import slugify from 'slugify'
+import { sendTrackingEmail } from '@/lib/emails/sendOrderConfirmation'
+import { sendAdminOrderNotification } from '@/lib/emails/sendAdminOrderNotification'
 
 const API_BASE = 'https://api.printful.com'
 const API_KEY = process.env.PRINTFUL_TOKEN || process.env.PRINTFUL_API_KEY!
@@ -200,6 +202,65 @@ export async function POST(req: NextRequest) {
     const id = body.data?.variant?.variant_id || body.data?.variant?.id || body.data?.id
     if (id) {
       await prisma.variant.updateMany({ where: { printfulVariantId: String(id) }, data: { deleted: true } })
+    }
+
+  } else if (type === 'package_shipped') {
+    // Printful has shipped a package — update order status and notify the customer
+    const externalId = body.data?.order?.external_id // = our Order.id
+    const trackingNumber: string | undefined = body.data?.shipment?.tracking_number
+    const trackingUrl: string | undefined = body.data?.shipment?.tracking_url
+
+    if (externalId) {
+      const localOrderId = Number(externalId)
+      try {
+        await prisma.order.update({
+          where: { id: localOrderId },
+          data: {
+            status: 'fulfilled',
+            ...(trackingNumber ? { trackingNumber } : {}),
+          },
+        })
+        logger.info({ localOrderId, trackingNumber }, 'Order marked fulfilled from Printful shipment')
+
+        if (trackingNumber) {
+          const order = await prisma.order.findUnique({ where: { id: localOrderId } })
+          const customerEmail = order?.customerEmail
+          if (customerEmail) {
+            try {
+              await sendTrackingEmail({
+                to: customerEmail,
+                customerName: order?.customerName ?? undefined,
+                orderId: localOrderId,
+                trackingNumber,
+                trackingUrl,
+              })
+            } catch (e) {
+              logger.error({ err: e, localOrderId }, 'Failed to send tracking email')
+            }
+          }
+        }
+      } catch (e) {
+        logger.error({ err: e, externalId }, 'Failed to update order on package_shipped event')
+      }
+    }
+
+  } else if (type === 'order_failed') {
+    // Printful could not process the order — alert the admin
+    const externalId = body.data?.order?.external_id
+    const reason: string = body.data?.reason ?? body.data?.error ?? 'Unknown reason'
+    logger.error({ externalId, reason, body }, 'Printful order_failed event received')
+
+    try {
+      // Best-effort admin notification — not fatal if it fails
+      await sendAdminOrderNotification({
+        orderId: externalId ? Number(externalId) : 0,
+        lines: [],
+        totalCents: 0,
+        currency: 'eur',
+        customerName: `⚠ PRINTFUL ORDER FAILED: ${reason}`,
+      })
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to send admin notification for order_failed')
     }
   }
 

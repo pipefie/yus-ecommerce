@@ -1,21 +1,27 @@
 import sgMail from '@sendgrid/mail'
+import { env } from '@/lib/env'
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
+function getClient() {
+  if (!env.SENDGRID_API_KEY) throw new Error('SENDGRID_API_KEY is not configured')
+  sgMail.setApiKey(env.SENDGRID_API_KEY)
+  return sgMail
+}
 
 export async function sendWelcomeEmail(email: string, name: string) {
-  const msg = {
+  const client = getClient()
+  await client.send({
     to: email,
-    from: process.env.SENDGRID_FROM!,
-    templateId: process.env.SENDGRID_WELCOME_TEMPLATE!,
+    from: env.SENDGRID_FROM!,
+    templateId: env.SENDGRID_WELCOME_TEMPLATE!,
     dynamicTemplateData: { name },
-  }
-  await sgMail.send(msg)
+  })
 }
 
 export async function sendInvoiceEmail(email: string, pdfBuffer: Buffer, orderId: string) {
-  const msg = {
+  const client = getClient()
+  await client.send({
     to: email,
-    from: process.env.SENDGRID_FROM!,
+    from: env.SENDGRID_FROM!,
     subject: `Invoice ${orderId}`,
     text: 'Please find your invoice attached.',
     attachments: [
@@ -26,6 +32,5 @@ export async function sendInvoiceEmail(email: string, pdfBuffer: Buffer, orderId
         disposition: 'attachment',
       },
     ],
-  }
-  await sgMail.send(msg)
+  })
 }
