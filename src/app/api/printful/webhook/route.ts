@@ -6,11 +6,12 @@ import logger from '@/lib/logger'
 import slugify from 'slugify'
 import { sendTrackingEmail } from '@/lib/emails/sendOrderConfirmation'
 import { sendAdminOrderNotification } from '@/lib/emails/sendAdminOrderNotification'
+import { env } from '@/lib/env'
 
 const API_BASE = 'https://api.printful.com'
-const API_KEY = process.env.PRINTFUL_TOKEN || process.env.PRINTFUL_API_KEY!
-const STORE_ID = process.env.PRINTFUL_STORE_ID
-const WEBHOOK_SECRET = process.env.PRINTFUL_WEBHOOK_SECRET!
+const API_KEY = env.PRINTFUL_TOKEN ?? env.PRINTFUL_API_KEY ?? ''
+const STORE_ID = env.PRINTFUL_STORE_ID
+const WEBHOOK_SECRET = env.PRINTFUL_WEBHOOK_SECRET ?? ''
 
 interface PrintfulFile {
   preview_url?: string
@@ -168,6 +169,16 @@ export async function POST(req: NextRequest) {
   const expBuf = Buffer.from(expected, 'hex')
   if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  const requestTimestamp = req.headers.get('x-printful-timestamp')
+  if (requestTimestamp) {
+    const ts = parseInt(requestTimestamp, 10)
+    const ageSeconds = (Date.now() / 1000) - ts
+    if (ageSeconds > 300) {
+      logger.warn({ ageSeconds }, 'Printful webhook replay rejected')
+      return NextResponse.json({ error: 'Request too old' }, { status: 400 })
+    }
   }
 
   const body = JSON.parse(raw)
