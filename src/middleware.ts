@@ -90,7 +90,9 @@ export async function middleware(req: NextRequest) {
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
   if (!req.cookies.get('csrfToken')) {
-    res.cookies.set('csrfToken', globalThis.crypto?.randomUUID?.() ?? '', {
+    const csrfToken = globalThis.crypto?.randomUUID?.()
+    if (!csrfToken) throw new Error('crypto.randomUUID unavailable — cannot generate CSRF token')
+    res.cookies.set('csrfToken', csrfToken, {
       secure: isProd,
       sameSite: 'lax',
       path: '/',
