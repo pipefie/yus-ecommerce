@@ -15,6 +15,7 @@ import {
   type VariantSummary,
 } from "@/server/mockups/metadata";
 import { putObjectStream } from "@/server/storage/s3";
+import logger from "@/lib/logger";
 
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".avif"]);
 
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
         const manifestJson = JSON.parse(Buffer.from(content).toString("utf-8"));
         manifestLookup = parseMockupsManifest(manifestJson, product.variants);
       } catch (error) {
-        console.warn("Failed to parse mockups.json:", error);
+        logger.warn({ err: error }, "Failed to parse mockups.json");
       }
       continue;
     }

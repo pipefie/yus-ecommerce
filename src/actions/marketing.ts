@@ -1,5 +1,6 @@
 'use server'
 import fetch from 'node-fetch'
+import logger from '@/lib/logger'
 
 export async function pushCustomerToMailchimp(email: string, name?: string) {
   const apiKey = process.env.MAILCHIMP_API_KEY
@@ -14,7 +15,7 @@ export async function pushCustomerToMailchimp(email: string, name?: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email_address: email, status: 'subscribed', merge_fields: { FNAME: name } }),
-  }).catch((err) => console.error('Mailchimp signup failed', err))
+  }).catch((err) => logger.error({ err }, 'Mailchimp signup failed'))
 }
 
 export async function pushOrderToMailchimp(email: string, orderId: string, total: number) {
@@ -35,5 +36,5 @@ export async function pushOrderToMailchimp(email: string, orderId: string, total
       currency_code: 'USD',
       order_total: total / 100,
     }),
-  }).catch((err) => console.error('Mailchimp order failed', err))
+  }).catch((err) => logger.error({ err }, 'Mailchimp order failed'))
 }
