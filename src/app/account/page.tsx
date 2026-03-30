@@ -80,16 +80,15 @@ export default async function AccountPage() {
 
   const statusStyles: Record<string, string> = {
     pending: "bg-amber-500/20 text-amber-200",
-    paid: "bg-sky-500/20 text-sky-200",
+    paid: "bg-slate-600/30 text-slate-200",
     fulfilled: "bg-emerald-500/20 text-emerald-200",
     refunded: "bg-rose-500/20 text-rose-200",
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black text-white">
+    <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 pb-24 pt-28 md:px-10">
-        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 p-8 shadow-2xl backdrop-blur">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-sky-600/20 via-transparent to-transparent" />
+        <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/40 p-8 shadow-2xl backdrop-blur">
 
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
@@ -150,7 +149,7 @@ export default async function AccountPage() {
             <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-8 backdrop-blur">
               <header className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Recent activity</h2>
+                  <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Recent activity</h2>
                   <p className="text-sm text-white/60">Your last orders and their current status.</p>
                 </div>
                 <Link
@@ -203,14 +202,14 @@ export default async function AccountPage() {
 
           <div className="space-y-6">
             <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-7 backdrop-blur">
-              <h3 className="text-base font-semibold text-white">Quick actions</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Quick actions</h3>
               <ul className="mt-5 space-y-3 text-sm text-white/70">
                 <li>
                   <Link
                     href="/orders"
                     className="group flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3 transition hover:border-white/20 hover:bg-white/10"
                   >
-                    <ShoppingBag className="shrink-0 text-sky-400 transition group-hover:text-sky-300" size={18} />
+                    <ShoppingBag className="shrink-0 text-emerald-300 transition group-hover:text-emerald-200" size={18} />
                     <div>
                       <p className="font-medium text-white">Order history</p>
                       <p className="text-xs text-white/50">Track past and current purchases.</p>
@@ -234,7 +233,7 @@ export default async function AccountPage() {
                     href="/account?tab=profile"
                     className="group flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3 transition hover:border-white/20 hover:bg-white/10"
                   >
-                    <UserCog className="shrink-0 text-violet-400 transition group-hover:text-violet-300" size={18} />
+                    <UserCog className="shrink-0 text-[#39ff14] transition group-hover:text-[#39ff14]/80" size={18} />
                     <div>
                       <p className="font-medium text-white">Profile & preferences</p>
                       <p className="text-xs text-white/50">Manage notifications and saved info.</p>
@@ -244,13 +243,13 @@ export default async function AccountPage() {
               </ul>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-transparent p-7 text-sm text-white/70 shadow-inner backdrop-blur">
-              <h3 className="text-base font-semibold text-white">Y-US+ Insider</h3>
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-7 text-sm text-white/70 shadow-inner backdrop-blur">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Y-US+ Insider</h3>
               <p className="mt-3 leading-6 text-white/70">
                 Stay tuned for loyalty drops, early access to collaborations, and styling tips tailored to your vibe.
               </p>
               <button
-                className="mt-5 inline-flex items-center justify-center rounded-full border border-sky-400/50 bg-sky-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20"
+                className="mt-5 inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-emerald-400/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300 transition hover:border-emerald-300 hover:bg-emerald-400/10"
                 type="button"
               >
                 Join the waitlist
