@@ -2,7 +2,7 @@
 
 interface Props {
   message: string
-  formAction: (formData: FormData) => Promise<void>
+  formAction?: (formData: FormData) => Promise<void>
   name?: string
   value?: string
   className?: string
@@ -19,7 +19,7 @@ export function ConfirmButton({ message, formAction, name, value, className, chi
   return (
     <button
       type="submit"
-      formAction={formAction as unknown as string}
+      {...(formAction ? { formAction: formAction as unknown as string } : {})}
       name={name}
       value={value}
       onClick={handleClick}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { assertCsrf } from '@/utils/csrf'
 
 export const runtime = 'nodejs'
 
@@ -21,9 +20,6 @@ function allowed(key: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const csrfError = assertCsrf(req)
-  if (csrfError) return csrfError
-
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!allowed(ip)) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
