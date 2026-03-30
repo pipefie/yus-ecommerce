@@ -8,8 +8,28 @@ import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { getSessionUser } from "@/lib/auth/session"
 import { getAssetUrl, getAssetUrls } from "@/lib/assets"
+import { env } from "@/lib/env"
 
 export const runtime = "nodejs"
+
+const checkoutBuckets = new Map<string, { count: number; reset: number }>()
+const CHECKOUT_LIMIT = 10
+const CHECKOUT_WINDOW_MS = 60_000
+
+function checkoutAllowed(ip: string): boolean {
+  const now = Date.now()
+  for (const [key, val] of checkoutBuckets) {
+    if (val.reset < now) checkoutBuckets.delete(key)
+  }
+  const bucket = checkoutBuckets.get(ip)
+  if (!bucket || bucket.reset < now) {
+    checkoutBuckets.set(ip, { count: 1, reset: now + CHECKOUT_WINDOW_MS })
+    return true
+  }
+  if (bucket.count >= CHECKOUT_LIMIT) return false
+  bucket.count++
+  return true
+}
 
 const ItemSchema = z.object({
   _id: z.string(),
@@ -23,6 +43,11 @@ const BodySchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!checkoutAllowed(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const csrfError = assertCsrf(req)
   if (csrfError) return csrfError
 
@@ -144,8 +169,8 @@ export async function POST(req: NextRequest) {
         ],
       },
       phone_number_collection: { enabled: true },
-      success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
+      success_url: `${env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${env.NEXT_PUBLIC_URL}/cancel`,
     })
   } catch {
     return NextResponse.json({ error: "Stripe error" }, { status: 500 })
