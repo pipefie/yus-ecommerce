@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import { runPrintfulSync } from "@/server/printful/sync";
@@ -5,8 +6,13 @@ import { runPrintfulSync } from "@/server/printful/sync";
 async function authorize(req: NextRequest): Promise<string | undefined> {
   const header = req.headers.get("authorization");
   const syncKey = process.env.PRINTFUL_SYNC_KEY;
-  if (syncKey && header === `Bearer ${syncKey}`) {
-    return "automation";
+  if (syncKey) {
+    const expected = Buffer.from(`Bearer ${syncKey}`);
+    const actual = Buffer.from(header ?? "");
+    const match =
+      expected.length === actual.length &&
+      crypto.timingSafeEqual(expected, actual);
+    if (match) return "automation";
   }
   const user = await getSessionUser();
   if (!user || user.role !== "admin") {
