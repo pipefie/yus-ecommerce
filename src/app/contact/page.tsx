@@ -27,7 +27,7 @@ export default function ContactPage() {
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Contact</p>
-          <h1 className="mt-3 text-4xl font-semibold">Need help, collab, or cosmic guidance?</h1>
+          <h1 className="mt-3 text-4xl font-black uppercase tracking-widest">Need help, collab, or cosmic guidance?</h1>
           <p className="mt-3 text-slate-400">
             Slide into our inbox for support, partnerships, or press. We reply faster than your espresso shot settles.
           </p>

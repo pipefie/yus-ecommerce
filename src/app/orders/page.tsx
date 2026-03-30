@@ -42,7 +42,7 @@ export default async function OrdersPage() {
               </span>
               <Link
                 href={`/orders/${order.id}`}
-                className="text-indigo-400 hover:underline"
+                className="text-emerald-300 hover:text-emerald-200 hover:underline transition"
               >
                 Details
               </Link>

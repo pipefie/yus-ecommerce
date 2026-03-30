@@ -49,7 +49,7 @@ export default async function ProductsPage() {
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Catalog</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">{t('shop_our_tees')}</h1>
+          <h1 className="mt-3 text-4xl font-black uppercase tracking-widest text-white">{t('shop_our_tees')}</h1>
           <p className="mt-3 text-slate-400">Limited drops, unlimited vibes.</p>
         </div>
         <ShopClient initialProducts={initialProducts} />

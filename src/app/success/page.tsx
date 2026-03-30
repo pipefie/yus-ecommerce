@@ -32,7 +32,7 @@ export default async function SuccessPage({
     <div className="pt-16 min-h-screen flex flex-col items-center justify-center bg-black text-white px-4 text-center">
       <h1 className="font-pixel text-4xl text-neon mb-4">{t('thank_you')}</h1>
       {items.length > 0 && (
-        <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-neon mb-6">
+        <div className="w-full max-w-md bg-slate-900 p-6 rounded-lg shadow-neon mb-6">
           <h2 className="font-pixel text-2xl mb-4">Order Summary</h2>
           <ul className="space-y-2 mb-4">
             {items.map((item) => (
@@ -42,7 +42,7 @@ export default async function SuccessPage({
               </li>
             ))}
           </ul>
-          <div className="flex justify-between font-bold border-t border-gray-700 pt-2">
+          <div className="flex justify-between font-bold border-t border-slate-800 pt-2">
             <span>Total</span>
             <span>{symbols[currency] || ''}{total.toFixed(2)}</span>
           </div>

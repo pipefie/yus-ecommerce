@@ -325,7 +325,7 @@ export default function ProductDetailClient({ product, related }: Props) {
                       type="button"
                       onClick={() => onSelectColor(color)}
                       aria-label={`Select color ${color}`}
-                      className={`relative h-12 w-12 overflow-hidden rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${selectedColor === color ? "border-white" : "border-transparent"
+                      className={`relative h-12 w-12 overflow-hidden rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#39ff14] ${selectedColor === color ? "border-white" : "border-transparent"
                         }`}
                       title={color}
                     >

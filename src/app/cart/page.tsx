@@ -92,7 +92,7 @@ export default function CartPage() {
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-2 text-4xl font-semibold">Ready to checkout?</h1>
+            <h1 className="mt-2 text-4xl font-black uppercase tracking-widest">Ready to checkout?</h1>
           </div>
           <button
             onClick={clear}
