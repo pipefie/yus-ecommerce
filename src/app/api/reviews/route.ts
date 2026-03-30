@@ -8,6 +8,9 @@ const buckets = new Map<string, { count: number; reset: number }>()
 
 function allowed(key: string) {
   const now = Date.now()
+  for (const [k, val] of buckets) {
+    if (val.reset < now) buckets.delete(k)
+  }
   const bucket = buckets.get(key)
   if (!bucket || bucket.reset < now) {
     buckets.set(key, { count: 1, reset: now + WINDOW_MS })
