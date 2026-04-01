@@ -18,7 +18,7 @@ export async function GET() {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  const orders = await prisma.order.findMany({ include: { user: true }, orderBy: { createdAt: 'desc' } })
+  const orders = await prisma.order.findMany({ take: 50, include: { user: true }, orderBy: { createdAt: 'desc' } })
   return NextResponse.json(orders)
 }
 

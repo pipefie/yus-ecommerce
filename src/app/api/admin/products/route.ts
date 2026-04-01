@@ -18,7 +18,7 @@ export async function GET() {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  const products = await prisma.product.findMany({ include: { variants: true } })
+  const products = await prisma.product.findMany({ take: 100, include: { variants: true } })
   return NextResponse.json(products)
 }
 

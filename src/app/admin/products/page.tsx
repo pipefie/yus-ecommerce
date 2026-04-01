@@ -22,6 +22,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   const [products, archivedCount, missingMockupsCount] = await Promise.all([
     prisma.product.findMany({
+      take: 500,
       orderBy: { updatedAt: "desc" },
       include: {
         variants: { orderBy: { id: "asc" } },
