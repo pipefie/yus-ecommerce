@@ -26,6 +26,15 @@ export default async function AdminDashboard() {
       where: { status: "paid" },
       orderBy: { createdAt: "desc" },
       take: 50,
+      select: {
+        id: true,
+        userId: true,
+        stripeSessionId: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+        items: true,
+      },
     }),
     prisma.printfulSyncLog.findMany({
       orderBy: { startedAt: "desc" },
