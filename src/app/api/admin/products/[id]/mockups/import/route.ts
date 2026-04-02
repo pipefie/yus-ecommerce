@@ -11,6 +11,7 @@ import {
   parseMockupsManifest,
   resolveMockupMetadata,
   sanitizeZipPath,
+  deriveMetadataFromFilename,
   type ManifestLookup,
   type VariantSummary,
 } from "@/server/mockups/metadata";
@@ -79,17 +80,25 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Read mode/dryRun from query params (body is raw binary ZIP)
+  // Read mode/dryRun/productName from query params (body is raw binary ZIP)
   const searchParams = req.nextUrl.searchParams;
   const modeParam = searchParams.get("mode") ?? "append";
   const mode = modeParam === "replace" ? "replace" : "append";
   const dryRun = searchParams.get("dryRun")?.toLowerCase() === "true";
+  const rawProductName = searchParams.get("productName") ?? "";
+  // productName is resolved after findProduct so we can fall back to product.slug
 
   const params = await context.params;
   const product = await findProduct(params.id);
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
+
+  const productName = rawProductName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || product.slug;
 
   const bucket = env.ASSETS_BUCKET ?? env.S3_BUCKET;
   if (!bucket) {
@@ -178,8 +187,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const buffer = Buffer.from(content);
     if (buffer.length === 0) continue;
 
+    // Derive color + placement from original filename, then build a clean name
+    const { colorHint, placement: derivedPlacement } = deriveMetadataFromFilename(normalizedPath, product.variants);
+    const colorPart = colorHint ? `-${colorHint}` : "";
+    const placementPart = derivedPlacement ? `-${derivedPlacement}` : "";
+    const cleanFileName = `${productName}${colorPart}${placementPart}${ext}`;
+
     const hash = crypto.createHash("sha256").update(buffer).digest("hex");
-    const key = `products/${product.slug}/${hash}-${safeFileName}`;
+    const key = `products/${product.slug}/${hash}-${cleanFileName}`;
     const mimeType = MIME_LOOKUP[ext] ?? "application/octet-stream";
 
     if (!dryRun) {
@@ -192,7 +207,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       });
     }
 
-    processedImages.push({ normalizedPath, safeFileName, key });
+    processedImages.push({ normalizedPath, safeFileName: cleanFileName, key });
     // buffer + entryChunks drop out of scope here → GC'd before next iteration
   }
 
