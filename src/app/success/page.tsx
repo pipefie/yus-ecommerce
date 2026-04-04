@@ -33,7 +33,7 @@ export default async function SuccessPage({
       <h1 className="font-pixel text-4xl text-neon mb-4">{t('thank_you')}</h1>
       {items.length > 0 && (
         <div className="w-full max-w-md bg-slate-900 p-6 rounded-lg shadow-neon mb-6">
-          <h2 className="font-pixel text-2xl mb-4">Order Summary</h2>
+          <h2 className="text-2xl font-black uppercase tracking-widest mb-4">Order Summary</h2>
           <ul className="space-y-2 mb-4">
             {items.map((item) => (
               <li key={item.id} className="flex justify-between">

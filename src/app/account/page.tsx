@@ -108,7 +108,7 @@ export default async function AccountPage() {
               </div>
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-white/40">Account</p>
-                <h1 className="text-3xl font-semibold text-white">
+                <h1 className="text-3xl font-black text-white">
                   Welcome back{dbUser.name ? `, ${dbUser.name.split(" ")[0]}` : ""}
                 </h1>
                 <p className="mt-2 text-sm text-white/60">{dbUser.email ?? "No email on file"}</p>

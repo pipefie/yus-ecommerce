@@ -51,7 +51,7 @@ export default async function OrderDetail({ params }: { params: OrderPageParams 
           <Link href="/orders" className="text-sm text-slate-500 transition hover:text-slate-300">
             ← My orders
           </Link>
-          <h1 className="mt-4 font-mono text-3xl font-bold text-slate-100">
+          <h1 className="mt-4 text-3xl font-black text-slate-100">
             Order <span className="text-[#39ff14]">#{order.id}</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">

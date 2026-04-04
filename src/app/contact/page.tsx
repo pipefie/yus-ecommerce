@@ -36,7 +36,7 @@ export default function ContactPage() {
         <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
           <section className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900/80 to-slate-950/90 p-8 shadow-[0_0_80px_rgba(45,212,191,0.08)]">
             <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Say hola</p>
-            <h2 className="mt-3 text-3xl font-semibold">The humans behind the screens</h2>
+            <h2 className="mt-3 text-3xl font-black">the humans behind the screens</h2>
             <p className="mt-4 text-sm text-slate-300">
               Designers, dreamers, support nerds—we’re all here reading your words. Drop us the vibe: technical issues,
               wholesale drops, or meme collabs. You’ll get a thoughtful reply from a real person.

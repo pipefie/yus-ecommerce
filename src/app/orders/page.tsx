@@ -23,7 +23,7 @@ export default async function OrdersPage() {
 
   return (
     <div className="pt-16 container mx-auto px-4 py-8">
-      <h1 className="font-pixel text-3xl mb-6">Your Orders</h1>
+      <h1 className="text-3xl font-black uppercase tracking-widest mb-6">Your Orders</h1>
       {!orders.length && <p>No orders yet.</p>}
       <ul className="space-y-4">
         {orders.map((order) => (

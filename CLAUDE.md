@@ -12,7 +12,7 @@ Complete context for AI-assisted development. Read this before making any change
 
 **Tagline:** "internet absurdity. wearable form."
 
-**Domain:** y-us.store
+**Domain:** y-us.eu
 
 ---
 
@@ -398,7 +398,7 @@ curl -X POST https://api.printful.com/webhooks \
   -H "X-PF-Store-Id: $PRINTFUL_STORE_ID" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://y-us.store/api/printful/webhook",
+    "url": "https://y-us.eu/api/printful/webhook",
     "types": ["package_shipped","order_failed","product_synced","product_updated","product_deleted"]
   }'
 ```
@@ -421,7 +421,7 @@ All emails use **Resend**. All templates use dark HTML (black background, neon/e
 | `sendTrackingEmail()` | `src/lib/emails/sendOrderConfirmation.ts` | Printful `package_shipped` webhook | Customer |
 | `sendAdminOrderNotification()` | `src/lib/emails/sendAdminOrderNotification.ts` | Stripe webhook, order paid | All `ADMIN_EMAILS` (comma-separated) |
 
-`RESEND_FROM` default: `Y-US? <orders@y-us.store>`
+`RESEND_FROM` default: `Y-US? <orders@y-us.eu>`
 
 ---
 
@@ -472,16 +472,16 @@ All validated by Zod in `src/lib/env.ts`. App will crash at startup if required 
 
 ### Required (app will not start without these)
 ```env
-BASE_URL=https://y-us.store
-NEXT_PUBLIC_URL=https://y-us.store
+BASE_URL=https://y-us.eu
+NEXT_PUBLIC_URL=https://y-us.eu
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
 
 # Auth (OIDC / Auth0)
 OIDC_ISSUER=https://your-tenant.eu.auth0.com/
 OIDC_CLIENT_ID=your_client_id
 OIDC_CLIENT_SECRET=your_client_secret
-OIDC_REDIRECT_URI=https://y-us.store/api/auth/callback
-OIDC_POST_LOGOUT_REDIRECT_URI=https://y-us.store/
+OIDC_REDIRECT_URI=https://y-us.eu/api/auth/callback
+OIDC_POST_LOGOUT_REDIRECT_URI=https://y-us.eu/
 
 # Generate with: openssl rand -hex 32
 SESSION_SECRET=minimum-32-character-random-string-here
@@ -498,7 +498,7 @@ CLOUDFRONT_BASE_URL=https://your-distribution.cloudfront.net
 ```env
 # Resend (emails — strongly recommended, all 3 email types will silently skip without this)
 RESEND_API_KEY=re_...
-RESEND_FROM=Y-US? <orders@y-us.store>
+RESEND_FROM=Y-US? <orders@y-us.eu>
 
 # Admin emails (comma-separated — required for admin notification emails)
 ADMIN_EMAILS=you@example.com,other@example.com
@@ -528,7 +528,7 @@ SENTRY_DSN=https://...@sentry.io/...
 
 # SendGrid (legacy welcome/invoice emails)
 SENDGRID_API_KEY=SG...
-SENDGRID_FROM=Y-US? <noreply@y-us.store>
+SENDGRID_FROM=Y-US? <noreply@y-us.eu>
 
 # Social feeds (/feed page — tokens expire frequently)
 INSTAGRAM_ACCESS_TOKEN=...
@@ -569,7 +569,7 @@ TWITTER_BEARER_TOKEN=...
 ```nginx
 server {
   listen 443 ssl;
-  server_name y-us.store;
+  server_name y-us.eu;
   location / {
     proxy_pass http://localhost:3000;
     proxy_set_header X-Forwarded-Proto https;  # REQUIRED — Stripe webhook check fails without this
@@ -580,7 +580,7 @@ server {
 
 **One-time post-deploy setup:**
 1. Run DB migrations: `docker compose exec web npx prisma migrate deploy`
-2. Register Stripe webhook: `https://y-us.store/api/stripe/webhook` → event: `checkout.session.completed`
+2. Register Stripe webhook: `https://y-us.eu/api/stripe/webhook` → event: `checkout.session.completed`
 3. Register Printful webhook via API (see Printful Integration section above)
 4. Sync products: `npm run sync:printful` (or use admin "Sync" button)
 5. Update Auth0 callback URLs to production domain in Auth0 tenant dashboard

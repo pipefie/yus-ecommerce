@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="container mx-auto grid gap-10 md:grid-cols-3">
         {/* Brand & Tagline */}
         <div className="space-y-4">
-          <h3 className="text-2xl font-semibold text-white">Y-US?</h3>
+          <h3 className="font-pixel text-xl text-white">Y-US?</h3>
           <p className="max-w-xs text-sm text-slate-400">Minimal design meets unfiltered chaos. Crafted in limited batches.</p>
         </div>
 
@@ -72,7 +72,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mt-8 text-center text-xs text-gray-500">
+      <div className="mt-8 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Y-US? — All Rights Reserved.
       </div>
     </footer>

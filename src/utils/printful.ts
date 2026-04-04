@@ -19,12 +19,19 @@ function buildHeaders(extra: HeadersInit = {}): HeadersInit {
   return { ...headers, ...(extra as Record<string, string>) };
 }
 
-async function callPrintful(path: string, opts: RequestInit = {}) {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function callPrintful(path: string, opts: RequestInit = {}, _retries = 4) {
   const res = await fetch(BASE + path, {
     ...opts,
     headers: buildHeaders(opts.headers || {}),
     cache: "no-store",
   });
+  if (res.status === 429 && _retries > 0) {
+    const retryAfter = Number(res.headers.get("Retry-After") ?? 60);
+    await sleep(retryAfter * 1000);
+    return callPrintful(path, opts, _retries - 1);
+  }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const detail = typeof (json as any)?.result === "string" ? (json as any).result : JSON.stringify(json);
@@ -34,13 +41,18 @@ async function callPrintful(path: string, opts: RequestInit = {}) {
 }
 
 // v2 API helper (new Mockup endpoints live under /v2)
-async function callPrintfulV2(path: string, opts: RequestInit = {}) {
+async function callPrintfulV2(path: string, opts: RequestInit = {}, _retries = 4) {
   const url = path.startsWith("/v2/") ? path : `/v2${path.startsWith("/") ? "" : "/"}${path}`;
   const res = await fetch(BASE + url, {
     ...opts,
     headers: buildHeaders(opts.headers || {}),
     cache: "no-store",
   });
+  if (res.status === 429 && _retries > 0) {
+    const retryAfter = Number(res.headers.get("Retry-After") ?? 60);
+    await sleep(retryAfter * 1000);
+    return callPrintfulV2(path, opts, _retries - 1);
+  }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const detail = typeof (json as any)?.data === "string" ? (json as any).data : JSON.stringify(json);
@@ -221,9 +233,10 @@ export async function fetchPrintfulProductDetail(
     }
   }
 
-  // Enrich each variant with its full files list
-  const variantsEnriched = await Promise.all(
-    syncVariants.map(async (v: any) => {
+  // Enrich each variant with its full files list — sequential to avoid 429
+  const variantsEnriched: RawPrintfulVariant[] = [];
+  for (const v of syncVariants) {
+    variantsEnriched.push(await (async (v: any) => {
       // Disambiguate IDs from Sync API
       const syncId = Number(v.id);
       const catalogId = Number(v.variant_id ?? v.id);
@@ -265,8 +278,8 @@ export async function fetchPrintfulProductDetail(
         files: unique,
         product_id,
       } as RawPrintfulVariant;
-    })
-  );
+    })(v));
+  }
 
   return {
     id: syncProduct.id,

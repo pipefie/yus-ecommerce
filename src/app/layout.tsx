@@ -1,4 +1,13 @@
 import "./globals.css";
+import { Press_Start_2P } from "next/font/google";
+
+const pressStart2P = Press_Start_2P({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-pixel",
+  display: "swap",
+});
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
@@ -25,7 +34,7 @@ export default async function RootLayout({
   const messages = (await import(`../../locales/${lang}.json`)).default;
   void messages; // keep for potential future use
   return (
-    <html lang={lang} className="scroll-smooth" suppressHydrationWarning>
+    <html lang={lang} className={`scroll-smooth ${pressStart2P.variable}`} suppressHydrationWarning>
       <body
         className="pt-24 antialiased bg-black text-white selection:bg-emerald-400Selection:text-black"
         suppressHydrationWarning

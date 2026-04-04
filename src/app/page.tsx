@@ -1,7 +1,6 @@
 // src/app/page.tsx
 import type { Metadata } from "next";
 import HeroSection from "@/components/HeroSection";
-import AnimatedShapes from "@/components/AnimatedShapes";
 import ProductGrid from "@/components/ProductGrid";
 import { getTranslations } from 'next-intl/server'
 import { getAllProducts } from "../lib/products";
@@ -60,15 +59,14 @@ export default async function HomePage() {
   });
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="bg-black">
       <HeroSection videoUrl={videoUrl} />
-      <AnimatedShapes />
 
       <section
         id="products"
         className="container mx-auto py-16 z-10 relative"
       >
-        <h2 className="font-pixel text-4xl text-center mb-8">
+        <h2 className="text-4xl font-black uppercase tracking-widest text-center mb-8">
           {t('featured_tees')}
         </h2>
         <ProductGrid products={items} />

@@ -6,7 +6,7 @@ export default function NotFound() {
       <p className="font-pixel text-[#39ff14] text-5xl md:text-7xl mb-6 tracking-widest">
         404
       </p>
-      <h1 className="text-white text-3xl md:text-5xl font-semibold mb-4">
+      <h1 className="text-white text-3xl md:text-5xl font-black mb-4">
         you got lost.
       </h1>
       <p className="text-white/50 text-sm md:text-base max-w-sm mb-10 leading-relaxed">

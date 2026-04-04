@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react"
 import gsap from "gsap"
 import ScrollTrigger from "gsap/dist/ScrollTrigger"
+import AnimatedShapes from "@/components/AnimatedShapes"
 
 export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -26,7 +27,7 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
   return (
     <section
       ref={ref}
-      className="h-screen relative flex items-center justify-center bg-black"
+      className="h-screen relative overflow-hidden flex items-center justify-center bg-black"
     >
       {/* Full-screen autoplay video */}
       <video
@@ -34,10 +35,11 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
         autoPlay
         muted
         loop
-        className="absolute inset-0 w-auto min-w-full min-h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover"
       />
 
       {/* Neon rotating ring (Quechua-style) */}
+      {/*
       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
         <svg
           className="w-32 h-32 animate-spin-slow"
@@ -54,7 +56,9 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
             className="stroke-neon/50"
           />
         </svg>
-      </div>
+      </div> */}
+
+      <AnimatedShapes />
 
       {/* Centered content stack */}
       <div className="relative z-20 flex flex-col items-center gap-4 text-center">

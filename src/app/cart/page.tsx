@@ -70,7 +70,7 @@ export default function CartPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-lg rounded-3xl border border-slate-800/80 bg-slate-950/80 p-10 text-center">
             <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-4 text-3xl font-semibold">Your cart is empty</h1>
+            <h1 className="mt-4 text-3xl font-black uppercase tracking-widest">Your cart is empty</h1>
             <p className="mt-3 text-slate-400">
               Looks like you haven’t picked your next obsession yet. Explore new drops and come back with loot.
             </p>
