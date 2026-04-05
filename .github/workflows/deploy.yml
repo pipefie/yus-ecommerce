@@ -46,7 +46,7 @@ jobs:
           script: |
             set -e
 
-            cd /opt/yus-ecommerce
+            cd /opt/yus
 
             echo "→ Pulling latest code..."
             git pull origin master
