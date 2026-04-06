@@ -37,7 +37,7 @@
     "node-fetch": "^3.3.2",
     "nookies": "^2.5.2",
     "openid-client": "^6.8.1",
-    "pdfkit": "^0.16.0",
+    "pdfkit": "^0.18.0",
     "pino": "^9.9.0",
     "playwright": "^1.53.1",
     "react": "^19.0.0",
