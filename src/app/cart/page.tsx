@@ -21,7 +21,7 @@ export default function CartPage() {
   const t = useTranslations();
 
   const subtotal = (items.reduce((sum, item) => sum + item.price * item.quantity, 0) / 100) * rate;
-  const shippingEstimate = items.length ? 0 : 0;
+  const shippingEstimate: number = 0;
   const total = subtotal + shippingEstimate;
 
   useEffect(() => {
@@ -66,11 +66,11 @@ export default function CartPage() {
 
   if (!items.length) {
     return (
-      <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+      <main className="min-h-screen bg-black pt-20 pb-24 text-white">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-lg rounded-3xl border border-slate-800/80 bg-slate-950/80 p-10 text-center">
             <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-4 text-3xl font-semibold">Your cart is empty</h1>
+            <h1 className="mt-4 text-3xl font-black uppercase tracking-widest">Your cart is empty</h1>
             <p className="mt-3 text-slate-400">
               Looks like you haven’t picked your next obsession yet. Explore new drops and come back with loot.
             </p>
@@ -87,12 +87,12 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+    <main className="min-h-screen bg-black pt-20 pb-24 text-white">
       <div className="container mx-auto px-4">
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-slate-500">{t("your_cart")}</p>
-            <h1 className="mt-2 text-4xl font-semibold">Ready to checkout?</h1>
+            <h1 className="mt-2 text-4xl font-black uppercase tracking-widest">Ready to checkout?</h1>
           </div>
           <button
             onClick={clear}
@@ -181,10 +181,7 @@ export default function CartPage() {
                 <dt>Shipping</dt>
                 <dd>{shippingEstimate === 0 ? "Included" : `${CURRENCY_SYMBOLS[currency] ?? ""}${shippingEstimate.toFixed(2)}`}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt>Rewards</dt>
-                <dd className="text-emerald-300">+200 pts</dd>
-              </div>
+
             </dl>
 
             <div className="flex items-center justify-between border-t border-slate-800 pt-4">

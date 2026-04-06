@@ -90,8 +90,7 @@ export function MockupReorderBoard({ images, updateAction }: MockupReorderBoardP
         baselineRef.current = synced.map((entry) => ({ ...entry }));
         setOrdered(synced);
         setToast({ type: "success", message: "Mockup order updated" });
-      } catch (error) {
-        console.error(error);
+      } catch {
         setToast({ type: "error", message: "Failed to update order. Please try again." });
       }
     });

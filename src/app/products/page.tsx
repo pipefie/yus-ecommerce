@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProductsPage() {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
-  const t = await getTranslations({ locale: lang})
+  const t = await getTranslations({ locale: lang })
   const products = await getAllProducts();
 
   const initialProducts = products.map((p) => {
@@ -45,10 +45,13 @@ export default async function ProductsPage() {
   });
 
   return (
-    <div className="pt-16 min-h-screen bg-white text-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-semibold mb-6">{t('shop_our_tees')}</h1>
-        {/* @ts-expect-error: already serialized */}
+    <div className="min-h-screen bg-black pt-20 pb-24 text-white">
+      <div className="container mx-auto px-4">
+        <div className="mb-12 text-center">
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Catalog</p>
+          <h1 className="mt-3 text-4xl font-black uppercase tracking-widest text-white">{t('shop_our_tees')}</h1>
+          <p className="mt-3 text-slate-400">Limited drops, unlimited vibes.</p>
+        </div>
         <ShopClient initialProducts={initialProducts} />
       </div>
     </div>

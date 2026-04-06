@@ -70,7 +70,7 @@ export async function buildAuthorizationUrl({
   prompt,
 }: AuthorizationOptions): Promise<string> {
   const config = await resolveConfiguration();
-  const params: Record<string, string | undefined> = {
+  const params: Record<string, string> = {
     scope: "openid profile email",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
@@ -111,7 +111,7 @@ export async function handleCallback({
 export async function getEndSessionUrl(idTokenHint?: string, postLogoutRedirectUri?: string): Promise<string | null> {
   const config = await resolveConfiguration();
   const url = oidcBuildEndSessionUrl(config, {
-    id_token_hint: idTokenHint,
+    ...(idTokenHint ? { id_token_hint: idTokenHint } : {}),
     post_logout_redirect_uri: postLogoutRedirectUri ?? env.OIDC_POST_LOGOUT_REDIRECT_URI,
   });
   return url?.toString() ?? null;

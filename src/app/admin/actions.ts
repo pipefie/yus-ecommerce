@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 import { runPrintfulSync } from '@/server/printful/sync'
+import { createPrintfulOrderForLocalOrder, type Recipient } from '@/utils/printful'
 import { getSessionUser } from '@/lib/auth/session'
 import { isWhitelistedAdmin } from '@/lib/auth/adminWhitelist'
 import type { Role } from '@/lib/auth/types'
@@ -251,4 +253,65 @@ export async function updateUserRoleAction(formData: FormData) {
   })
 
   revalidatePath('/admin/permissions')
+}
+
+import { redirect } from 'next/navigation'
+
+export async function updateOrderStatusAction(orderId: number, status: string) {
+  await requireAdmin()
+  const parsed = z.enum(['pending', 'paid', 'fulfilled', 'refunded']).safeParse(status)
+  if (!parsed.success) throw new Error('Invalid status')
+  await prisma.order.update({ where: { id: orderId }, data: { status: parsed.data } })
+  revalidatePath('/admin/orders')
+  revalidatePath(`/admin/orders/${orderId}`)
+}
+
+export async function updateTrackingNumberAction(formData: FormData) {
+  await requireAdmin()
+  const orderId = Number(formData.get('orderId'))
+  const trackingNumber = z.string().trim().min(1).parse(formData.get('trackingNumber'))
+  await prisma.order.update({ where: { id: orderId }, data: { trackingNumber } })
+  revalidatePath(`/admin/orders/${orderId}`)
+}
+
+export async function resubmitToPrintfulAction(formData: FormData) {
+  await requireAdmin()
+  const orderId = Number(formData.get('orderId'))
+  const order = await prisma.order.findUnique({ where: { id: orderId } })
+  if (!order) throw new Error('Order not found')
+  if (!order.shippingAddress) throw new Error('No shipping address on record — cannot re-submit')
+
+  const addr = order.shippingAddress as Record<string, string>
+  const recipient: Recipient = {
+    name: order.customerName ?? 'Customer',
+    email: order.customerEmail ?? undefined,
+    address1: addr.line1,
+    address2: addr.line2 ?? undefined,
+    city: addr.city,
+    state_code: addr.state ?? undefined,
+    country_code: addr.country,
+    zip: addr.zip,
+  }
+  const { printfulOrderId } = await createPrintfulOrderForLocalOrder(orderId, recipient)
+  if (printfulOrderId) {
+    await prisma.order.update({ where: { id: orderId }, data: { printfulOrderId } })
+  }
+  revalidatePath(`/admin/orders/${orderId}`)
+}
+
+export async function createProductAction() {
+  await requireAdmin()
+  const timestamp = Date.now()
+  const product = await prisma.product.create({
+    data: {
+      title: 'New Manual Product',
+      slug: `draft-product-${timestamp}`,
+      printfulProductId: `manual-${timestamp}`,
+      imageUrl: '',
+      description: '<p>Edit me...</p>',
+      price: 0,
+      images: [],
+    }
+  })
+  redirect(`/admin/products/${product.slug}`)
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import crypto from "node:crypto";
 import { Readable } from "node:stream";
-import { unzipSync } from "fflate";
+import { Unzip, UnzipInflate, type UnzipFile } from "fflate";
 
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
@@ -11,10 +11,12 @@ import {
   parseMockupsManifest,
   resolveMockupMetadata,
   sanitizeZipPath,
+  deriveMetadataFromFilename,
   type ManifestLookup,
   type VariantSummary,
 } from "@/server/mockups/metadata";
 import { putObjectStream } from "@/server/storage/s3";
+import logger from "@/lib/logger";
 
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".avif"]);
 
@@ -34,6 +36,8 @@ type ProcessedImage = {
   safeFileName: string;
   key: string;
 };
+
+export const runtime = 'nodejs'
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -76,15 +80,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-  if (!file || !(file instanceof File)) {
-    return NextResponse.json({ error: "Missing file" }, { status: 400 });
-  }
-
-  const modeParam = String(formData.get("mode") ?? "append");
+  // Read mode/dryRun/productName from query params (body is raw binary ZIP)
+  const searchParams = req.nextUrl.searchParams;
+  const modeParam = searchParams.get("mode") ?? "append";
   const mode = modeParam === "replace" ? "replace" : "append";
-  const dryRun = String(formData.get("dryRun") ?? "false").toLowerCase() === "true";
+  const dryRun = searchParams.get("dryRun")?.toLowerCase() === "true";
+  const rawProductName = searchParams.get("productName") ?? "";
+  // productName is resolved after findProduct so we can fall back to product.slug
 
   const params = await context.params;
   const product = await findProduct(params.id);
@@ -92,17 +94,42 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
+  const productName = rawProductName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || product.slug;
+
   const bucket = env.ASSETS_BUCKET ?? env.S3_BUCKET;
   if (!bucket) {
     throw new Error("ASSETS_BUCKET or S3_BUCKET env var is required");
   }
 
-  const filename = typeof file.name === "string" ? file.name : "";
-  const lowerFilename = filename.toLowerCase();
-  const mime = file.type?.toLowerCase() ?? "";
-
-  if (!lowerFilename.endsWith(".zip") && !["application/zip", "application/x-zip-compressed"].includes(mime)) {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.includes("zip") && !contentType.includes("octet-stream")) {
     return NextResponse.json({ error: "Only ZIP archives are supported" }, { status: 415 });
+  }
+
+  if (!req.body) {
+    return NextResponse.json({ error: "Missing request body" }, { status: 400 });
+  }
+
+  // Stream body directly to bypass Next.js 10 MB formData limit
+  const chunks: Buffer[] = [];
+  const reader = req.body.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(Buffer.from(value));
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const zipBuffer = Buffer.concat(chunks);
+
+  if (zipBuffer.length === 0) {
+    return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
 
   const variantIdSet = new Set(product.variants.map((variant) => variant.id));
@@ -110,22 +137,46 @@ export async function POST(req: NextRequest, context: RouteContext) {
   let manifestLookup: ManifestLookup | undefined;
   const processedImages: ProcessedImage[] = [];
 
-  const archiveEntries = unzipSync(new Uint8Array(await file.arrayBuffer()));
+  // Pass 1: parse ZIP structure, queue all file handles — no decompression yet
+  interface QueuedEntry { file: UnzipFile; normalizedPath: string; safeFileName: string }
+  const fileQueue: QueuedEntry[] = [];
 
-  for (const [entryPath, content] of Object.entries(archiveEntries)) {
-    if (entryPath.endsWith("/")) continue;
+  const unzipper = new Unzip();
+  unzipper.register(UnzipInflate);
 
-    const { normalizedPath, safeFileName } = sanitizeZipPath(entryPath);
-    if (!safeFileName) continue;
+  unzipper.onfile = (file) => {
+    if (file.name.endsWith("/")) return;
+    const { normalizedPath, safeFileName } = sanitizeZipPath(file.name);
+    if (!safeFileName) return;
+    if (normalizedPath.endsWith(".ds_store") || normalizedPath.startsWith("__macosx")) return;
+    fileQueue.push({ file, normalizedPath, safeFileName });
+  };
 
-    if (normalizedPath.endsWith(".ds_store") || normalizedPath.startsWith("__macosx")) continue;
+  unzipper.push(new Uint8Array(zipBuffer), true);
+
+  // Pass 2: decompress one entry at a time — each image buffer is GC'd before the next begins
+  for (const { file, normalizedPath, safeFileName } of fileQueue) {
+    const entryChunks: Uint8Array[] = [];
+    await new Promise<void>((resolve, reject) => {
+      file.ondata = (err, data, final) => {
+        if (err) { reject(err); return; }
+        entryChunks.push(data);
+        if (final) resolve();
+      };
+      file.start();
+    });
+
+    const totalLen = entryChunks.reduce((n, c) => n + c.length, 0);
+    const content = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const chunk of entryChunks) { content.set(chunk, offset); offset += chunk.length; }
 
     if (normalizedPath.endsWith("mockups.json")) {
       try {
         const manifestJson = JSON.parse(Buffer.from(content).toString("utf-8"));
         manifestLookup = parseMockupsManifest(manifestJson, product.variants);
       } catch (error) {
-        console.warn("Failed to parse mockups.json:", error);
+        logger.warn({ err: error }, "Failed to parse mockups.json");
       }
       continue;
     }
@@ -136,25 +187,28 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const buffer = Buffer.from(content);
     if (buffer.length === 0) continue;
 
+    // Derive color + placement from original filename, then build a clean name
+    const { colorHint, placement: derivedPlacement } = deriveMetadataFromFilename(normalizedPath, product.variants);
+    const colorPart = colorHint ? `-${colorHint}` : "";
+    const placementPart = derivedPlacement ? `-${derivedPlacement}` : "";
+    const cleanFileName = `${productName}${colorPart}${placementPart}${ext}`;
+
     const hash = crypto.createHash("sha256").update(buffer).digest("hex");
-    const key = `products/${product.slug}/${hash}-${safeFileName}`;
-    const contentType = MIME_LOOKUP[ext] ?? "application/octet-stream";
+    const key = `products/${product.slug}/${hash}-${cleanFileName}`;
+    const mimeType = MIME_LOOKUP[ext] ?? "application/octet-stream";
 
     if (!dryRun) {
       await putObjectStream({
         bucket,
         key,
         body: Readable.from([buffer]),
-        contentType,
+        contentType: mimeType,
         cacheControl: CACHE_CONTROL,
       });
     }
 
-    processedImages.push({
-      normalizedPath,
-      safeFileName,
-      key,
-    });
+    processedImages.push({ normalizedPath, safeFileName: cleanFileName, key });
+    // buffer + entryChunks drop out of scope here → GC'd before next iteration
   }
 
   if (!processedImages.length) {

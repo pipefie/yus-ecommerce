@@ -1,15 +1,11 @@
 import pino from 'pino';
 import { NextRequest } from 'next/server';
 
+// Avoid pino-pretty's worker-thread transport in Next.js dev (Turbopack cannot
+// resolve the thread-stream worker path and crashes with a jest-worker error).
+// Plain JSON output is used instead; pipe through `npx pino-pretty` if needed.
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
-  transport:
-    process.env.NODE_ENV !== 'production'
-      ? {
-          target: 'pino-pretty',
-          options: { colorize: true },
-        }
-      : undefined,
 });
 
 export function getRequestLogger(req: NextRequest) {

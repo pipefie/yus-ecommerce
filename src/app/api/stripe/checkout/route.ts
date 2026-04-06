@@ -7,9 +7,29 @@ import { z } from "zod"
 import type { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 import { getSessionUser } from "@/lib/auth/session"
-import { getAssetUrl, getAssetUrls, assetPlaceholder } from "@/lib/assets"
+import { getAssetUrl, getAssetUrls } from "@/lib/assets"
+import { env } from "@/lib/env"
 
 export const runtime = "nodejs"
+
+const checkoutBuckets = new Map<string, { count: number; reset: number }>()
+const CHECKOUT_LIMIT = 10
+const CHECKOUT_WINDOW_MS = 60_000
+
+function checkoutAllowed(ip: string): boolean {
+  const now = Date.now()
+  for (const [key, val] of checkoutBuckets) {
+    if (val.reset < now) checkoutBuckets.delete(key)
+  }
+  const bucket = checkoutBuckets.get(ip)
+  if (!bucket || bucket.reset < now) {
+    checkoutBuckets.set(ip, { count: 1, reset: now + CHECKOUT_WINDOW_MS })
+    return true
+  }
+  if (bucket.count >= CHECKOUT_LIMIT) return false
+  bucket.count++
+  return true
+}
 
 const ItemSchema = z.object({
   _id: z.string(),
@@ -23,6 +43,11 @@ const BodySchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (!checkoutAllowed(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const csrfError = assertCsrf(req)
   if (csrfError) return csrfError
 
@@ -111,15 +136,17 @@ export async function POST(req: NextRequest) {
 
       const qty = Math.max(1, Math.min(50, Number.isFinite(i.quantity) ? i.quantity : 1))
 
-      const productImages = getAssetUrls(product.productImages.map((img) => img.url), { fallback: assetPlaceholder() })
+      const productImages = getAssetUrls(product.productImages.map((img) => img.url))
       const variantImage =
         getAssetUrl(variant?.previewUrl ?? null) ?? getAssetUrl(variant?.imageUrl ?? null)
-      const images = variantImage ? [variantImage] : productImages.slice(0, 1)
+      const rawImages = variantImage ? [variantImage] : productImages.slice(0, 1)
+      // Stripe requires absolute URLs — skip relative paths like /placeholder.png
+      const images = rawImages.filter((img) => /^https?:\/\//i.test(img))
 
       return {
         price_data: {
           currency: "eur",
-          product_data: { name: product.title, images },
+          product_data: { name: product.title, ...(images.length ? { images } : {}) },
           unit_amount: Math.round(unitAmountCents),
         },
         quantity: qty,
@@ -142,8 +169,8 @@ export async function POST(req: NextRequest) {
         ],
       },
       phone_number_collection: { enabled: true },
-      success_url: `${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
+      success_url: `${env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${env.NEXT_PUBLIC_URL}/cancel`,
     })
   } catch {
     return NextResponse.json({ error: "Stripe error" }, { status: 500 })

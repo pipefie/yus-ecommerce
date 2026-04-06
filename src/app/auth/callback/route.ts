@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
   }
 
   const claims = tokenSet.claims();
+  if (!claims) return fail("missing_claims");
   const sub = claims.sub;
   if (typeof sub !== "string" || !sub) {
     return fail("missing_sub");
