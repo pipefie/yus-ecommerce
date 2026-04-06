@@ -26,6 +26,7 @@ remotePatterns.push(
 );
 
 const nextConfig = {
+  output: 'standalone' as const,
   reactStrictMode: true,
   images: {
     minimumCacheTTL: 60,
@@ -33,6 +34,10 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ["react-icons"],
+    serverActions: {
+      bodySizeLimit: 500 * 1024 * 1024,
+    },
+    middlewareClientMaxBodySize: 500 * 1024 * 1024,
   },
 };
 const withNextIntl = createNextIntlPlugin();

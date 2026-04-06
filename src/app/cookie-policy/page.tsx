@@ -18,19 +18,19 @@ export default async function CookiePolicyPage() {
       <section className="mb-6">
         <h2 className="text-xl font-semibold">{t('cookie_essential_title')}</h2>
         <p>{t('cookie_essential_purpose')}</p>
-        <p className="text-sm text-gray-400">{t('cookie_essential_duration')}</p>
+        <p className="text-sm text-slate-400">{t('cookie_essential_duration')}</p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold">{t('cookie_analytics_title')}</h2>
         <p>{t('cookie_analytics_purpose')}</p>
-        <p className="text-sm text-gray-400">{t('cookie_analytics_duration')}</p>
+        <p className="text-sm text-slate-400">{t('cookie_analytics_duration')}</p>
       </section>
 
       <section className="mb-6">
         <h2 className="text-xl font-semibold">{t('cookie_marketing_title')}</h2>
         <p>{t('cookie_marketing_purpose')}</p>
-        <p className="text-sm text-gray-400">{t('cookie_marketing_duration')}</p>
+        <p className="text-sm text-slate-400">{t('cookie_marketing_duration')}</p>
       </section>
 
       <p>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { assertCsrf } from '@/utils/csrf'
 
 export const runtime = 'nodejs'
 
@@ -10,6 +9,9 @@ const buckets = new Map<string, { count: number; reset: number }>()
 
 function allowed(key: string) {
   const now = Date.now()
+  for (const [k, val] of buckets) {
+    if (val.reset < now) buckets.delete(k)
+  }
   const bucket = buckets.get(key)
   if (!bucket || bucket.reset < now) {
     buckets.set(key, { count: 1, reset: now + WINDOW_MS })
@@ -21,9 +23,6 @@ function allowed(key: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const csrfError = assertCsrf(req)
-  if (csrfError) return csrfError
-
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!allowed(ip)) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { runPrintfulSync } from "@/server/printful/sync"
+import logger from "@/lib/logger"
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
     const result = await runPrintfulSync({ clear: shouldClear, source: "public-get" })
     return NextResponse.json(result)
   } catch (err: unknown) {
-    console.error("printful-sync error", err)
+    logger.error({ err }, "printful-sync error")
     const message = err instanceof Error ? err.message : "Unknown error"
 
     return NextResponse.json({ error: message }, { status: 500 })

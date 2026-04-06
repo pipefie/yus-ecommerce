@@ -2,12 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { prisma } from '@/lib/prisma'
+import logger from '@/lib/logger'
 import slugify from 'slugify'
+import { sendTrackingEmail } from '@/lib/emails/sendOrderConfirmation'
+import { sendAdminOrderNotification } from '@/lib/emails/sendAdminOrderNotification'
+import { env } from '@/lib/env'
 
 const API_BASE = 'https://api.printful.com'
-const API_KEY = process.env.PRINTFUL_TOKEN || process.env.PRINTFUL_API_KEY!
-const STORE_ID = process.env.PRINTFUL_STORE_ID
-const WEBHOOK_SECRET = process.env.PRINTFUL_WEBHOOK_SECRET!
+const API_KEY = env.PRINTFUL_TOKEN ?? env.PRINTFUL_API_KEY ?? ''
+const STORE_ID = env.PRINTFUL_STORE_ID
+const WEBHOOK_SECRET = env.PRINTFUL_WEBHOOK_SECRET ?? ''
 
 interface PrintfulFile {
   preview_url?: string
@@ -161,12 +165,24 @@ export async function POST(req: NextRequest) {
     .update(raw)
     .digest('hex')
 
-  if (signature !== expected) {
+  const sigBuf = Buffer.from(signature, 'hex')
+  const expBuf = Buffer.from(expected, 'hex')
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
+  const requestTimestamp = req.headers.get('x-printful-timestamp')
+  if (requestTimestamp) {
+    const ts = parseInt(requestTimestamp, 10)
+    const ageSeconds = (Date.now() / 1000) - ts
+    if (ageSeconds > 300) {
+      logger.warn({ ageSeconds }, 'Printful webhook replay rejected')
+      return NextResponse.json({ error: 'Request too old' }, { status: 400 })
+    }
+  }
+
   const body = JSON.parse(raw)
-  console.log('ðŸ”” Printful webhook', body.type)
+  logger.info({ type: body.type }, 'Printful webhook received')
 
   try {
     await prisma.userEvent.create({
@@ -180,7 +196,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (err) {
-    console.error('Failed to record UserEvent', err)
+    logger.error({ err }, 'Failed to record Printful webhook UserEvent')
   }
 
   const type = body.type
@@ -197,6 +213,65 @@ export async function POST(req: NextRequest) {
     const id = body.data?.variant?.variant_id || body.data?.variant?.id || body.data?.id
     if (id) {
       await prisma.variant.updateMany({ where: { printfulVariantId: String(id) }, data: { deleted: true } })
+    }
+
+  } else if (type === 'package_shipped') {
+    // Printful has shipped a package — update order status and notify the customer
+    const externalId = body.data?.order?.external_id // = our Order.id
+    const trackingNumber: string | undefined = body.data?.shipment?.tracking_number
+    const trackingUrl: string | undefined = body.data?.shipment?.tracking_url
+
+    if (externalId) {
+      const localOrderId = Number(externalId)
+      try {
+        await prisma.order.update({
+          where: { id: localOrderId },
+          data: {
+            status: 'fulfilled',
+            ...(trackingNumber ? { trackingNumber } : {}),
+          },
+        })
+        logger.info({ localOrderId, trackingNumber }, 'Order marked fulfilled from Printful shipment')
+
+        if (trackingNumber) {
+          const order = await prisma.order.findUnique({ where: { id: localOrderId } })
+          const customerEmail = order?.customerEmail
+          if (customerEmail) {
+            try {
+              await sendTrackingEmail({
+                to: customerEmail,
+                customerName: order?.customerName ?? undefined,
+                orderId: localOrderId,
+                trackingNumber,
+                trackingUrl,
+              })
+            } catch (e) {
+              logger.error({ err: e, localOrderId }, 'Failed to send tracking email')
+            }
+          }
+        }
+      } catch (e) {
+        logger.error({ err: e, externalId }, 'Failed to update order on package_shipped event')
+      }
+    }
+
+  } else if (type === 'order_failed') {
+    // Printful could not process the order — alert the admin
+    const externalId = body.data?.order?.external_id
+    const reason: string = body.data?.reason ?? body.data?.error ?? 'Unknown reason'
+    logger.error({ externalId, reason, body }, 'Printful order_failed event received')
+
+    try {
+      // Best-effort admin notification — not fatal if it fails
+      await sendAdminOrderNotification({
+        orderId: externalId ? Number(externalId) : 0,
+        lines: [],
+        totalCents: 0,
+        currency: 'eur',
+        customerName: `⚠ PRINTFUL ORDER FAILED: ${reason}`,
+      })
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to send admin notification for order_failed')
     }
   }
 

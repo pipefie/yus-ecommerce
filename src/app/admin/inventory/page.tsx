@@ -2,6 +2,7 @@
 
 export default async function InventoryPage() {
   const variants = await prisma.variant.findMany({
+    take: 1000,
     orderBy: { updatedAt: "desc" },
     include: { product: { select: { title: true, slug: true } } },
   });

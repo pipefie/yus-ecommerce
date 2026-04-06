@@ -1,5 +1,6 @@
 ﻿import { prisma } from "@/lib/prisma";
 import { triggerPrintfulSyncAction } from "@/app/admin/actions";
+import { ConfirmButton } from "@/components/admin/ConfirmButton";
 
 function formatCurrency(cents: number): string {
   return `€ ${(cents / 100).toFixed(2)}`;
@@ -25,6 +26,15 @@ export default async function AdminDashboard() {
       where: { status: "paid" },
       orderBy: { createdAt: "desc" },
       take: 50,
+      select: {
+        id: true,
+        userId: true,
+        stripeSessionId: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+        items: true,
+      },
     }),
     prisma.printfulSyncLog.findMany({
       orderBy: { startedAt: "desc" },
@@ -108,24 +118,26 @@ export default async function AdminDashboard() {
               )}
             </p>
           </div>
-          <form action={triggerPrintfulSyncAction} className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              name="mode"
-              value="append"
-              className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-100 transition hover:bg-slate-700"
-            >
-              Sync catalog
-            </button>
-            <button
-              type="submit"
-              name="mode"
-              value="replace"
-              className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:bg-red-500/20"
-            >
-              Clear & Sync
-            </button>
-          </form>
+          <div className="flex flex-wrap gap-3">
+            <form action={triggerPrintfulSyncAction}>
+              <input type="hidden" name="mode" value="append" />
+              <button
+                type="submit"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-100 transition hover:bg-slate-700"
+              >
+                Sync catalog
+              </button>
+            </form>
+            <form action={triggerPrintfulSyncAction}>
+              <input type="hidden" name="mode" value="replace" />
+              <ConfirmButton
+                message="This will wipe your entire product catalog and re-sync everything from Printful. Any manual edits to products will be lost. Are you sure?"
+                className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+              >
+                Clear &amp; Sync
+              </ConfirmButton>
+            </form>
+          </div>
         </div>
         {recentSyncs.length > 0 && (
           <div className="mt-4 overflow-x-auto">

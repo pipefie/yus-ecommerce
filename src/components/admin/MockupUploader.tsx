@@ -47,9 +47,22 @@ export default function MockupUploader({
     startTransition(async () => {
       setState({ status: "pending", message: "Uploading mockups…" });
       try {
-        const res = await fetch(actionUrl, {
+        const file = formData.get("file") as File | null;
+        if (!file) {
+          setState({ status: "error", message: "Select a ZIP archive before uploading." });
+          return;
+        }
+
+        const mode = formData.get("mode") ?? "append";
+        const isDryRun = formData.get("dryRun") === "true";
+        const productName = (formData.get("productName") as string | null) ?? "";
+        const url = `${actionUrl}?mode=${encodeURIComponent(String(mode))}&dryRun=${isDryRun}&productName=${encodeURIComponent(productName)}`;
+
+        // Send raw binary body to bypass the 10 MB multipart/form-data limit
+        const res = await fetch(url, {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/zip" },
+          body: file,
         });
 
         const json = (await res.json().catch(() => null)) as { importedCount?: number; error?: unknown } | null;
@@ -64,12 +77,12 @@ export default function MockupUploader({
         }
 
         if (json?.importedCount !== undefined) {
-          const suffix = formData.get("dryRun") === "true" ? " (dry run)" : "";
+          const suffix = isDryRun ? " (dry run)" : "";
           setState({
             status: "success",
             message: `Processed ${json.importedCount} images${suffix}.`,
           });
-          if (formData.get("dryRun") !== "true") {
+          if (!isDryRun) {
             form.reset();
           }
         } else {
@@ -93,6 +106,16 @@ export default function MockupUploader({
     <form onSubmit={handleSubmit} className="mt-4 space-y-3 text-xs text-slate-200" encType="multipart/form-data">
       {heading && <h4 className="text-sm font-semibold text-slate-100">{heading}</h4>}
       {description && <p className="text-[13px] text-slate-400">{description}</p>}
+      <label className="flex flex-col gap-1">
+        <span className="text-slate-400">Product name <span className="text-slate-600">(used to rename files)</span></span>
+        <input
+          name="productName"
+          type="text"
+          defaultValue={productSlug}
+          placeholder="e.g. cigui-t-shirt"
+          className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-200 placeholder:text-slate-600"
+        />
+      </label>
       <label className="flex flex-col gap-1">
         <span className="text-slate-400">Mockup archive (.zip)</span>
         <input

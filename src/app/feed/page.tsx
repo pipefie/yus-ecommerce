@@ -19,7 +19,7 @@ export default function FeedPage() {
   const posts = data?.feed ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-950 pt-20 pb-24 text-white">
+    <main className="min-h-screen bg-black pt-20 pb-24 text-white">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Social feed</p>

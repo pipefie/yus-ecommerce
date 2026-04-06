@@ -17,12 +17,13 @@ export default async function OrdersPage() {
 
   const orders = await prisma.order.findMany({
     where: { userId: dbUser.id },
+    take: 50,
     orderBy: { createdAt: "desc" },
   });
 
   return (
     <div className="pt-16 container mx-auto px-4 py-8">
-      <h1 className="font-pixel text-3xl mb-6">Your Orders</h1>
+      <h1 className="text-3xl font-black uppercase tracking-widest mb-6">Your Orders</h1>
       {!orders.length && <p>No orders yet.</p>}
       <ul className="space-y-4">
         {orders.map((order) => (
@@ -42,7 +43,7 @@ export default async function OrdersPage() {
               </span>
               <Link
                 href={`/orders/${order.id}`}
-                className="text-indigo-400 hover:underline"
+                className="text-emerald-300 hover:text-emerald-200 hover:underline transition"
               >
                 Details
               </Link>

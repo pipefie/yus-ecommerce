@@ -9,7 +9,7 @@ export const revalidate = 0
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
   const cookie = await cookies();
   const lang = cookie.get('language')?.value || 'en'
@@ -17,9 +17,9 @@ export default async function SuccessPage({
   let items: Stripe.LineItem[] = [];
   let total = 0;
   let currency = 'USD';
-  const symbols: Record<string,string> = { USD: '$', EUR: '€', GBP: '£' };
+  const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
 
-  const sessionId = searchParams.session_id;
+  const { session_id: sessionId } = await searchParams;
   if (sessionId) {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
@@ -32,8 +32,8 @@ export default async function SuccessPage({
     <div className="pt-16 min-h-screen flex flex-col items-center justify-center bg-black text-white px-4 text-center">
       <h1 className="font-pixel text-4xl text-neon mb-4">{t('thank_you')}</h1>
       {items.length > 0 && (
-        <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-neon mb-6">
-          <h2 className="font-pixel text-2xl mb-4">Order Summary</h2>
+        <div className="w-full max-w-md bg-slate-900 p-6 rounded-lg shadow-neon mb-6">
+          <h2 className="text-2xl font-black uppercase tracking-widest mb-4">Order Summary</h2>
           <ul className="space-y-2 mb-4">
             {items.map((item) => (
               <li key={item.id} className="flex justify-between">
@@ -42,22 +42,29 @@ export default async function SuccessPage({
               </li>
             ))}
           </ul>
-          <div className="flex justify-between font-bold border-t border-gray-700 pt-2">
+          <div className="flex justify-between font-bold border-t border-slate-800 pt-2">
             <span>Total</span>
             <span>{symbols[currency] || ''}{total.toFixed(2)}</span>
           </div>
         </div>
       )}
+      <div className="mt-6 mb-6 max-w-md rounded-2xl border border-emerald-400/20 bg-emerald-950/20 px-6 py-4 text-sm text-emerald-300">
+        <p className="font-semibold">Your drop is in production.</p>
+        <p className="mt-1 text-emerald-300/70">
+          We&apos;re printing your order now. Expect dispatch in 3–5 business days.
+          You&apos;ll get a tracking email as soon as it ships.
+        </p>
+      </div>
       <Link href="/products" className="px-6 py-3 bg-neon text-black font-pixel rounded hover:bg-neon/80 transition">
         {t('back_to_shop')}
       </Link>
-      {items.length > 0 && 
-        (<PurchaseTracker 
+      {items.length > 0 &&
+        (<PurchaseTracker
           items={items.map(item => ({
             ...item,
             description: item.description ?? "",
-          }))} 
-          total={total} 
+          }))}
+          total={total}
         />)}
     </div>
   );

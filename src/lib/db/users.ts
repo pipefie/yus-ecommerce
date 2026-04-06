@@ -8,6 +8,9 @@ type UpsertInput = {
   picture?: string | null;
 };
 
+// getSessionUser depends on cookies/headers, so it should be in lib/auth not lib/db to avoid mixing server-only headers in pure db utils if possible,
+// but looking at imports, getSessionUser is actually in lib/auth/session.ts.
+// I will check the import in reviews/route.ts and fix it.efined,
 export async function upsertOidcUser(input: UpsertInput): Promise<OidcUser> {
   const { sub, email, name, picture } = input;
   const user = await prisma.user.upsert({

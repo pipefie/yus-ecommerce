@@ -106,6 +106,7 @@ type VariantIndex = {
   byPrintfulId: Map<string, VariantSummary>;
   byColor: Map<string, VariantSummary[]>;
   byColorSize: Map<string, VariantSummary>;
+  byColorWord: Map<string, VariantSummary[]>;
 };
 
 function buildVariantIndex(variants: VariantSummary[]): VariantIndex {
@@ -113,6 +114,7 @@ function buildVariantIndex(variants: VariantSummary[]): VariantIndex {
   const byPrintfulId = new Map<string, VariantSummary>();
   const byColor = new Map<string, VariantSummary[]>();
   const byColorSize = new Map<string, VariantSummary>();
+  const byColorWord = new Map<string, VariantSummary[]>();
 
   for (const variant of variants) {
     const idKey = String(variant.id);
@@ -133,10 +135,24 @@ function buildVariantIndex(variants: VariantSummary[]): VariantIndex {
       if (sizeKey) {
         byColorSize.set(`${colorKey}:${sizeKey}`, variant);
       }
+
+      // Index individual words from multi-word colors so "black" matches "Black and Blue"
+      const rawWords = variant.color
+        .toLowerCase()
+        .split(/[\s/&,+_-]+/)
+        .map(w => w.replace(/[^a-z0-9]/g, ""))
+        .filter(w => w.length >= 3 && !["and", "the", "or"].includes(w));
+
+      for (const word of rawWords) {
+        if (word === colorKey) continue; // exact key already in byColor
+        const wordExisting = byColorWord.get(word) ?? [];
+        wordExisting.push(variant);
+        byColorWord.set(word, wordExisting);
+      }
     }
   }
 
-  return { byId, byPrintfulId, byColor, byColorSize };
+  return { byId, byPrintfulId, byColor, byColorSize, byColorWord };
 }
 
 function resolveVariantIdFromHints(
@@ -171,6 +187,13 @@ function resolveVariantIdFromHints(
     const candidates = index.byColor.get(colorKey);
     if (candidates?.length) {
       return candidates[0]?.id;
+    }
+
+    // Fallback: match a single color word against multi-word variant colors
+    // e.g. "black" from filename matches variant "Black and Blue"
+    const wordCandidates = index.byColorWord.get(colorKey);
+    if (wordCandidates?.length) {
+      return wordCandidates[0]?.id;
     }
   }
 
@@ -265,7 +288,7 @@ export function deriveMetadataFromFilename(
       continue;
     }
 
-    if (!colorHint && index.byColor.has(token)) {
+    if (!colorHint && (index.byColor.has(token) || index.byColorWord.has(token))) {
       colorHint = token;
       continue;
     }

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAdmin } from '@/server/auth/isAdmin'
 import { getShippingRates, purchaseLabel, Address, Parcel } from '@/utils/shipping'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function POST(req: NextRequest, context: RouteContext) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
   try {
     const params = await context.params
     const { from, to, parcel }: { from: Address; to: Address; parcel: Parcel } = await req.json()

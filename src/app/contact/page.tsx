@@ -23,11 +23,11 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white pt-20 pb-24">
+    <main className="min-h-screen bg-black text-white pt-20 pb-24">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Contact</p>
-          <h1 className="mt-3 text-4xl font-semibold">Need help, collab, or cosmic guidance?</h1>
+          <h1 className="mt-3 text-4xl font-black uppercase tracking-widest">Need help, collab, or cosmic guidance?</h1>
           <p className="mt-3 text-slate-400">
             Slide into our inbox for support, partnerships, or press. We reply faster than your espresso shot settles.
           </p>
@@ -36,7 +36,7 @@ export default function ContactPage() {
         <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
           <section className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900/80 to-slate-950/90 p-8 shadow-[0_0_80px_rgba(45,212,191,0.08)]">
             <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">Say hola</p>
-            <h2 className="mt-3 text-3xl font-semibold">The humans behind the screens</h2>
+            <h2 className="mt-3 text-3xl font-black">the humans behind the screens</h2>
             <p className="mt-4 text-sm text-slate-300">
               Designers, dreamers, support nerds—we’re all here reading your words. Drop us the vibe: technical issues,
               wholesale drops, or meme collabs. You’ll get a thoughtful reply from a real person.

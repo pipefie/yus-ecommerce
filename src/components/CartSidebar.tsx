@@ -64,28 +64,28 @@ export default function CartSidebar({
 
       {/* sliding panel */}
       <aside
-        className={`fixed inset-y-0 right-0 w-full md:w-1/3 bg-white shadow-lg z-60 transform transition-transform ${
+        className={`fixed inset-y-0 right-0 w-full md:w-1/3 bg-[#0a0a0a] border-l border-slate-800 shadow-2xl z-60 transform transition-transform ${
           open ? 'translate-x-0' : 'translate-x-full'
         } flex flex-col`}
       >
         {/* header */}
-        <header className="flex items-center justify-between px-8 py-6 border-b text-black">
-          <h2 className="text-lg font-bold uppercase tracking-wide">Cart ({items.length})</h2>
+        <header className="flex items-center justify-between px-8 py-6 border-b border-slate-800 text-slate-100">
+          <h2 className="text-lg font-bold uppercase tracking-widest">Cart ({items.length})</h2>
           <button
             onClick={onClose}
             aria-label="Close cart"
-            className="p-2 rounded hover:bg-gray-100"
+            className="p-2 rounded hover:bg-slate-800 transition text-slate-400 hover:text-slate-100"
           >
             <X size={24} />
           </button>
         </header>
 
         {/* items */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 divide-y">
-          {items.length === 0 && <p className="text-gray-500">{t('cart_empty')}</p>}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 divide-y divide-slate-800">
+          {items.length === 0 && <p className="text-slate-500">{t('cart_empty')}</p>}
           {items.map((item: CartItem) => (
-            <div key={item.variantId} className="flex space-x-4 py-4 text-black">
-              <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden">
+            <div key={item.variantId} className="flex space-x-4 py-4 text-slate-100">
+              <div className="w-24 h-24 bg-slate-900 rounded overflow-hidden">
                 <Image
                   src={item.imageUrl}
                   alt={item.title}
@@ -95,20 +95,20 @@ export default function CartSidebar({
                 />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-black">{item.title}</h3>
+                <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
                 <div className="mt-2 flex items-center space-x-2">
                   {/* decrement */}
                   <button
                     onClick={() => remove({ ...item, quantity: 1 })}
-                    className="w-8 h-8 flex items-center justify-center border rounded text-black hover:bg-gray-100"
+                    className="w-8 h-8 flex items-center justify-center border border-slate-700 rounded text-slate-100 hover:bg-slate-800 transition"
                   >
                     –
                   </button>
-                  <span className="text-sm font-medium">{item.quantity}</span>
+                  <span className="text-sm font-medium text-slate-100">{item.quantity}</span>
                   {/* increment */}
                   <button
                     onClick={() => add({ ...item, quantity: 1 })}
-                    className="w-8 h-8 flex items-center justify-center border rounded text-black hover:bg-gray-100"
+                    className="w-8 h-8 flex items-center justify-center border border-slate-700 rounded text-slate-100 hover:bg-slate-800 transition"
                   >
                     +
                   </button>
@@ -121,12 +121,12 @@ export default function CartSidebar({
                         item.quantity--
                       }
                     }}
-                    className="ml-auto text-xs text-gray-500 hover:underline"
+                    className="ml-auto text-xs text-slate-500 hover:text-slate-300 hover:underline transition"
                   >
                     Remove
                   </button>
                 </div>
-                <p className="mt-2 text-sm font-bold text-black">
+                <p className="mt-2 text-sm font-bold text-slate-100">
                   {symbols[currency] || ''}{((item.price * item.quantity * rate)/100).toFixed(2)}
                 </p>
               </div>
@@ -136,21 +136,23 @@ export default function CartSidebar({
 
         {/* footer */}
         {items.length > 0 && (
-          <footer className="px-8 py-6 border-t">
-            <div className="flex justify-between mb-2 text-black">
-              <span className="font-bold">Total</span>
+          <footer className="px-8 py-6 border-t border-slate-800">
+            <div className="flex justify-between mb-2 text-slate-100">
+              <span className="font-bold uppercase tracking-widest text-sm">Total</span>
               <span className="font-bold">{symbols[currency] || ''}{(subtotal / 100).toFixed(2)}</span>
             </div>
-            <p className="text-xs text-gray-500 mb-4">Delivery calculated at checkout</p>
+            <p className="text-xs text-slate-500 mb-4">Delivery calculated at checkout</p>
             {error && (
-              <p className="text-red-500 text-sm mb-2">{error}</p>
-            )}           
+              <p className="text-red-400 text-sm mb-2">{error}</p>
+            )}
             <button
               onClick={handleCheckout}
               disabled={isLoading}
-              className={`w-full py-3 text-white font-bold rounded-lg ${
-                isLoading ? 'bg-gray-400 cursor-wait' : 'bg-black hover:bg-gray-800'
-              } transition`}
+              className={`w-full py-3 font-semibold uppercase tracking-widest rounded-lg transition ${
+                isLoading
+                  ? 'bg-slate-700 text-slate-400 cursor-wait'
+                  : 'bg-emerald-400/90 text-black hover:bg-emerald-300'
+              }`}
             >
               {isLoading ? 'Processing…' : t('checkout')}
             </button>
