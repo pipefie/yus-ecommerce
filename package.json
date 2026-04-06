@@ -33,7 +33,7 @@
     "jose": "^5.10.0",
     "lucide-react": "^0.503.0",
     "next": "^15.5.11",
-    "next-intl": "^4.3.0",
+    "next-intl": "^4.9.0",
     "node-fetch": "^3.3.2",
     "nookies": "^2.5.2",
     "openid-client": "^6.8.1",
