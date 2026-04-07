@@ -57,8 +57,13 @@ function collectMockupAssets(prod: ProductRecord | null) {
 }
 
 export async function generateStaticParams(): Promise<Array<{ id: string }>> {
-  const slugs = await getProductSlugs();
-  return slugs.map((slug: string) => ({ id: slug }));
+  try {
+    const slugs = await getProductSlugs();
+    return slugs.map((slug: string) => ({ id: slug }));
+  } catch {
+    // DB not available at build time (Docker build) — pages render on-demand at runtime
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {

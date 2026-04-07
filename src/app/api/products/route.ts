@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAllProducts } from '../../../lib/products'
 import { getAssetUrls, assetPlaceholder } from '@/lib/assets'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const raws = await getAllProducts()
