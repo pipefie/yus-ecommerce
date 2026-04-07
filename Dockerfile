@@ -13,7 +13,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma client then build (output: standalone)
-RUN npx prisma generate && npm run build
+# SKIP_ENV_VALIDATION=1 prevents Zod from throwing on missing runtime env vars during build
+RUN SKIP_ENV_VALIDATION=1 npx prisma generate && SKIP_ENV_VALIDATION=1 npm run build
 
 # ─── Stage 3: production runner ───────────────────────────────────────────────
 FROM node:22-slim AS runner

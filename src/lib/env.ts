@@ -112,9 +112,9 @@ const parsed = envSchema.safeParse({
   TWITTER_USERNAME: process.env.TWITTER_USERNAME,
 });
 
-if (!parsed.success) {
+if (!parsed.success && process.env.SKIP_ENV_VALIDATION !== "1") {
   console.error("Invalid environment variables", parsed.error.flatten().fieldErrors);
   throw new Error("Invalid environment configuration");
 }
 
-export const env = parsed.data;
+export const env = (parsed.success ? parsed.data : {}) as z.infer<typeof envSchema>;
