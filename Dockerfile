@@ -12,9 +12,24 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Dummy env vars for build stage only — satisfies Prisma schema check and Zod.
+# Real values are injected at runtime via env_file in docker-compose. NOT in final image.
+ENV SKIP_ENV_VALIDATION=1 \
+    DATABASE_URL=postgresql://build:build@localhost:5432/build \
+    BASE_URL=http://localhost:3000 \
+    NEXT_PUBLIC_URL=http://localhost:3000 \
+    OIDC_ISSUER=https://placeholder.auth0.com/ \
+    OIDC_CLIENT_ID=build \
+    OIDC_CLIENT_SECRET=build \
+    OIDC_REDIRECT_URI=http://localhost:3000/api/auth/callback \
+    OIDC_POST_LOGOUT_REDIRECT_URI=http://localhost:3000/ \
+    SESSION_SECRET=00000000000000000000000000000000 \
+    STRIPE_SECRET_KEY=sk_test_build \
+    STRIPE_WEBHOOK_SECRET=whsec_build \
+    CLOUDFRONT_BASE_URL=https://placeholder.cloudfront.net
+
 # Generate Prisma client then build (output: standalone)
-# SKIP_ENV_VALIDATION=1 prevents Zod from throwing on missing runtime env vars during build
-RUN SKIP_ENV_VALIDATION=1 npx prisma generate && SKIP_ENV_VALIDATION=1 npm run build
+RUN npx prisma generate && npm run build
 
 # ─── Stage 3: production runner ───────────────────────────────────────────────
 FROM node:22-slim AS runner

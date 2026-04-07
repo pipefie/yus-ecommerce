@@ -1,7 +1,7 @@
 // src/app/sitemap.xml/route.ts
 import { getAllProducts } from '@/lib/products'
 
-export const revalidate = 86400 // 24 hours
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
