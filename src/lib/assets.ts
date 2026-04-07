@@ -1,13 +1,16 @@
 import { env } from "@/lib/env";
 
-const baseUrl = env.CLOUDFRONT_BASE_URL.replace(/\/+$/, "");
-const baseHost = (() => {
+function getBaseUrl(): string {
+  return (env.CLOUDFRONT_BASE_URL ?? "").replace(/\/+$/, "");
+}
+
+function getBaseHost(): string {
   try {
-    return new URL(baseUrl).hostname;
+    return new URL(getBaseUrl()).hostname;
   } catch {
     return "";
   }
-})();
+}
 
 const PLACEHOLDER = "/placeholder.png";
 
@@ -16,14 +19,14 @@ export function getAssetUrl(value: string | null | undefined): string | null {
   if (/^https?:\/\//i.test(value)) {
     try {
       const url = new URL(value);
-      return url.hostname === baseHost ? value : null;
+      return url.hostname === getBaseHost() ? value : null;
     } catch {
       return null;
     }
   }
   const key = value.replace(/^\/+/, "");
   if (!key) return null;
-  return `${baseUrl}/${key}`;
+  return `${getBaseUrl()}/${key}`;
 }
 
 export function getAssetUrls(values: Array<string | null | undefined>, options?: { fallback?: string; }): string[] {
@@ -39,5 +42,5 @@ export function assetPlaceholder(): string {
 }
 
 export function getCdnHostname(): string {
-  return baseHost;
+  return getBaseHost();
 }
