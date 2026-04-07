@@ -12,24 +12,52 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Dummy env vars for build stage only — satisfies Prisma schema check and Zod.
-# Real values are injected at runtime via env_file in docker-compose. NOT in final image.
-ENV SKIP_ENV_VALIDATION=1 \
-    DATABASE_URL=postgresql://build:build@localhost:5432/build \
-    BASE_URL=http://localhost:3000 \
-    NEXT_PUBLIC_URL=http://localhost:3000 \
-    OIDC_ISSUER=https://placeholder.auth0.com/ \
-    OIDC_CLIENT_ID=build \
-    OIDC_CLIENT_SECRET=build \
-    OIDC_REDIRECT_URI=http://localhost:3000/api/auth/callback \
-    OIDC_POST_LOGOUT_REDIRECT_URI=http://localhost:3000/ \
-    SESSION_SECRET=00000000000000000000000000000000 \
-    STRIPE_SECRET_KEY=sk_test_build \
-    STRIPE_WEBHOOK_SECRET=whsec_build \
-    CLOUDFRONT_BASE_URL=https://placeholder.cloudfront.net
+# Build-time only placeholders — ARG values never persist into the final image.
+# Real secrets are injected at runtime via env_file in docker-compose.
+ARG SKIP_ENV_VALIDATION=1
+ARG DATABASE_URL=postgresql://build:build@localhost:5432/build
+ARG BASE_URL=http://localhost:3000
+ARG NEXT_PUBLIC_URL=http://localhost:3000
+ARG OIDC_ISSUER=https://placeholder.auth0.com/
+ARG OIDC_CLIENT_ID=build
+ARG OIDC_CLIENT_SECRET=build
+ARG OIDC_REDIRECT_URI=http://localhost:3000/api/auth/callback
+ARG OIDC_POST_LOGOUT_REDIRECT_URI=http://localhost:3000/
+ARG SESSION_SECRET=00000000000000000000000000000000
+ARG STRIPE_SECRET_KEY=sk_test_build
+ARG STRIPE_WEBHOOK_SECRET=whsec_build
+ARG CLOUDFRONT_BASE_URL=https://placeholder.cloudfront.net
 
+# Expose ARGs as env vars only for the RUN step below
 # Generate Prisma client then build (output: standalone)
-RUN npx prisma generate && npm run build
+RUN SKIP_ENV_VALIDATION=$SKIP_ENV_VALIDATION \
+    DATABASE_URL=$DATABASE_URL \
+    BASE_URL=$BASE_URL \
+    NEXT_PUBLIC_URL=$NEXT_PUBLIC_URL \
+    OIDC_ISSUER=$OIDC_ISSUER \
+    OIDC_CLIENT_ID=$OIDC_CLIENT_ID \
+    OIDC_CLIENT_SECRET=$OIDC_CLIENT_SECRET \
+    OIDC_REDIRECT_URI=$OIDC_REDIRECT_URI \
+    OIDC_POST_LOGOUT_REDIRECT_URI=$OIDC_POST_LOGOUT_REDIRECT_URI \
+    SESSION_SECRET=$SESSION_SECRET \
+    STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY \
+    STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
+    CLOUDFRONT_BASE_URL=$CLOUDFRONT_BASE_URL \
+    npx prisma generate && \
+    SKIP_ENV_VALIDATION=$SKIP_ENV_VALIDATION \
+    DATABASE_URL=$DATABASE_URL \
+    BASE_URL=$BASE_URL \
+    NEXT_PUBLIC_URL=$NEXT_PUBLIC_URL \
+    OIDC_ISSUER=$OIDC_ISSUER \
+    OIDC_CLIENT_ID=$OIDC_CLIENT_ID \
+    OIDC_CLIENT_SECRET=$OIDC_CLIENT_SECRET \
+    OIDC_REDIRECT_URI=$OIDC_REDIRECT_URI \
+    OIDC_POST_LOGOUT_REDIRECT_URI=$OIDC_POST_LOGOUT_REDIRECT_URI \
+    SESSION_SECRET=$SESSION_SECRET \
+    STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY \
+    STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
+    CLOUDFRONT_BASE_URL=$CLOUDFRONT_BASE_URL \
+    npm run build
 
 # ─── Stage 3: production runner ───────────────────────────────────────────────
 FROM node:22-slim AS runner
@@ -58,7 +86,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public        ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 # Prisma CLI + generated client (not included in standalone bundle)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma        ./node_modules/.bin/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma*       ./node_modules/.bin/
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma             ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma            ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma            ./node_modules/@prisma
