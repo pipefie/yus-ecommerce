@@ -36,7 +36,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`scroll-smooth ${pressStart2P.variable}`} suppressHydrationWarning>
       <body
-        className="pt-24 antialiased bg-black text-white selection:bg-emerald-400Selection:text-black"
+        className="pt-24 antialiased bg-black text-white selection:bg-emerald-400 selection:text-black"
         suppressHydrationWarning
       >
         <Providers>
