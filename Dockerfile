@@ -85,11 +85,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/public        ./public
 # Prisma schema + migrations (needed by migrate deploy at startup)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Prisma CLI + generated client (not included in standalone bundle)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma*       ./node_modules/.bin/
+# Prisma generated client (not included in standalone bundle)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma             ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma            ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma            ./node_modules/@prisma
+
+# Create prisma CLI symlink so __dirname resolves to prisma/build/ where the .wasm lives
+RUN mkdir -p node_modules/.bin && \
+    ln -sf /app/node_modules/prisma/build/index.js node_modules/.bin/prisma && \
+    chmod +x node_modules/prisma/build/index.js
 
 USER nextjs
 
