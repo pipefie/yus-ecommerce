@@ -99,5 +99,6 @@ USER nextjs
 
 EXPOSE 3000
 
-# Run migrations then start the standalone server
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
+# Start the standalone server
+# Run migrations separately: docker compose exec web node node_modules/prisma/build/index.js migrate deploy
+CMD ["node", "server.js"]
