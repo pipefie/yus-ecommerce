@@ -103,5 +103,5 @@ USER nextjs
 
 EXPOSE 3000
 
-# Run migrations then start the app
-CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy && node server.js"]
+# Migrations are handled by the separate migrate service in docker-compose.prod.yml
+CMD ["node", "server.js"]

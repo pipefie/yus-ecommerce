@@ -9,6 +9,16 @@
 # Make sure Nginx sets: proxy_set_header X-Forwarded-Proto https;
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    restart: "no"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     build:
       context: .
@@ -20,6 +30,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 30s
