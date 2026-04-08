@@ -87,10 +87,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/public        ./public
 # Prisma schema + migrations (needed by migrate deploy at startup)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Prisma generated client (not included in standalone bundle)
+# Prisma generated client + CLI dependencies (not included in standalone bundle)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma             ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma            ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma            ./node_modules/@prisma
+# effect is a required peer dep of @prisma/config in Prisma 6
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/effect             ./node_modules/effect
 
 # Create prisma CLI symlink so __dirname resolves to prisma/build/ where the .wasm lives
 RUN mkdir -p node_modules/.bin && \
@@ -101,6 +103,5 @@ USER nextjs
 
 EXPOSE 3000
 
-# Start the standalone server
-# Run migrations separately: docker compose exec web node node_modules/prisma/build/index.js migrate deploy
-CMD ["node", "server.js"]
+# Run migrations then start the app
+CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy && node server.js"]
