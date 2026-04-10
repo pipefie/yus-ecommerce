@@ -35,6 +35,7 @@ export default function HeroSection({ videoUrl }: { videoUrl?: string }) {
         autoPlay
         muted
         loop
+        playsInline
         className="absolute inset-0 w-full h-full object-cover"
       />
 
